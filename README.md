@@ -17,12 +17,12 @@ Following environmental variables are needed
 # Testing
 - TEST_EMAIL : The email to be logged in if "test-idp" is specified as the IDP
  
-# MYSQL configuration
-- MYSQL_HOST : The host URL of the MYSQL database
-- MYSQL_PORT : The port of the MYSQL database
-- MYSQL_USER : The service user of the MYSQL database
-- MYSQL_PASSWORD : The password for the service user of the MYSQL database
-- MYSQL_DATABASE : The MYSQL database name
+# Mongo configuration
+- MONGO_DB_HOST : The host URL of the Mongo database
+- MONGO_DB_PORT : The port of the Mongo database
+- MONGO_DB_USER : The service user of the Mongo database
+- MONGO_DB_PASSWORD : The password for the service user of the Mongo database
+- MONGO_DB_DATABASE : The Mongo database name
  
 # NIH login configuration
 - NIH_CLIENT_ID: NIH login server client id

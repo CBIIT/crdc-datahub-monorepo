@@ -27,7 +27,7 @@ const config = {
   neo4j_uri: process.env.NEO4J_URI,
   neo4j_user: process.env.NEO4J_USER,
   neo4j_password: process.env.NEO4J_PASSWORD,
-  // MySQL Session
+  // Mongo DB Session
   mongo_db_host: process.env.MONGO_DB_HOST,
   mongo_db_port: process.env.MONGO_DB_PORT,
   mongo_db_user: process.env.MONGO_DB_USER,
