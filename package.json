@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "connect-mongo": "^5.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
@@ -16,6 +17,7 @@
     "googleapis": "^95.0.0",
     "http-errors": "~1.6.3",
     "http-proxy-middleware": "^2.0.6",
+    "mongodb": "^5.5.0",
     "morgan": "~1.9.1",
     "mysql": "^2.18.1",
     "neo4j-driver": "^5.3.0",
@@ -27,6 +29,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@shelf/jest-mongodb": "^4.1.7",
     "ejs": "^3.1.8",
     "jest": "^28.1.1",
     "supertest": "^6.2.4"

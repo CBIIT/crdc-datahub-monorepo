@@ -5,7 +5,7 @@ Following environmental variables are needed
 
 - VERSION : version number
 - DATE : build date
-- IDP : default identification provider, enabled if IDP is not provided from the client side e.g., "google" 
+- IDP : default identification provider, enabled if IDP is not provided from the client side e.g., "nih" 
 - COOKIE_SECRET : secret used to sign cookies
 - SESSION_TIMEOUT : session timeout in seconds, default is 30 minutes
 
@@ -23,11 +23,6 @@ Following environmental variables are needed
 - MYSQL_USER : The service user of the MYSQL database
 - MYSQL_PASSWORD : The password for the service user of the MYSQL database
 - MYSQL_DATABASE : The MYSQL database name
- 
-# Google login configuration
-- GOOGLE_CLIENT_ID: Google cloud client id
-- GOOGLE_CLIENT_SECRET: Google cloud client secret
-- GOOGLE_REDIRECT_URL: redirecting url after successful authentication
  
 # NIH login configuration
 - NIH_CLIENT_ID: NIH login server client id
