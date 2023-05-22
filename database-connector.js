@@ -1,15 +1,14 @@
-const config = require("../config");
 const MongoClient = require('mongodb').MongoClient;
 
-const ConnectionString = `mongodb://${config.mongo_db_user}:${config.mongo_db_password}@${config.mongo_db_host}:${config.mongo_db_port}`;
 class DatabaseConnector {
-    constructor() {
+    constructor(connectionString) {
+        this.connectionString = connectionString;
         this.client = null;
     }
 
     async connect() {
         try {
-            this.client = new MongoClient(ConnectionString, { useNewUrlParser: true, useUnifiedTopology: true });
+            this.client = new MongoClient(this.connectionString, { useNewUrlParser: true, useUnifiedTopology: true });
             await this.client.connect();
             console.log('Connected to MongoDB');
 
@@ -32,6 +31,5 @@ class DatabaseConnector {
 }
 
 module.exports = {
-    DatabaseConnector,
-    ConnectionString
+    DatabaseConnector
 };
