@@ -1,6 +1,6 @@
-# Bento AuthN/AuthZ service
+# CRDC AuthN/AuthZ service
 
-## Environmental Variables
+## Environmental Variables 
 Following environmental variables are needed
 
 - VERSION : version number
@@ -9,11 +9,6 @@ Following environmental variables are needed
 - COOKIE_SECRET : secret used to sign cookies
 - SESSION_TIMEOUT : session timeout in seconds, default is 30 minutes
 
-# Neo4j configuration
-- NEO4J_URI: Bolt URI of the Neo4j database
-- NEO4J_USER: Neo4j username
-- NEO4J_PASSWORD: Neo4j password
- 
 # Testing
 - TEST_EMAIL : The email to be logged in if "test-idp" is specified as the IDP
  

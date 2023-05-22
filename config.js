@@ -22,17 +22,8 @@ const config = {
     SCOPE: process.env.NIH_SCOPE,
     PROMPT: process.env.NIH_PROMPT
   },
-
-  // Neo4j Connection
-  neo4j_uri: process.env.NEO4J_URI,
-  neo4j_user: process.env.NEO4J_USER,
-  neo4j_password: process.env.NEO4J_PASSWORD,
-  // Mongo DB Session
-  mongo_db_host: process.env.MONGO_DB_HOST,
-  mongo_db_port: process.env.MONGO_DB_PORT,
-  mongo_db_user: process.env.MONGO_DB_USER,
-  mongo_db_password: process.env.MONGO_DB_PASSWORD,
-  mongo_db_database: process.env.MONGO_DB_DATABASE,
+  // Mongo DB Connection
+  mongo_db_connection_string: `mongodb://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_PASSWORD}@${process.env.MONGO_DB_HOST}:${process.env.MONGO_DB_PORT}`,
   // Disable local test page automatically sends /login request, so Postman can use the auth code
   noAutoLogin: process.env.NO_AUTO_LOGIN ? process.env.NO_AUTO_LOGIN.toLowerCase() === "true" : false,
 
@@ -44,23 +35,6 @@ const config = {
     return url;
   }
 };
-
-function getTransportConfig() {
-  return {
-    host: process.env.EMAIL_SMTP_HOST,
-    port: process.env.EMAIL_SMTP_PORT,
-    // Optional AWS Email Identity
-    ...(process.env.EMAIL_USER && {
-          secure: true, // true for 465, false for other ports
-          auth: {
-            user: process.env.EMAIL_USER, // generated ethereal user
-            pass: process.env.EMAIL_PASSWORD, // generated ethereal password
-          }
-        }
-    )
-  };
-}
-
 
 if (!config.version) {
   config.version = 'Version not set'
