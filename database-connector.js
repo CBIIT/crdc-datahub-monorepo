@@ -1,3 +1,4 @@
+const MongoStore = require("connect-mongo");
 const MongoClient = require('mongodb').MongoClient;
 
 class DatabaseConnector {
@@ -28,6 +29,14 @@ class DatabaseConnector {
             console.error('Error disconnecting from MongoDB:', err);
         }
     }
+
+    static createMongoStore(connectionString, sessionTimeout) {
+        return MongoStore.create({
+            mongoUrl: connectionString,
+            touchAfter: sessionTimeout // time period in seconds
+        })
+    }
+
 }
 
 module.exports = {
