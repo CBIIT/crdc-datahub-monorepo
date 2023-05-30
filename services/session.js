@@ -1,8 +1,7 @@
 const session = require('express-session');
 const {randomBytes} = require("crypto");
 const config = require('../config');
-const MySQLStore = require('express-mysql-session')(session);
-
+const {DatabaseConnector} = require("../database-drivers/database-connector");
 function createSession({ sessionSecret, session_timeout } = {}) {
     sessionSecret = sessionSecret || randomBytes(16).toString("hex");
     return session({
@@ -10,15 +9,7 @@ function createSession({ sessionSecret, session_timeout } = {}) {
         // rolling: true,
         saveUninitialized: false,
         resave: true,
-        store: new MySQLStore({
-          host: config.mysql_host,
-          port: config.mysql_port,
-          user: config.mysql_user,
-          password: config.mysql_password,
-          database: config.mysql_database,
-          checkExpirationInterval: 10 * 1000, // 10 seconds
-          expiration: session_timeout
-        })
+        store: DatabaseConnector.createMongoStore(config.mongo_db_connection_string, session_timeout)
     });
 }
 

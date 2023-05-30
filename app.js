@@ -7,7 +7,6 @@ var logger = require('morgan');
 const fs = require('fs');
 const cors = require('cors');
 const config = require('./config');
-const {getTTL} = require("./services/mysql-connection");
 const cookieParser = require('cookie-parser');
 
 console.log(config);
@@ -30,9 +29,6 @@ app.use(logger('combined', { stream: accessLogStream }))
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.get('/api/auth/session-ttl', (req, res) => {
-  getTTL(req, res);
-});
 app.use(createSession({ sessionSecret: config.cookie_secret, session_timeout: config.session_timeout }));
 
 
@@ -44,7 +40,6 @@ if (process.env.NODE_ENV === 'development') {
 
   app.get('/', (req, res) => {
     res.render('index', {
-      googleClientID: config.google.CLIENT_ID,
       nihClientID: config.nih.CLIENT_ID,
       nihRedirectURL: config.nih.REDIRECT_URL,
       noAutoLogin: config.noAutoLogin

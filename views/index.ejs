@@ -4,28 +4,11 @@
     <!-- BEGIN Pre-requisites -->
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
     </script>
-    <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer>
-    </script>
     <!-- END Pre-requisites -->
-    <script>
-        function start() {
-            gapi.load('auth2', function() {
-                auth2 = gapi.auth2.init({
-                    client_id: '<%= googleClientID %>',
-                    // Scopes to request in addition to 'profile' and 'email'
-                    //scope: 'additional_scope'
-                });
-            });
-        };
-    </script>
 </head>
 <body>
-    <h1>Google Login Test page</h1>
     <!-- Add where you want your sign-in button to render -->
     <!-- Use an image that follows the branding guidelines in a real app -->
-    <div>
-        <button id="signInBtnGoogle">Sign in with Google</button>
-    </div>
     <div>
         <button id="signInBtnNIH">Sign in NIH</button>
     </div>
@@ -41,10 +24,6 @@
     </div>
     <p id="login_text">Not logged in</p>
     <script>
-        $('#signInBtnGoogle').click(function() {
-            // signInCallback defined in step 6.
-            auth2.grantOfflineAccess().then(signInDisplayCode);
-        });
         $('#signInBtnNIH').click(function() {
             // signInCallback defined in step 6.
             let newUrl = "https://stsstg.nih.gov/auth/oauth/v2/authorize?";

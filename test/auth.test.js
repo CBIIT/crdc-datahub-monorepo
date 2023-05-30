@@ -1,9 +1,7 @@
 const app = require('../app');
 const request = require('supertest');
-const {NIH, LOGIN_GOV, GOOGLE} = require("../constants/idp-constants");
-const nihClient = require("../idps/nih");
+const {NIH, LOGIN_GOV} = require("../constants/idp-constants");
 jest.mock("../idps/nih");
-jest.mock("../idps/google");
 jest.mock("../services/nih-auth");
 describe('GET /auth test', ()=> {
     const LOGOUT_ROUTE = '/api/auth/logout';
@@ -22,17 +20,6 @@ describe('GET /auth test', ()=> {
             .expect(200);
         expect(nihClient.login).toBeCalledTimes(1);
     });
-
-    test(`auth nih login called once`, async () => {
-        const googleClient = require('../idps/google');
-        nihClient.login.mockReturnValue(Promise.resolve(mockLoginResult));
-        await request(app)
-            .post(LOGIN_ROUTE)
-            .send({code: 'code', IDP: GOOGLE})
-            .expect(200);
-        expect(googleClient.login).toBeCalledTimes(1);
-    });
-
 
     test(`auth nih login called once`, async () => {
         const nihClient = require('../idps/nih');
