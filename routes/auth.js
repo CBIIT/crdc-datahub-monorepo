@@ -3,8 +3,6 @@ const router = express.Router();
 const idpClient = require('../idps');
 const config = require('../config');
 const {logout} = require('../controllers/auth-api')
-const {storeLoginEvent, storeLogoutEvent} = require("../neo4j/neo4j-operations");
-const {formatVariables, formatMap} = require("../bento-event-logging/const/format-constants");
 
 /* Login */
 router.post('/login', async function (req, res) {
@@ -17,8 +15,6 @@ router.post('/login', async function (req, res) {
             firstName: name,
             lastName: lastName
         };
-        req.session.userInfo = formatVariables(req.session.userInfo, ["IDP"], formatMap);
-        await storeLoginEvent(req.session.userInfo.email, req.session.userInfo.IDP);
         req.session.tokens = tokens;
         res.json({name, email, "timeout": config.session_timeout / 1000});
     } catch (e) {
@@ -39,7 +35,6 @@ router.post('/logout', async function (req, res, next) {
         const idp = config.getIdpOrDefault(req.body['IDP']);
         await idpClient.logout(idp, req.session.tokens);
         let userInfo = req.session.userInfo;
-        await storeLogoutEvent(userInfo.email, userInfo.IDP);
         // Remove User Session
         return logout(req, res);
     } catch (e) {

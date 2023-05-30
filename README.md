@@ -1,33 +1,23 @@
-# Bento AuthN/AuthZ service
+# CRDC AuthN/AuthZ service
 
-## Environmental Variables
+## Environmental Variables 
 Following environmental variables are needed
 
 - VERSION : version number
 - DATE : build date
-- IDP : default identification provider, enabled if IDP is not provided from the client side e.g., "google" 
+- IDP : default identification provider, enabled if IDP is not provided from the client side e.g., "nih" 
 - COOKIE_SECRET : secret used to sign cookies
 - SESSION_TIMEOUT : session timeout in seconds, default is 30 minutes
 
-# Neo4j configuration
-- NEO4J_URI: Bolt URI of the Neo4j database
-- NEO4J_USER: Neo4j username
-- NEO4J_PASSWORD: Neo4j password
- 
 # Testing
 - TEST_EMAIL : The email to be logged in if "test-idp" is specified as the IDP
  
-# MYSQL configuration
-- MYSQL_HOST : The host URL of the MYSQL database
-- MYSQL_PORT : The port of the MYSQL database
-- MYSQL_USER : The service user of the MYSQL database
-- MYSQL_PASSWORD : The password for the service user of the MYSQL database
-- MYSQL_DATABASE : The MYSQL database name
- 
-# Google login configuration
-- GOOGLE_CLIENT_ID: Google cloud client id
-- GOOGLE_CLIENT_SECRET: Google cloud client secret
-- GOOGLE_REDIRECT_URL: redirecting url after successful authentication
+# Mongo configuration
+- MONGO_DB_HOST : The host URL of the Mongo database
+- MONGO_DB_PORT : The port of the Mongo database
+- MONGO_DB_USER : The service user of the Mongo database
+- MONGO_DB_PASSWORD : The password for the service user of the Mongo database
+- MONGO_DB_DATABASE : The Mongo database name
  
 # NIH login configuration
 - NIH_CLIENT_ID: NIH login server client id
