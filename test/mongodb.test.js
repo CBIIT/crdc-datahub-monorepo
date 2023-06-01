@@ -1,4 +1,4 @@
-const {MongoQueries} = require("../database-drivers/mongo-queries");
+const {MongoQueries} = require("../crdc-datahub-database-drivers/mongo-queries");
 
 describe('Mongo DB Test', () => {
     test('/find document',  async () => {
