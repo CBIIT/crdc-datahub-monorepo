@@ -1,7 +1,7 @@
 const session = require('express-session');
 const {randomBytes} = require("crypto");
 const config = require('../config');
-const {DatabaseConnector} = require("../database-drivers/database-connector");
+const {DatabaseConnector} = require("../crdc-datahub-database-drivers/database-connector");
 function createSession({ sessionSecret, session_timeout } = {}) {
     sessionSecret = sessionSecret || randomBytes(16).toString("hex");
     return session({
