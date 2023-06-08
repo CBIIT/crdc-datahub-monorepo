@@ -1,12 +1,13 @@
 const {DatabaseConnector} = require("./database-connector");
 class MongoQueries {
-    constructor(connectionString) {
+    constructor(connectionString, database) {
         this.connectionString = connectionString;
+        this.database = database
     }
     async execute(operator) {
         const connector = new DatabaseConnector(this.connectionString);
         const client = await connector.connect();
-        const db = client.db();
+        const db = client.db(this.database);
         let result = [];
         try {
             result = await operator(db);
