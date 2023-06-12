@@ -4,8 +4,8 @@ const {NIH, LOGIN_GOV} = require("../constants/idp-constants");
 jest.mock("../idps/nih");
 jest.mock("../services/nih-auth");
 describe('GET /auth test', ()=> {
-    const LOGOUT_ROUTE = '/api/auth/logout';
-    const LOGIN_ROUTE = '/api/auth/login';
+    const LOGOUT_ROUTE = '/api/authn/logout';
+    const LOGIN_ROUTE = '/api/authn/login';
     const mockLoginResult = { name: '', tokens: '', email: '', idp: '' };
 
     afterEach(() => {

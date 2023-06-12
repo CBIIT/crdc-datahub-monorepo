@@ -2,7 +2,7 @@ const newrelic = require('newrelic');
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-const {createSession} = require("./services/session");
+const createSession = require("./crdc-datahub-database-drivers/session-middleware");
 var logger = require('morgan');
 const fs = require('fs');
 const cors = require('cors');
@@ -29,10 +29,10 @@ app.use(logger('combined', { stream: accessLogStream }))
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(createSession({ sessionSecret: config.cookie_secret, session_timeout: config.session_timeout }));
+app.use(createSession(config.cookie_secret, config.session_timeout, config.mongo_db_connection_string));
 
 
-app.use('/api/auth', authRouter);
+app.use('/api/authn', authRouter);
 
 if (process.env.NODE_ENV === 'development') {
   console.log("Running in development mode, local test page enabled");
