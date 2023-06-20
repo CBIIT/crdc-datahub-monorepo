@@ -1,4 +1,3 @@
-const MongoStore = require("connect-mongo");
 const MongoClient = require('mongodb').MongoClient;
 
 class DatabaseConnector {
