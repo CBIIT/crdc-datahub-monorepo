@@ -7,7 +7,7 @@ const config = {
   version: process.env.VERSION,
   date: process.env.DATE,
   idp: process.env.IDP ? process.env.IDP.toLowerCase() : NIH,
-  cookie_secret: process.env.COOKIE_SECRET,
+  session_secret: process.env.SESSION_SECRET,
   session_timeout: process.env.SESSION_TIMEOUT ? parseInt(process.env.SESSION_TIMEOUT) * 1000 : 1000 * 30 * 60,  // 30 minutes
   // NIH login settings
   nih: {

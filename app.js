@@ -29,7 +29,7 @@ app.use(logger('combined', { stream: accessLogStream }))
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(createSession(config.cookie_secret, config.session_timeout, config.mongo_db_connection_string));
+app.use(createSession(config.session_secret, config.session_timeout, config.mongo_db_connection_string));
 
 
 app.use('/api/authn', authRouter);
