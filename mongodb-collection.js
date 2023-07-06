@@ -10,9 +10,7 @@ class MongoDBCollection {
             return await this.collection.find({_id: id}).toArray();
         }
         catch (e){
-            console.debug("An exception occurred during a find operation");
-            console.debug(e);
-            throw DATABASE_ERROR;
+            logAndThrow("An exception occurred during a find operation", e);
         }
     }
 
@@ -21,9 +19,7 @@ class MongoDBCollection {
             return await this.collection.aggregate(pipeline).toArray()
         }
         catch (e){
-            console.debug("An exception occurred during an aggregate operation");
-            console.debug(e);
-            throw DATABASE_ERROR;
+            logAndThrow("An exception occurred during an aggregate operation", e);
         }
     }
 
@@ -32,9 +28,7 @@ class MongoDBCollection {
             return await this.collection.insertOne(application);
         }
         catch (e){
-            console.debug("An exception occurred during an insert operation");
-            console.debug(e);
-            throw DATABASE_ERROR;
+            logAndThrow("An exception occurred during an insert operation", e);
         }
     }
 
@@ -49,11 +43,28 @@ class MongoDBCollection {
             return await this.collection.updateOne(filter, updateDoc);
         }
         catch (e){
-            console.debug("An exception occurred during an update one operation");
-            console.debug(e);
-            throw DATABASE_ERROR;
+            logAndThrow("An exception occurred during an update one operation", e);
         }
     }
+
+    async deleteOneById(id) {
+        return await this.deleteOne({_id: id});
+    }
+
+    async deleteOne(query) {
+        try{
+            return await this.collection.deleteOne(query);
+        }
+        catch (e){
+            logAndThrow("An exception occurred during a delete operation", e);
+        }
+    }
+}
+
+function logAndThrow(message, error){
+    console.error(message)
+    console.error(error)
+    throw DATABASE_ERROR;
 }
 
 module.exports = {
