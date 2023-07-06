@@ -2,11 +2,21 @@ const {getCurrentTimeYYYYMMDDSS} = require("../utility/time-utility");
 const {v4} = require("uuid")
 
 class User {
-    constructor(userCollection, dbService) {
+    constructor(userCollection) {
         this.userCollection = userCollection
     }
 
+    async getUser(userID) {
+        let result = await this.userCollection.aggregate([{
+            "$match": {
+                _id: userID
+            }
+        }, {"$limit": 1}]);
+        return (result?.length > 0) ? result[0] : null;
+    }
+
     async getMyUser(params, context) {
+        if (!context?.userInfo?.email || context?.userInfo?.IDP) throw new Error("A user must be logged in to call this API");
         let session_currentTime = getCurrentTimeYYYYMMDDSS();
         const user_email = {
             "$match": {
