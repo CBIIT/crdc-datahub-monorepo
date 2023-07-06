@@ -16,7 +16,7 @@ class User {
     }
 
     async getMyUser(params, context) {
-        if (!context?.userInfo?.email || context?.userInfo?.IDP) throw new Error("A user must be logged in to call this API");
+        if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error("A user must be logged in to call this API");
         let session_currentTime = getCurrentTimeYYYYMMDDSS();
         const user_email = {
             "$match": {
