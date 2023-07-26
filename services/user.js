@@ -1,5 +1,6 @@
 const {getCurrentTimeYYYYMMDDSS} = require("../utility/time-utility");
 const {v4} = require("uuid")
+const {USER} = require("../constants/user-constants");
 
 class User {
     constructor(userCollection) {
@@ -38,8 +39,8 @@ class User {
                 _id: v4(),
                 email: context.userInfo.email,
                 IDP: context.userInfo.IDP,
-                userStatus: "Active",
-                role: "User",
+                userStatus: USER.STATUSES.ACTIVE,
+                role: USER.ROLES.USER,
                 organizations: [],
                 firstName: context.userInfo.firstName,
                 lastName: context.userInfo.lastName,
@@ -113,6 +114,9 @@ class User {
 
     }
 
+    isAdmin(role) {
+        return role && role === USER.ROLES.ADMIN;
+    }
 }
 
 
