@@ -3,5 +3,6 @@ module.exports = Object.freeze({
     DATABASE_NAME: 'crdc-datahub',
     SESSION_COLLECTION: 'sessions',
     APPLICATION_COLLECTION: 'applications',
-    USER_COLLECTION: 'users'
+    USER_COLLECTION: 'users',
+    ORGANIZATION_COLLECTION: 'organization'
 });
