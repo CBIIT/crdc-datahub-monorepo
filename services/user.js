@@ -35,14 +35,17 @@ class User {
         let result = await this.userCollection.aggregate(pipeline);
         let user
         if (result.length < 1) {
+            let email = context.userInfo.email;
+            let emailName = email.split("@")[0];
+            let firstName = context?.userInfo?.firstName || emailName;
             user = {
                 _id: v4(),
-                email: context.userInfo.email,
+                email: email,
                 IDP: context.userInfo.IDP,
                 userStatus: USER.STATUSES.ACTIVE,
                 role: USER.ROLES.USER,
-                organizations: [],
-                firstName: context.userInfo.firstName,
+                organization: {},
+                firstName: firstName,
                 lastName: context.userInfo.lastName,
                 createdAt: session_currentTime,
                 updateAt: session_currentTime
