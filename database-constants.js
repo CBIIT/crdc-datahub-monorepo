@@ -4,5 +4,6 @@ module.exports = Object.freeze({
     SESSION_COLLECTION: 'sessions',
     APPLICATION_COLLECTION: 'applications',
     USER_COLLECTION: 'users',
-    ORGANIZATION_COLLECTION: 'organization'
+    ORGANIZATION_COLLECTION: 'organization',
+    LOG_COLLECTION: 'logs'
 });
