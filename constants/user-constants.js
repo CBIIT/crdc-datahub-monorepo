@@ -5,7 +5,8 @@ module.exports = Object.freeze({
             USER: "User",
             CURATOR: "Curator",
             FEDERAL_LEAD: "FederalLead",
-            DC_POC: "DC_POC"
+            DC_POC: "DC_POC",
+            NEW: "New",
         },
         STATUSES: {
             ACTIVE: "Active",
