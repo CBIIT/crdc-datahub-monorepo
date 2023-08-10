@@ -32,12 +32,13 @@ class MongoDBCollection {
         }
     }
 
-    async update(application) {
+    async update(application, option) {
         const filter = {
             _id: application._id
         };
         const updateDoc = {
-            $set: application
+            $set: application,
+            ...option
         };
         try{
             return await this.collection.updateOne(filter, updateDoc);
