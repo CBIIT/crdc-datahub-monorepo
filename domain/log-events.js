@@ -4,6 +4,7 @@ const {LOGIN, LOGOUT, PROFILE_UPDATE, CREATE_ACCESS_TOKEN, CREATE_APPLICATION, U
 
 const moment = require("moment");
 const {v4} = require("uuid");
+const {NOT_APPLICABLE} = require("../constants/user-constants");
 class AbstractLog {
     constructor() {
         this._id= v4();
@@ -81,26 +82,31 @@ const CreateTokenEvent = class extends AbstractLog {
 }
 
 const CreateApplicationEvent = class extends AbstractLog {
-    constructor(userID, userEmail, userIDP) {
+    constructor(userID, userEmail, userIDP, applicationID) {
         super();
         this.setUser(userID, userEmail, userIDP);
         this.setEventType(CREATE_APPLICATION);
+        this.applicationID = applicationID;
     }
-    static create(userID, userEmail, userIDP) {
-        return new CreateApplicationEvent(userID, userEmail, userIDP);
+    static create(userID, userEmail, userIDP, applicationID) {
+        return new CreateApplicationEvent(userID, userEmail, userIDP, applicationID);
     }
 }
 
 const UpdateApplicationStateEvent = class extends AbstractLog {
-    constructor(userID, userEmail, userIDP, prevState, newState) {
+    constructor(userID, userEmail, userIDP, applicationID, prevState, newState) {
         super();
         this.setUser(userID, userEmail, userIDP);
         this.setEventType(UPDATE_APPLICATION_STATE);
+        this.applicationID = applicationID;
         this.prevState = prevState;
         this.newState = newState;
     }
-    static create(userID, userEmail, userIDP, prevState, newState) {
-        return new UpdateApplicationStateEvent(userID, userEmail, userIDP, prevState, newState);
+    static create(userID, userEmail, userIDP, applicationID, prevState, newState) {
+        return new UpdateApplicationStateEvent(userID, userEmail, userIDP, applicationID, prevState, newState);
+    }
+    static createByApp(applicationID, prevState, newState) {
+        return new UpdateApplicationStateEvent(NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE, applicationID, prevState, newState);
     }
 }
 
