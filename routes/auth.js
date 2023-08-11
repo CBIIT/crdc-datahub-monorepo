@@ -3,6 +3,7 @@ const router = express.Router();
 const idpClient = require('../idps');
 const config = require('../config');
 const {logout} = require('../controllers/auth-api')
+const {getTTL} = require('../services/ttl')
 
 /* Login */
 router.post('/login', async function (req, res) {
@@ -71,5 +72,9 @@ router.get('/version', function (req, res, next) {
         version: config.version, date: config.date
     });
 });
+
+router.get('/session-ttl',async function(req, res){
+    getTTL(req, res)
+})
 
 module.exports = router;
