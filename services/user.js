@@ -62,8 +62,8 @@ class User {
             throw new Error(error)
         }
         context.userInfo = {
+            ...context.userInfo,
             ...aUser,
-            ...context.userInfo
         }
         return aUser
     }
