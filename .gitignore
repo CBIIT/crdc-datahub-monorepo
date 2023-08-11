@@ -5,5 +5,3 @@ sessions/
 logs/
 yaml/
 newrelic_agent.log
-.env
-*localtest*

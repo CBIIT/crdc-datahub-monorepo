@@ -1,15 +1,7 @@
 const config = require('../config');
-const {DatabaseConnector} = require("../crdc-datahub-database-drivers/database-connector");
-const {MongoDBCollection} = require("../crdc-datahub-database-drivers/mongodb-collection");
-const {DATABASE_NAME, SESSION_COLLECTION} = require("../crdc-datahub-database-drivers/database-constants");
-const dbConnector = new DatabaseConnector(config.mongo_db_connection_string);
-
-
-
 
 const getTTL = (req, res) => {
-    const sessionID = req.sessionID
-    if (sessionID){
+    if (req.sessionID){
         let expires = req.session.cookie.expires;
         if (!expires){
             response = {ttl: 0}
