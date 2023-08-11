@@ -61,6 +61,7 @@ class User {
             console.error(error)
             throw new Error(error)
         }
+
         context.userInfo = {
             ...context.userInfo,
             ...aUser,
