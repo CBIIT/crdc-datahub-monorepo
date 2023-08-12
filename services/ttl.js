@@ -1,8 +1,10 @@
+const { response } = require('../app');
 const config = require('../config');
 
 const getTTL = (req, res) => {
     if (req.sessionID){
         let expires = req.session.cookie.expires;
+        let response
         if (!expires){
             response = {ttl: 0}
         }
@@ -12,6 +14,7 @@ const getTTL = (req, res) => {
             response = {ttl: ttl};
         }
         res.json(response)
+        // console.log(response)
     } else {
         res.json({ttl: null, error: "An internal server error occurred, please contact the administrators"});
     }
