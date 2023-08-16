@@ -28,5 +28,6 @@ module.exports = Object.freeze({
             INACTIVE: "Inactive",
             DISABLED: "Disabled"
         }
-    }
+    },
+    NOT_APPLICABLE: "Not Applicable"
 });
