@@ -25,24 +25,24 @@ class AbstractLog {
 }
 
 const LoginEvent = class extends AbstractLog {
-    constructor(userID, userEmail, userIDP) {
+    constructor(userEmail, userIDP) {
         super();
-        this.setUser(userID, userEmail, userIDP);
+        this.setUser(NOT_APPLICABLE, userEmail, userIDP);
         this.setEventType(LOGIN);
     }
-    static create(userID, userEmail, userIDP) {
-        return new LoginEvent(userID, userEmail, userIDP);
+    static create(userEmail, userIDP) {
+        return new LoginEvent(userEmail, userIDP);
     }
 }
 
 const LogoutEvent = class extends AbstractLog {
-    constructor(userID, userEmail, userIDP) {
+    constructor(userEmail, userIDP) {
         super();
-        this.setUser(userID, userEmail, userIDP);
+        this.setUser(NOT_APPLICABLE, userEmail, userIDP);
         this.setEventType(LOGOUT);
     }
-    static create(userID, userEmail, userIDP) {
-        return new LogoutEvent(userID, userEmail, userIDP);
+    static create(userEmail, userIDP) {
+        return new LogoutEvent(userEmail, userIDP);
     }
 }
 
