@@ -3,6 +3,15 @@ const router = express.Router();
 const idpClient = require('../idps');
 const config = require('../config');
 const {logout} = require('../controllers/auth-api')
+const {DatabaseConnector} = require("../crdc-datahub-database-drivers/database-connector");
+const {MongoDBCollection} = require("../crdc-datahub-database-drivers/mongodb-collection");
+const {DATABASE_NAME, LOG_COLLECTION} = require("../crdc-datahub-database-drivers/database-constants");
+const {LoginEvent, LogoutEvent} = require("../crdc-datahub-database-drivers/domain/log-events");
+const dbConnector = new DatabaseConnector(config.mongo_db_connection_string);
+let logCollection;
+dbConnector.connect().then(() => {
+    logCollection = new MongoDBCollection(dbConnector.client, DATABASE_NAME, LOG_COLLECTION);
+});
 
 /* Login */
 router.post('/login', async function (req, res) {
@@ -17,6 +26,7 @@ router.post('/login', async function (req, res) {
         };
         req.session.tokens = tokens;
         res.json({name, email, "timeout": config.session_timeout / 1000});
+        await logCollection.insert(LoginEvent.create(email, idp));
     } catch (e) {
         if (e.code && parseInt(e.code)) {
             res.status(e.code);
@@ -33,9 +43,9 @@ router.post('/login', async function (req, res) {
 router.post('/logout', async function (req, res, next) {
     try {
         const idp = config.getIdpOrDefault(req.body['IDP']);
+        const userInfo = req?.session?.userInfo;
+        if (userInfo?.email && userInfo?.IDP) await logCollection.insert(LogoutEvent.create(userInfo.email, userInfo.IDP));
         await idpClient.logout(idp, req.session.tokens);
-        let userInfo = req.session.userInfo;
-        // Remove User Session
         return logout(req, res);
     } catch (e) {
         console.log(e);

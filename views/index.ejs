@@ -64,7 +64,7 @@
                 // Google login with authenticated code
               if (!noAutoLogin) {
                   (async () => {
-                      const rawResponse = await fetch('/api/auth/login/', {
+                      const rawResponse = await fetch('/api/authn/login/', {
                           method: 'POST',
                           headers: {
                               'Accept': 'application/json',
@@ -80,7 +80,7 @@
             }
         }
         async function signOut() {
-            const rawResponse = await fetch('/api/auth/logout/', {
+            const rawResponse = await fetch('/api/authn/logout/', {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -101,7 +101,7 @@
 
         async function nihLogin(auth_code) {
             console.log('auth_code: ' + auth_code);
-            fetch(`/api/auth/login`, {
+            fetch(`/api/authn/login`, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
