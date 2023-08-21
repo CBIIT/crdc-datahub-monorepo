@@ -81,24 +81,24 @@ router.get('/version', function (req, res, next) {
     });
 });
 
-router.get('/session-ttl',async function(req, res){
-    let response
-    if (req.sessionID){
+// router.get('/session-ttl',async function(req, res){
+//     let response
+//     if (req.sessionID){
 
-        const dbService = new MongoQueries(config.mongo_db_connection_string, DATABASE_NAME);
-        dbConnector.connect().then( async () => {
-            const sessionCollection = new MongoDBCollection(dbConnector.client, DATABASE_NAME, SESSION_COLLECTION);
-            const dataInterface = new Sessions(sessionCollection)
-            response = {
-                ttl: await dataInterface.getSession(req.sessionID),
-            }
+//         const dbService = new MongoQueries(config.mongo_db_connection_string, DATABASE_NAME);
+//         dbConnector.connect().then( async () => {
+//             const sessionCollection = new MongoDBCollection(dbConnector.client, DATABASE_NAME, SESSION_COLLECTION);
+//             const dataInterface = new Sessions(sessionCollection)
+//             response = {
+//                 ttl: await dataInterface.getSession(req.sessionID),
+//             }
 
-            res.send(response);
+//             res.send(response);
 
-        })
-    }else{
-        res.json({ttl: null, error: "An internal server error occurred, please contact the administrators"});
-    }
-})
+//         })
+//     }else{
+//         res.json({ttl: null, error: "An internal server error occurred, please contact the administrators"});
+//     }
+// })
 
 module.exports = router;
