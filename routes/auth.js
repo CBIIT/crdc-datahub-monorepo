@@ -69,36 +69,4 @@ router.post('/authenticated', async function (req, res, next) {
 });
 
 
-// /* GET ping-ping for health checking. */
-// router.get('/ping', function (req, res, next) {
-//     res.send(`pong`);
-// });
-
-// /* GET version for health checking and version checking. */
-// router.get('/version', function (req, res, next) {
-//     res.json({
-//         version: config.version, date: config.date
-//     });
-// });
-
-// router.get('/session-ttl',async function(req, res){
-//     let response
-//     if (req.sessionID){
-
-//         const dbService = new MongoQueries(config.mongo_db_connection_string, DATABASE_NAME);
-//         dbConnector.connect().then( async () => {
-//             const sessionCollection = new MongoDBCollection(dbConnector.client, DATABASE_NAME, SESSION_COLLECTION);
-//             const dataInterface = new Sessions(sessionCollection)
-//             response = {
-//                 ttl: await dataInterface.getSession(req.sessionID),
-//             }
-
-//             res.send(response);
-
-//         })
-//     }else{
-//         res.json({ttl: null, error: "An internal server error occurred, please contact the administrators"});
-//     }
-// })
-
 module.exports = router;

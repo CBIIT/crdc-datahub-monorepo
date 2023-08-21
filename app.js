@@ -31,15 +31,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-
+// Ping/version/session-ttl
 app.use('/api/authn', checkRouter);
+
 app.use(createSession(config.session_secret, config.session_timeout, config.mongo_db_connection_string));
 app.use('/api/authn', authRouter);
-
-/* GET ping-ping for health checking. */
-app.get('/api/auth/ping', function (req, res, next) {
-  res.send(`pong`);
-});
 
 if (process.env.NODE_ENV === 'development') {
   console.log("Running in development mode, local test page enabled");
