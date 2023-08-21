@@ -21,6 +21,7 @@ if (!fs.existsSync(LOG_FOLDER)) {
 const accessLogStream = fs.createWriteStream(path.join(__dirname, LOG_FOLDER, 'access.log'), { flags: 'a'})
 
 var authRouter = require('./routes/auth');
+var checkRouter = require('./routes/check');
 var app = express();
 app.use(cors());
 
@@ -29,9 +30,11 @@ app.use(logger('combined', { stream: accessLogStream }))
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+// Ping/version/session-ttl
+app.use('/api/authn', checkRouter);
+
 app.use(createSession(config.session_secret, config.session_timeout, config.mongo_db_connection_string));
-
-
 app.use('/api/authn', authRouter);
 
 if (process.env.NODE_ENV === 'development') {
