@@ -1,6 +1,5 @@
-const {getCurrentTimeYYYYMMDDSS} = require("../utility/time-utility");
-const {v4} = require("uuid")
-const {USER} = require("../constants/user-constants");
+const {getCurrentTimeYYYYMMDDSS, subtractDaysFromNow} = require("../utility/time-utility");
+const {USER, ORG} = require("../constants/user-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
 
 const isLoggedInOrThrow = (context) => {
@@ -113,6 +112,46 @@ class User {
             updateAt: sessionCurrentTime
         }
 
+    }
+
+    async getInactiveUsers(inactiveDays) {
+        const query = [
+            {"$match": { // inactive conditions
+                    localtime: {
+                        $lt: subtractDaysFromNow(inactiveDays)
+                    }
+                }},
+            {"$group": {_id: { userEmail: "$userEmail", userIDP: "$userIDP" }}},
+            {"$project": {
+                    _id: 0, // Exclude _id field
+                    userEmail: "$_id.userEmail",
+                    userIDP: "$_id.userIDP"
+                }}
+        ];
+        return await this.logCollection.aggregate(query) || [];
+    }
+
+    // search by user's email and idp
+    async disableInactiveUsers(inactiveUsers) {
+        if (!inactiveUsers || inactiveUsers?.length === 0) return [];
+        // collection inactive user conditions
+        const inactiveConditions = inactiveUsers
+            .filter((u)=> (u))
+            .map((u) => {return {"$and": [{email: u.userEmail, IDP: u.userIDP}]}});
+        const query = {"$or": inactiveConditions};
+        const updated = await this.userCollection.updateMany(query, {userStatus: USER.STATUSES.DISABLED});
+        if (updated?.modifiedCount && updated?.modifiedCount > 0) {
+            return await this.userCollection.aggregate([{"$match": query}]) || [];
+        }
+        return [];
+    }
+
+    async getAdminUserEmails() {
+        const orgOwnerOrAdminRole = {
+            "userStatus": USER.STATUSES.ACTIVE,
+            "$or": [{"organization.orgRole": ORG.ROLES.OWNER, "role": USER.ROLES.ADMIN}]
+        };
+        return await this.userCollection.aggregate([{"$match": orgOwnerOrAdminRole}]) || [];
     }
 
     isAdmin(role) {
