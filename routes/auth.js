@@ -3,15 +3,6 @@ const router = express.Router();
 const idpClient = require('../idps');
 const config = require('../config');
 const {logout} = require('../controllers/auth-api')
-// const {getTTL} = require('../services/ttl')
-const {DatabaseConnector} = require("../crdc-datahub-database-drivers/database-connector");
-const {MongoDBCollection} = require("../crdc-datahub-database-drivers/mongodb-collection");
-const {MongoQueries} = require("../crdc-datahub-database-drivers/mongo-queries");
-
-const {DATABASE_NAME, SESSION_COLLECTION} = require("../crdc-datahub-database-drivers/database-constants");
-const dbConnector = new DatabaseConnector(config.mongo_db_connection_string);
-const {Sessions} = require('../services/ttl-query')
-
 
 /* Login */
 router.post('/login', async function (req, res) {
