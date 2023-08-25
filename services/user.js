@@ -1,5 +1,5 @@
 const {getCurrentTimeYYYYMMDDSS, subtractDaysFromNow} = require("../utility/time-utility");
-const {USER, ORG} = require("../constants/user-constants");
+const {USER} = require("../constants/user-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
 
 const isLoggedInOrThrow = (context) => {
@@ -114,6 +114,14 @@ class User {
 
     }
 
+    async getAdminUserEmails() {
+        const orgOwnerOrAdminRole = {
+            "userStatus": USER.STATUSES.ACTIVE,
+            "$or": [{"role": USER.ROLES.ADMIN}, {"role": USER.ROLES.ORG_OWNER}]
+        };
+        return await this.userCollection.aggregate([{"$match": orgOwnerOrAdminRole}]) || [];
+    }
+
     async getInactiveUsers(inactiveDays) {
         const query = [
             {"$match": { // inactive conditions
@@ -144,14 +152,6 @@ class User {
             return await this.userCollection.aggregate([{"$match": query}]) || [];
         }
         return [];
-    }
-
-    async getAdminUserEmails() {
-        const orgOwnerOrAdminRole = {
-            "userStatus": USER.STATUSES.ACTIVE,
-            "$or": [{"organization.orgRole": ORG.ROLES.OWNER, "role": USER.ROLES.ADMIN}]
-        };
-        return await this.userCollection.aggregate([{"$match": orgOwnerOrAdminRole}]) || [];
     }
 
     isAdmin(role) {
