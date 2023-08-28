@@ -22,12 +22,19 @@ class User {
         if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
             throw new Error(ERROR.INVALID_ROLE);
         };
+        if (context.userInfo.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
+            throw new Error(ERROR.NO_ORG_ASSIGNED);
+        }
+
+        const filters = { _id: params.userID };
+        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
+            filters["organization.orgID"] = context?.userInfo?.organization?.orgID;
+        }
 
         const result = await this.userCollection.aggregate([{
-            "$match": {
-                _id: params.userID,
-            }
+            "$match": filters
         }, {"$limit": 1}]);
+
         return (result?.length === 1) ? result[0] : null;
     }
 
