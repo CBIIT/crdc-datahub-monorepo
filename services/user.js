@@ -15,6 +15,30 @@ class User {
         this.organizationService = organizationService;
     }
 
+    // Note: This is a wrapper for the OrgService version which returns OrgInfo instead of Organization
+    async listOrganizations(params, context) {
+        isLoggedInOrThrow(context);
+        if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
+            throw new Error(ERROR.INVALID_ROLE);
+        }
+        if (context.userInfo.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
+            throw new Error(ERROR.NO_ORG_ASSIGNED);
+        }
+
+        const filters = {};
+        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
+            filters["organization.orgID"] = context?.userInfo?.organization?.orgID;
+        }
+
+        const data = await this.organizationService.listOrganizations(filters);
+        return (data || []).map(org => ({
+            orgID: org._id,
+            orgName: org.name,
+            createdAt: org.createdAt,
+            updateAt: org.updateAt,
+        }));
+    }
+
     async getUser(params, context) {
         isLoggedInOrThrow(context);
         if (!params.userID) {

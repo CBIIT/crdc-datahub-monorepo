@@ -13,6 +13,10 @@ class Organization {
       return result?.length > 0 ? result[0] : null;
   }
 
+  async listOrganizations(filters) {
+    return await this.organizationCollection.aggregate([{ "$match": filters }]);
+  }
+
   async assignUserToOrganization(orgID, user, role) {
       const org = await this.getOrganizationByID(orgID);
       if (!org) {
