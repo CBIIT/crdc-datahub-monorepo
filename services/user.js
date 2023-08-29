@@ -16,13 +16,13 @@ class User {
 
     async getUser(params, context) {
         isLoggedInOrThrow(context);
-        if (!params.userID) {
+        if (!params?.userID) {
             throw new Error(ERROR.INVALID_USERID);
         };
         if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
             throw new Error(ERROR.INVALID_ROLE);
         };
-        if (context.userInfo.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
+        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
             throw new Error(ERROR.NO_ORG_ASSIGNED);
         }
 
