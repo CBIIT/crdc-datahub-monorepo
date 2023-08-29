@@ -9,19 +9,20 @@ const isLoggedInOrThrow = (context) => {
 }
 
 class User {
-    constructor(userCollection, logCollection) {
+    constructor(userCollection, logCollection, organizationService) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
+        this.organizationService = organizationService;
     }
 
     async getUser(params, context) {
         isLoggedInOrThrow(context);
         if (!params.userID) {
             throw new Error(ERROR.INVALID_USERID);
-        };
+        }
         if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
             throw new Error(ERROR.INVALID_ROLE);
-        };
+        }
         if (context.userInfo.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
             throw new Error(ERROR.NO_ORG_ASSIGNED);
         }
@@ -150,6 +151,54 @@ class User {
             updateAt: sessionCurrentTime
         }
 
+    }
+
+    async editUser(params, context) {
+        isLoggedInOrThrow(context);
+        if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+            throw new Error(ERROR.INVALID_ROLE);
+        }
+        if (!params.userID) {
+            throw new Error(ERROR.INVALID_USERID);
+        }
+
+        const sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
+        const user = await this.userCollection.aggregate([{ "$match": { _id: params.userID } }]);
+        if (!user || !Array.isArray(user) || user.length < 1 || user[0]?._id !== params.userID) {
+            throw new Error(ERROR.USER_NOT_FOUND);
+        }
+
+        const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
+        if (params.organization && (params.organization !== user[0]?.organization?.orgID || params.role !== user[0]?.role)) {
+            // NOTE: This will automatically remove user from previous org
+            // or update their new role in the org
+            const newOrg = await this.organizationService.assignUserToOrganization(params.organization, user[0], params.role);
+
+            updatedUser.organization = {
+                orgID: newOrg._id,
+                orgName: newOrg.name,
+                createdAt: newOrg.createdAt,
+                updatedAt: newOrg.updatedAt,
+            };
+        } else if (!params.organization) {
+            if (user[0]?.organization?.orgID) {
+                await this.organizationService.unassignUserFromOrganization(user[0]?.organization?.orgID, user[0]);
+            }
+            updatedUser.organization = null;
+        }
+        if (params.role && Object.values(USER.ROLES).includes(params.role)) {
+            updatedUser.role = params.role;
+        }
+        if (params.status && Object.values(USER.STATUSES).includes(params.status)) {
+            updatedUser.userStatus = params.status;
+        }
+
+        const updateResult = await this.userCollection.update(updatedUser);
+        if (updateResult?.matchedCount !== 1) {
+            throw new Error(ERROR.UPDATE_FAILED);
+        }
+
+        return { ...user[0], ...updatedUser };
     }
 
     async getAdminUserEmails() {
