@@ -8,5 +8,6 @@ module.exports = Object.freeze({
         UPDATE_FAILED: "Unknown error occurred while updating object",
         INVALID_ORG_ID: "The organization ID you provided is invalid",
         INVALID_ROLE_ASSIGNMENT: "The role you are trying to assign is invalid",
+        USER_ORG_REQUIRED: "An organization is required for the role you are trying to assign",
     },
 });

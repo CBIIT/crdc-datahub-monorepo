@@ -193,10 +193,14 @@ class User {
         }
 
         const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
-        if (params.organization && (params.organization !== user[0]?.organization?.orgID || params.role !== user[0]?.role)) {
-            // NOTE: This will automatically remove user from previous org
-            // or update their new role in the org
-            const newOrg = await this.organizationService.assignUserToOrganization(params.organization, user[0], params.role);
+        if (!params.organization && [USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(params.role)) {
+            throw new Error(ERROR.USER_ORG_REQUIRED);
+        }
+        if (params.organization && params.organization !== user[0]?.organization?.orgID) {
+            const newOrg = await this.organizationService.getOrganizationByID(params.organization);
+            if (!newOrg?._id || newOrg?._id !== params.organization) {
+                throw new Error(ERROR.INVALID_ORG_ID);
+            }
 
             updatedUser.organization = {
                 orgID: newOrg._id,
@@ -205,9 +209,6 @@ class User {
                 updatedAt: newOrg.updatedAt,
             };
         } else if (!params.organization) {
-            if (user[0]?.organization?.orgID) {
-                await this.organizationService.unassignUserFromOrganization(user[0]?.organization?.orgID, user[0]);
-            }
             updatedUser.organization = null;
         }
         if (params.role && Object.values(USER.ROLES).includes(params.role)) {
