@@ -1,9 +1,9 @@
-const {getCurrentTimeYYYYMMDDSS} = require("../utility/time-utility");
+
 const {v4} = require("uuid")
 const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
-const {toISO} = require("../../utility/time-utility");
+const {getCurrentTimeYYYYMMDDSS, toISO} = require("../utility/time-utility");
 
 const isLoggedInOrThrow = (context) => {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error(ERROR.NOT_LOGGED_IN);

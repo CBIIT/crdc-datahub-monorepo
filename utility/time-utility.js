@@ -1,6 +1,13 @@
-const moment = require('moment');
 module.exports = {
     getCurrentTimeYYYYMMDDSS() {
-        return moment().format('YYYY-MM-DDTHH:mm:ss');
+        return new Date();
+    },
+    subtractDaysFromNow(days) {
+        const currentDate = new Date();
+        currentDate.setDate(currentDate.getDate() - days);
+        return currentDate;
+    },
+    toISO(time) {
+        return new Date(time).toISOString();
     }
 }
