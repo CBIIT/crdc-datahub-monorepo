@@ -30,7 +30,7 @@ class User {
             "$match": filters
         }, {"$limit": 1}]);
 
-        return (result?.length === 1) ? result[0] : null;
+        return (result?.length === 1) ? toISOTime(result[0]) : null;
     }
 
     async createNewUser(context) {
@@ -141,7 +141,7 @@ class User {
 
 const toISOTime = (aUser) => {
     if (aUser?.createdAt) aUser.createdAt = toISO(aUser.createdAt);
-    if (aUser?.updatedAt) aUser.updatedAt = toISO(aUser.updatedAt);
+    if (aUser?.updateAt) aUser.updateAt = toISO(aUser.updateAt);
     return aUser;
 }
 
