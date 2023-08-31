@@ -27,7 +27,7 @@ class User {
 
         const filters = {};
         if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
-            filters["organization.orgID"] = context?.userInfo?.organization?.orgID;
+            filters["_id"] = context?.userInfo?.organization?.orgID;
         }
 
         const data = await this.organizationService.listOrganizations(filters);
