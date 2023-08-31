@@ -1,9 +1,10 @@
 const {getCurrentTimeYYYYMMDDSS, subtractDaysFromNow} = require("../utility/time-utility");
 const {USER} = require("../constants/user-constants");
+const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
 
 const isLoggedInOrThrow = (context) => {
-    if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error("A user must be logged in to call this API");
+    if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error(ERROR.NOT_LOGGED_IN);
 }
 
 class User {
@@ -12,13 +13,28 @@ class User {
         this.logCollection = logCollection;
     }
 
-    async getUser(userID) {
-        let result = await this.userCollection.aggregate([{
-            "$match": {
-                _id: userID
-            }
+    async getUser(params, context) {
+        isLoggedInOrThrow(context);
+        if (!params?.userID) {
+            throw new Error(ERROR.INVALID_USERID);
+        };
+        if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
+            throw new Error(ERROR.INVALID_ROLE);
+        };
+        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
+            throw new Error(ERROR.NO_ORG_ASSIGNED);
+        }
+
+        const filters = { _id: params.userID };
+        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
+            filters["organization.orgID"] = context?.userInfo?.organization?.orgID;
+        }
+
+        const result = await this.userCollection.aggregate([{
+            "$match": filters
         }, {"$limit": 1}]);
-        return (result?.length > 0) ? result[0] : null;
+
+        return (result?.length === 1) ? result[0] : null;
     }
 
     async createNewUser(context) {
