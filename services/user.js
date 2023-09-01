@@ -38,6 +38,15 @@ class User {
         return (result?.length === 1) ? result[0] : null;
     }
 
+    async getAdmin() {
+        let result = await this.userCollection.aggregate([{
+            "$match": {
+                role: "Admin"
+            }
+        }]);
+        return result;
+    }
+
     async createNewUser(context) {
         let sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
         let email = context.userInfo.email;
