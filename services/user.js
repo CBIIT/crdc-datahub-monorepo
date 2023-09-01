@@ -7,6 +7,11 @@ const isLoggedInOrThrow = (context) => {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error(ERROR.NOT_LOGGED_IN);
 }
 
+const isValidUserStatus = (userStatus) => {
+    const validUserStatus = [USER.STATUSES.ACTIVE];
+    if (userStatus && !validUserStatus.includes(userStatus)) throw new Error(ERROR.INVALID_USER_STATUS);
+}
+
 class User {
     constructor(userCollection, logCollection) {
         this.userCollection = userCollection;
@@ -58,6 +63,7 @@ class User {
 
     async getMyUser(params, context) {
         isLoggedInOrThrow(context);
+        isValidUserStatus(context?.userInfo?.userStatus);
         let result = await this.userCollection.aggregate([
             {
                 "$match": {
@@ -86,6 +92,7 @@ class User {
 
     async updateMyUser(params, context) {
         isLoggedInOrThrow(context);
+        isValidUserStatus(context?.userInfo?.userStatus);
         let sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
         let user = await this.userCollection.find(context.userInfo._id);
         if (!user || !Array.isArray(user) || user.length < 1) throw new Error("User is not in the database")
@@ -140,29 +147,60 @@ class User {
 
     async getInactiveUsers(inactiveDays) {
         const query = [
+            {"$group": {_id: { userEmail: "$userEmail", userIDP: "$userIDP" }, lastLogin: { $max: "$localtime" }}},
             {"$match": { // inactive conditions
-                    localtime: {
-                        $lt: subtractDaysFromNow(inactiveDays)
-                    }
-                }},
-            {"$group": {_id: { userEmail: "$userEmail", userIDP: "$userIDP" }}},
+                lastLogin: {
+                    $lt: subtractDaysFromNow(inactiveDays)
+                }
+            }},
             {"$project": {
                     _id: 0, // Exclude _id field
-                    userEmail: "$_id.userEmail",
-                    userIDP: "$_id.userIDP"
-                }}
+                    email: "$_id.userEmail",
+                    IDP: "$_id.userIDP"
+            }}
         ];
         return await this.logCollection.aggregate(query) || [];
     }
-
+    /**
+     * Finds all users.
+     *
+     * @returns {Promise<Array>} - An array of log aggregation result projecting email and idp only.
+     */
+    async getAllUsersByEmailAndIDP() {
+        return await this.logCollection.aggregate([
+            {"$group": {_id: { userEmail: "$userEmail", userIDP: "$userIDP" }}},
+            {"$project": {
+                _id: 0,
+                email: "$_id.userEmail",
+                IDP: "$_id.userIDP"
+            }}
+        ]);
+    }
+    /**
+     * Finds users excluding specific user conditions.
+     *
+     * @param {Array} users - An array of user conditions for $nor.
+     * @returns {Promise<Array>} - An array of user aggregation result projecting email and idp only.
+     */
+    async findUsersExcludingEmailAndIDP(users) {
+        const condition = {"$match": {
+            ...(users && users?.length > 0) ? {$nor: users} : {},
+            // valid user-statuses
+            userStatus: { $in: [USER.STATUSES.ACTIVE]
+            }
+        }}
+        return await this.userCollection.aggregate([condition,{$project: { _id: 0, email: 1, IDP: 1 }}]);
+    }
+    /**
+     * Disable users matching specific user conditions.
+     *
+     * @param {Array} users - An array of user conditions for $or.
+     * @returns {Promise<Array>} - An array of user aggregation result.
+     */
     // search by user's email and idp
     async disableInactiveUsers(inactiveUsers) {
         if (!inactiveUsers || inactiveUsers?.length === 0) return [];
-        // collection inactive user conditions
-        const inactiveConditions = inactiveUsers
-            .filter((u)=> (u))
-            .map((u) => {return {"$and": [{email: u.userEmail, IDP: u.userIDP}]}});
-        const query = {"$or": inactiveConditions};
+        const query = {"$or": inactiveUsers};
         const updated = await this.userCollection.updateMany(query, {userStatus: USER.STATUSES.DISABLED});
         if (updated?.modifiedCount && updated?.modifiedCount > 0) {
             return await this.userCollection.aggregate([{"$match": query}]) || [];
