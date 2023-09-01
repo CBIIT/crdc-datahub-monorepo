@@ -3,7 +3,7 @@ const {v4} = require("uuid")
 const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
-const {getCurrentTimeYYYYMMDDSS, toISO} = require("../utility/time-utility");
+const {getCurrentTime, toISO} = require("../utility/time-utility");
 
 const isLoggedInOrThrow = (context) => {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error(ERROR.NOT_LOGGED_IN);
@@ -30,11 +30,11 @@ class User {
             "$match": filters
         }, {"$limit": 1}]);
 
-        return (result?.length === 1) ? toISOTime(result[0]) : null;
+        return (result?.length === 1) ? transformDateTime(result[0]) : null;
     }
 
     async createNewUser(context) {
-        let sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
+        let sessionCurrentTime = getCurrentTime();
         let email = context.userInfo.email;
         let emailName = email.split("@")[0];
         const aUser = {
@@ -77,12 +77,12 @@ class User {
             ...context.userInfo,
             ...aUser,
         }
-        return toISOTime(aUser)
+        return transformDateTime(aUser)
     }
 
     async updateMyUser(params, context) {
         isLoggedInOrThrow(context);
-        let sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
+        let sessionCurrentTime = getCurrentTime();
         let user = await this.userCollection.find(context.userInfo._id);
         if (!user || !Array.isArray(user) || user.length < 1) throw new Error("User is not in the database")
 
@@ -123,7 +123,7 @@ class User {
             lastName: params.userInfo.lastName,
             updateAt: sessionCurrentTime
         }
-        return toISOTime(result);
+        return transformDateTime(result);
     }
 
     async getAdminUserEmails() {
@@ -139,7 +139,7 @@ class User {
     }
 }
 
-const toISOTime = (aUser) => {
+const transformDateTime = (aUser) => {
     if (aUser?.createdAt) aUser.createdAt = toISO(aUser.createdAt);
     if (aUser?.updateAt) aUser.updateAt = toISO(aUser.updateAt);
     return aUser;

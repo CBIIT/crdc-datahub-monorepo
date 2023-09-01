@@ -1,5 +1,5 @@
 module.exports = {
-    getCurrentTimeYYYYMMDDSS() {
+    getCurrentTime() {
         return new Date();
     },
     subtractDaysFromNow(days) {
