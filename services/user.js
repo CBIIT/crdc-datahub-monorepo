@@ -217,7 +217,7 @@ class User {
                 orgID: newOrg._id,
                 orgName: newOrg.name,
                 createdAt: newOrg.createdAt,
-                updatedAt: newOrg.updatedAt,
+                updateAt: newOrg.updateAt,
             };
         } else if (!params.organization && user[0]?.organization?.orgID) {
             updatedUser.organization = null;
