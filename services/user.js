@@ -219,7 +219,7 @@ class User {
                 createdAt: newOrg.createdAt,
                 updatedAt: newOrg.updatedAt,
             };
-        } else if (!params.organization) {
+        } else if (!params.organization && user[0]?.organization?.orgID) {
             updatedUser.organization = null;
         }
         if (params.role && Object.values(USER.ROLES).includes(params.role)) {
@@ -230,7 +230,21 @@ class User {
         }
 
         const updateResult = await this.userCollection.update(updatedUser);
-        if (updateResult?.matchedCount !== 1) {
+        if (updateResult?.matchedCount === 1) {
+            const prevProfile = {}, newProfile = {};
+
+            Object.keys(updatedUser).forEach(key => {
+                if (["_id", "updateAt"].includes(key)) {
+                    return;
+                }
+
+                prevProfile[key] = user[0]?.[key];
+                newProfile[key] = updatedUser[key];
+            });
+
+            const log = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
+            await this.logCollection.insert(log);
+        } else {
             throw new Error(ERROR.UPDATE_FAILED);
         }
 
