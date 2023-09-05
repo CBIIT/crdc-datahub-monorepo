@@ -1,8 +1,9 @@
-const {getCurrentTimeYYYYMMDDSS} = require("../utility/time-utility");
+
 const {v4} = require("uuid")
 const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
+const {getCurrentTime, toISO} = require("../utility/time-utility");
 
 const isLoggedInOrThrow = (context) => {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error(ERROR.NOT_LOGGED_IN);
@@ -46,11 +47,10 @@ class User {
         }
         if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
             throw new Error(ERROR.INVALID_ROLE);
-        };
+        }
         if (context?.userInfo?.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
             throw new Error(ERROR.NO_ORG_ASSIGNED);
         }
-
         const filters = { _id: params.userID };
         if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
             filters["organization.orgID"] = context?.userInfo?.organization?.orgID;
@@ -60,7 +60,7 @@ class User {
             "$match": filters
         }, {"$limit": 1}]);
 
-        return (result?.length === 1) ? result[0] : null;
+        return (result?.length === 1) ? transformDateTime(result[0]) : null;
     }
 
 
@@ -96,7 +96,7 @@ class User {
     }
 
     async createNewUser(context) {
-        let sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
+        let sessionCurrentTime = getCurrentTime();
         let email = context.userInfo.email;
         let emailName = email.split("@")[0];
         const aUser = {
@@ -139,12 +139,12 @@ class User {
             ...context.userInfo,
             ...aUser,
         }
-        return aUser
+        return transformDateTime(aUser)
     }
 
     async updateMyUser(params, context) {
         isLoggedInOrThrow(context);
-        let sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
+        let sessionCurrentTime = getCurrentTime();
         let user = await this.userCollection.find(context.userInfo._id);
         if (!user || !Array.isArray(user) || user.length < 1) throw new Error("User is not in the database")
 
@@ -179,13 +179,13 @@ class User {
             ...updateUser,
             updateAt: sessionCurrentTime
         }
-        return {
+        const result = {
             ...user[0],
             firstName: params.userInfo.firstName,
             lastName: params.userInfo.lastName,
             updateAt: sessionCurrentTime
         }
-
+        return transformDateTime(result);
     }
 
     async editUser(params, context) {
@@ -264,6 +264,11 @@ class User {
     }
 }
 
+const transformDateTime = (aUser) => {
+    if (aUser?.createdAt) aUser.createdAt = toISO(aUser.createdAt);
+    if (aUser?.updateAt) aUser.updateAt = toISO(aUser.updateAt);
+    return aUser;
+}
 
 module.exports = {
     User
