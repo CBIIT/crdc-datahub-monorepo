@@ -14,6 +14,15 @@ class User {
         this.logCollection = logCollection;
     }
 
+    async getUserByID(userID) {
+        const result = await this.userCollection.aggregate([{
+            "$match": {
+                _id: userID
+            }
+        }, {"$limit": 1}]);
+        return (result?.length > 0) ? result[0] : null;
+    }
+
     async getUser(params, context) {
         isLoggedInOrThrow(context);
         if (!params?.userID) {
