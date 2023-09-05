@@ -38,6 +38,28 @@ class User {
         return (result?.length === 1) ? result[0] : null;
     }
 
+
+    async listUsers(params, context) {
+        isLoggedInOrThrow(context);
+        if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo?.role !== USER.ROLES.ORG_OWNER) {
+            throw new Error(ERROR.INVALID_ROLE);
+        };
+        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
+            throw new Error(ERROR.NO_ORG_ASSIGNED);
+        }
+
+        const filters = {};
+        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
+            filters["organization.orgID"] = context?.userInfo?.organization?.orgID;
+        }
+
+        const result = await this.userCollection.aggregate([{
+            "$match": filters
+        }]);
+
+        return result || [];
+    }
+
     async getAdmin() {
         let result = await this.userCollection.aggregate([{
             "$match": {
@@ -45,6 +67,7 @@ class User {
             }
         }]);
         return result;
+
     }
 
     async createNewUser(context) {
