@@ -1,7 +1,7 @@
-const {getCurrentTimeYYYYMMDDSS, subtractDaysFromNow} = require("../utility/time-utility");
 const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
+const {getCurrentTime, subtractDaysFromNow, toISO} = require("../utility/time-utility");
 
 const isLoggedInOrThrow = (context) => {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error(ERROR.NOT_LOGGED_IN);
@@ -13,23 +13,47 @@ const isValidUserStatus = (userStatus) => {
 }
 
 class User {
-    constructor(userCollection, logCollection) {
+    constructor(userCollection, logCollection, organizationService) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
+        this.organizationService = organizationService;
+    }
+
+    // Note: This is a wrapper for the OrgService version which returns OrgInfo instead of Organization
+    async listOrganizations(params, context) {
+        isLoggedInOrThrow(context);
+        if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
+            throw new Error(ERROR.INVALID_ROLE);
+        }
+        if (context.userInfo.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
+            throw new Error(ERROR.NO_ORG_ASSIGNED);
+        }
+
+        const filters = {};
+        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
+            filters["_id"] = context?.userInfo?.organization?.orgID;
+        }
+
+        const data = await this.organizationService.listOrganizations(filters);
+        return (data || []).map(org => ({
+            orgID: org._id,
+            orgName: org.name,
+            createdAt: org.createdAt,
+            updateAt: org.updateAt,
+        }));
     }
 
     async getUser(params, context) {
         isLoggedInOrThrow(context);
         if (!params?.userID) {
             throw new Error(ERROR.INVALID_USERID);
-        };
+        }
         if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
             throw new Error(ERROR.INVALID_ROLE);
-        };
+        }
         if (context?.userInfo?.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
             throw new Error(ERROR.NO_ORG_ASSIGNED);
         }
-
         const filters = { _id: params.userID };
         if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
             filters["organization.orgID"] = context?.userInfo?.organization?.orgID;
@@ -39,7 +63,7 @@ class User {
             "$match": filters
         }, {"$limit": 1}]);
 
-        return (result?.length === 1) ? result[0] : null;
+        return (result?.length === 1) ? transformDateTime(result[0]) : null;
     }
 
 
@@ -75,7 +99,7 @@ class User {
     }
 
     async createNewUser(context) {
-        let sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
+        let sessionCurrentTime = getCurrentTime();
         let email = context.userInfo.email;
         let emailName = email.split("@")[0];
         const aUser = {
@@ -95,7 +119,6 @@ class User {
 
     async getMyUser(params, context) {
         isLoggedInOrThrow(context);
-        isValidUserStatus(context?.userInfo?.userStatus);
         let result = await this.userCollection.aggregate([
             {
                 "$match": {
@@ -119,13 +142,13 @@ class User {
             ...context.userInfo,
             ...aUser,
         }
-        return aUser
+        return transformDateTime(aUser)
     }
 
     async updateMyUser(params, context) {
         isLoggedInOrThrow(context);
         isValidUserStatus(context?.userInfo?.userStatus);
-        let sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
+        let sessionCurrentTime = getCurrentTime();
         let user = await this.userCollection.find(context.userInfo._id);
         if (!user || !Array.isArray(user) || user.length < 1) throw new Error("User is not in the database")
 
@@ -160,13 +183,76 @@ class User {
             ...updateUser,
             updateAt: sessionCurrentTime
         }
-        return {
+        const result = {
             ...user[0],
             firstName: params.userInfo.firstName,
             lastName: params.userInfo.lastName,
             updateAt: sessionCurrentTime
         }
+        return transformDateTime(result);
+    }
 
+    async editUser(params, context) {
+        isLoggedInOrThrow(context);
+        if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+            throw new Error(ERROR.INVALID_ROLE);
+        }
+        if (!params.userID) {
+            throw new Error(ERROR.INVALID_USERID);
+        }
+
+        const sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
+        const user = await this.userCollection.aggregate([{ "$match": { _id: params.userID } }]);
+        if (!user || !Array.isArray(user) || user.length < 1 || user[0]?._id !== params.userID) {
+            throw new Error(ERROR.USER_NOT_FOUND);
+        }
+
+        const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
+        if (!params.organization && [USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(params.role)) {
+            throw new Error(ERROR.USER_ORG_REQUIRED);
+        }
+        if (params.organization && params.organization !== user[0]?.organization?.orgID) {
+            const newOrg = await this.organizationService.getOrganizationByID(params.organization);
+            if (!newOrg?._id || newOrg?._id !== params.organization) {
+                throw new Error(ERROR.INVALID_ORG_ID);
+            }
+
+            updatedUser.organization = {
+                orgID: newOrg._id,
+                orgName: newOrg.name,
+                createdAt: newOrg.createdAt,
+                updateAt: newOrg.updateAt,
+            };
+        } else if (!params.organization && user[0]?.organization?.orgID) {
+            updatedUser.organization = null;
+        }
+        if (params.role && Object.values(USER.ROLES).includes(params.role)) {
+            updatedUser.role = params.role;
+        }
+        if (params.status && Object.values(USER.STATUSES).includes(params.status)) {
+            updatedUser.userStatus = params.status;
+        }
+
+        const updateResult = await this.userCollection.update(updatedUser);
+        if (updateResult?.matchedCount === 1) {
+            const prevProfile = {}, newProfile = {};
+
+            Object.keys(updatedUser).forEach(key => {
+                if (["_id", "updateAt"].includes(key)) {
+                    return;
+                }
+
+                prevProfile[key] = user[0]?.[key];
+                newProfile[key] = updatedUser[key];
+            });
+
+            const log = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
+            await this.logCollection.insert(log);
+        } else {
+            throw new Error(ERROR.UPDATE_FAILED);
+        }
+
+        return { ...user[0], ...updatedUser };
     }
 
     async getAdminUserEmails() {
@@ -245,6 +331,11 @@ class User {
     }
 }
 
+const transformDateTime = (aUser) => {
+    if (aUser?.createdAt) aUser.createdAt = toISO(aUser.createdAt);
+    if (aUser?.updateAt) aUser.updateAt = toISO(aUser.updateAt);
+    return aUser;
+}
 
 module.exports = {
     User
