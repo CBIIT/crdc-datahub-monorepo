@@ -41,13 +41,13 @@ class User {
 
     async getUser(params, context) {
         isLoggedInOrThrow(context);
-        if (!params.userID) {
+        if (!params?.userID) {
             throw new Error(ERROR.INVALID_USERID);
         }
         if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
             throw new Error(ERROR.INVALID_ROLE);
-        }
-        if (context.userInfo.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
+        };
+        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
             throw new Error(ERROR.NO_ORG_ASSIGNED);
         }
 
@@ -62,6 +62,7 @@ class User {
 
         return (result?.length === 1) ? result[0] : null;
     }
+
 
     async listUsers(params, context) {
         isLoggedInOrThrow(context);
@@ -82,6 +83,16 @@ class User {
         }]);
 
         return result || [];
+    }
+
+    async getAdmin() {
+        let result = await this.userCollection.aggregate([{
+            "$match": {
+                role: "Admin"
+            }
+        }]);
+        return result;
+
     }
 
     async createNewUser(context) {
