@@ -48,6 +48,19 @@ class MongoDBCollection {
         }
     }
 
+    async updateMany(query, document, option) {
+        const updateDoc = {
+            $set: document,
+            ...option
+        };
+        try{
+            return await this.collection.updateMany(query, updateDoc);
+        }
+        catch (e){
+            logAndThrow("An exception occurred during an updateMany operation", e);
+        }
+    }
+
     async deleteOneById(id) {
         return await this.deleteOne({_id: id});
     }
