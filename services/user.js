@@ -206,7 +206,7 @@ class User {
             throw new Error(ERROR.INVALID_USERID);
         }
 
-        const sessionCurrentTime = getCurrentTimeYYYYMMDDSS();
+        const sessionCurrentTime = getCurrentTime();
         const user = await this.userCollection.aggregate([{ "$match": { _id: params.userID } }]);
         if (!user || !Array.isArray(user) || user.length < 1 || user[0]?._id !== params.userID) {
             throw new Error(ERROR.USER_NOT_FOUND);
