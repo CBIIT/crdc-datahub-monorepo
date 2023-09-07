@@ -2,15 +2,14 @@ const {LOGIN, LOGOUT, PROFILE_UPDATE, CREATE_ACCESS_TOKEN, CREATE_APPLICATION, U
     UPDATE_BATCH, REGISTRATION
 } = require("../constants/event-constants");
 
-const moment = require("moment");
 const {v4} = require("uuid");
 const {NOT_APPLICABLE} = require("../constants/user-constants");
+const {getCurrentTime} = require("../utility/time-utility");
 class AbstractLog {
     constructor() {
         this._id= v4();
-        this.timestamp = Date.now();
-        const unixToSecond = Math.floor(this.timestamp/1000);
-        this.localtime = moment.unix(unixToSecond).format('YYYY-MM-DDTHH:mm:ss');
+        this.localtime = getCurrentTime();
+        this.timestamp = this.localtime.getTime();
     }
 
     setUser(id, email, idp) {
