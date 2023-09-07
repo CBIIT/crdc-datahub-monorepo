@@ -1,7 +1,10 @@
 const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
-const {getCurrentTime, subtractDaysFromNow} = require("../utility/time-utility");
+
+const {getCurrentTime, subtractDaysFromNow, toISO} = require("../utility/time-utility");
+const {LOGIN} = require("../constants/event-constants");
+
 
 const isLoggedInOrThrow = (context) => {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error(ERROR.NOT_LOGGED_IN);
@@ -274,6 +277,9 @@ class User {
 
     async getInactiveUsers(inactiveDays) {
         const query = [
+            {"$match": {
+                eventType: LOGIN
+            }},
             {"$group": {_id: { userEmail: "$userEmail", userIDP: "$userIDP" }, lastLogin: { $max: "$localtime" }}},
             {"$match": { // inactive conditions
                 lastLogin: {
@@ -281,9 +287,9 @@ class User {
                 }
             }},
             {"$project": {
-                    _id: 0, // Exclude _id field
-                    email: "$_id.userEmail",
-                    IDP: "$_id.userIDP"
+                _id: 0, // Exclude _id field
+                email: "$_id.userEmail",
+                IDP: "$_id.userIDP"
             }}
         ];
         return await this.logCollection.aggregate(query) || [];
@@ -295,6 +301,9 @@ class User {
      */
     async getAllUsersByEmailAndIDP() {
         return await this.logCollection.aggregate([
+            {"$match": {
+                    eventType: LOGIN
+            }},
             {"$group": {_id: { userEmail: "$userEmail", userIDP: "$userIDP" }}},
             {"$project": {
                 _id: 0,
