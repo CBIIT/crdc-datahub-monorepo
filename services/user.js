@@ -1,8 +1,10 @@
 const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
+
 const {getCurrentTime, subtractDaysFromNow, toISO} = require("../utility/time-utility");
 const {LOGIN} = require("../constants/event-constants");
+
 
 const isLoggedInOrThrow = (context) => {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) throw new Error(ERROR.NOT_LOGGED_IN);
@@ -73,7 +75,7 @@ class User {
             "$match": filters
         }, {"$limit": 1}]);
 
-        return (result?.length === 1) ? transformDateTime(result[0]) : null;
+        return (result?.length === 1) ? result[0] : null;
     }
 
 
@@ -152,7 +154,7 @@ class User {
             ...context.userInfo,
             ...aUser,
         }
-        return transformDateTime(aUser)
+        return aUser;
     }
 
     async updateMyUser(params, context) {
@@ -199,7 +201,7 @@ class User {
             lastName: params.userInfo.lastName,
             updateAt: sessionCurrentTime
         }
-        return transformDateTime(result);
+        return result;
     }
 
     async editUser(params, context) {
@@ -345,12 +347,6 @@ class User {
     isAdmin(role) {
         return role && role === USER.ROLES.ADMIN;
     }
-}
-
-const transformDateTime = (aUser) => {
-    if (aUser?.createdAt) aUser.createdAt = toISO(aUser.createdAt);
-    if (aUser?.updateAt) aUser.updateAt = toISO(aUser.updateAt);
-    return aUser;
 }
 
 module.exports = {
