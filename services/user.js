@@ -4,6 +4,7 @@ const {UpdateProfileEvent} = require("../domain/log-events");
 
 const {getCurrentTime, subtractDaysFromNow, toISO} = require("../utility/time-utility");
 const {LOGIN} = require("../constants/event-constants");
+const {v4} = require("uuid");
 
 
 const isLoggedInOrThrow = (context) => {
@@ -114,7 +115,7 @@ class User {
         let sessionCurrentTime = getCurrentTime();
         let email = context.userInfo.email;
         let emailName = email.split("@")[0];
-        const aUser = {
+        const newUser = {
             _id: v4(),
             email: email,
             IDP: context.userInfo.IDP,
@@ -126,7 +127,13 @@ class User {
             createdAt: sessionCurrentTime,
             updateAt: sessionCurrentTime
         };
-        await this.userCollection.insert(aUser);
+        const result = await this.userCollection.insert(newUser);
+        if (!result?.acknowledged){
+            let error = "An error occurred while creating a new user";
+            console.error(error)
+            throw new Error(error)
+        }
+        return newUser;
     }
 
     async getMyUser(params, context) {
@@ -141,20 +148,20 @@ class User {
             {"$sort": {createdAt: -1}}, // sort descending
             {"$limit": 1} // return one
         ]);
-        const isUserExits = result.length < 1;
-        const aUser = isUserExits ? await this.createNewUser(context) : result[0];
-
-        if (result.matchedCount < 1) {
+        if (!result){
             let error = "there is an error getting the result";
             console.error(error)
             throw new Error(error)
         }
-
+        let user =  result[0];
+        if (!user){
+            user = await this.createNewUser(context);
+        }
         context.userInfo = {
             ...context.userInfo,
-            ...aUser,
+            ...user
         }
-        return aUser;
+        return context.userInfo;
     }
 
     async updateMyUser(params, context) {
