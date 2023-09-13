@@ -351,6 +351,22 @@ class User {
         return [];
     }
 
+    async isEmailAndIDPLoginPermitted(email, idp) {
+        const result = await this.userCollection.aggregate([
+            {
+                "$match": {
+                    email: email,
+                    IDP: idp,
+                    userStatus:{
+                        $ne: USER.STATUSES.ACTIVE
+                    }
+                }
+            },
+            {"$limit": 1} // return one
+        ]);
+        return result?.length === 0;
+    }
+
     isAdmin(role) {
         return role && role === USER.ROLES.ADMIN;
     }
