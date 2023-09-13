@@ -5,12 +5,17 @@ const config = require('../config');
 const {logout} = require('../controllers/auth-api')
 const {DatabaseConnector} = require("../crdc-datahub-database-drivers/database-connector");
 const {MongoDBCollection} = require("../crdc-datahub-database-drivers/mongodb-collection");
-const {DATABASE_NAME, LOG_COLLECTION} = require("../crdc-datahub-database-drivers/database-constants");
+const {DATABASE_NAME, LOG_COLLECTION, USER_COLLECTION} = require("../crdc-datahub-database-drivers/database-constants");
 const {LoginEvent, LogoutEvent} = require("../crdc-datahub-database-drivers/domain/log-events");
+const {User} = require("../crdc-datahub-database-drivers/services/user");
+const {ERROR} = require("../crdc-datahub-database-drivers/constants/error-constants");
 const dbConnector = new DatabaseConnector(config.mongo_db_connection_string);
 let logCollection;
+let userService;
 dbConnector.connect().then(() => {
     logCollection = new MongoDBCollection(dbConnector.client, DATABASE_NAME, LOG_COLLECTION);
+    const userCollection = new MongoDBCollection(dbConnector.client, DATABASE_NAME, USER_COLLECTION);
+    userService = new User(userCollection, logCollection);
 });
 
 /* Login */
@@ -18,6 +23,9 @@ router.post('/login', async function (req, res) {
     try {
         const reqIDP = config.getIdpOrDefault(req.body['IDP']);
         const { name, lastName, tokens, email, idp } = await idpClient.login(req.body['code'], reqIDP, config.getUrlOrDefault(reqIDP, req.body['redirectUri']));
+        if (!await userService.isEmailAndIDPLoginPermitted(email, idp)) {
+            throw new Error(ERROR.INVALID_USER_STATUS);
+        }
         req.session.userInfo = {
             email: email,
             IDP: idp,
