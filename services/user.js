@@ -350,7 +350,14 @@ class User {
         }
         return [];
     }
-
+    /**
+     * Check if login with an email and identity provider (IDP) is permitted.
+     *
+     * @param {string} email - The email address.
+     * @param {string} idp - The identity provider.
+     * @returns {boolean} True if login is permitted, false otherwise.
+     * @throws {Error} Throws an error if there is an unexpected database issue.
+     */
     async isEmailAndIDPLoginPermitted(email, idp) {
         const result = await this.userCollection.aggregate([
             {
@@ -364,6 +371,9 @@ class User {
             },
             {"$limit": 1} // return one
         ]);
+        if (!result || !Array.isArray(result)){
+            throw new Error("An database error occurred while querying login permission");
+        }
         return result?.length === 0;
     }
 
