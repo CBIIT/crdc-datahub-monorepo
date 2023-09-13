@@ -3,12 +3,13 @@ module.exports = Object.freeze({
         ROLES: {
             ADMIN: "Admin",
             USER: "User",
-            CURATOR: "Curator",
-            FEDERAL_LEAD: "FederalLead",
-            DC_POC: "DC_POC",
-            ORG_OWNER: "ORG_OWNER",
-            DC_OWNER: "DC_OWNER",
+            CURATOR: "Data Curator",
+            FEDERAL_LEAD: "Federal Lead",
+            DC_POC: "Data Commons POC",
+            ORG_OWNER: "Organization Owner",
             SUBMITTER: "Submitter",
+            //The below roles are not yet used
+            DC_OWNER: "DC_OWNER",
             CONCIERGE: "Concierge",
         },
         STATUSES: {
@@ -21,17 +22,5 @@ module.exports = Object.freeze({
             LOGIN_GOV: "Login.gov"
         }
     },
-    // ORG: {
-    //     ROLES: {
-    //         OWNER: "Owner",
-    //         SUBMITTER: "Submitter",
-    //         CONCIERGE: "Concierge"
-    //     },
-    //     STATUSES: {
-    //         ACTIVE: "Active",
-    //         INACTIVE: "Inactive",
-    //         DISABLED: "Disabled"
-    //     }
-    // },
     NOT_APPLICABLE: "Not Applicable"
 });
