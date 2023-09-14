@@ -1,7 +1,8 @@
+const AWS = require('aws-sdk');
 class S3Service {
 
-    constructor(s3Auth) {
-        this.s3Auth = s3Auth;
+    constructor() {
+        this.s3 = new AWS.S3();
     }
 
     async createPreSignedURL(bucketName, submissionID, fileName) {
@@ -15,7 +16,7 @@ class S3Service {
                 ContentDisposition: `attachment; filename="${fileName}"`,
             };
             return new Promise((resolve, reject) => {
-                this.s3Auth.getSignedUrl('putObject', params, (error, url) => {
+                this.s3.getSignedUrl('putObject', params, (error, url) => {
                     if (error) {
                         reject(error);
                     } else {
