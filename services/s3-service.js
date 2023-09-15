@@ -5,11 +5,11 @@ class S3Service {
         this.s3 = new AWS.S3();
     }
 
-    async createPreSignedURL(bucketName, submissionID, fileName) {
+    async createPreSignedURL(bucketName, prefix, fileName) {
         try {
             const params = {
                 Bucket: bucketName,
-                Key: `${submissionID}/${fileName}`,
+                Key: `${prefix}`,
                 Expires: 3600, // 1 hour
                 ACL: 'private', // files to be publicly inaccessible
                 ContentType: 'application/octet-stream',
