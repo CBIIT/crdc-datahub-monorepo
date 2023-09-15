@@ -9,7 +9,7 @@ class S3Service {
         try {
             const params = {
                 Bucket: bucketName,
-                Key: `${prefix}`,
+                Key: `${prefix}/${fileName}`,
                 Expires: 3600, // 1 hour
                 ACL: 'private', // files to be publicly inaccessible
                 ContentType: 'application/octet-stream',
