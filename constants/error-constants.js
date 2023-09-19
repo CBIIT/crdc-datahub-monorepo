@@ -9,8 +9,11 @@ module.exports = Object.freeze({
         NO_ORG_ASSIGNED: "You do not have an organization assigned to your account",
         USER_NOT_FOUND: "The user you are trying to update does not exist",
         UPDATE_FAILED: "Unknown error occurred while updating object",
-        INVALID_ORG_ID: "The organization ID you provided is invalid",
         INVALID_ROLE_ASSIGNMENT: "The role you are trying to assign is invalid",
         USER_ORG_REQUIRED: "An organization is required for the role you are trying to assign",
+
+        INVALID_ORG_ID: "The organization ID you provided is invalid",
+        ORG_NOT_FOUND: "The organization you are trying to update does not exist",
+        DUPLICATE_ORG_NAME: "An organization with the same name already exists",
     },
 });

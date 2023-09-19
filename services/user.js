@@ -77,6 +77,19 @@ class User {
         return result || [];
     }
 
+    async listActiveCurators() {
+        const filters = { role: USER.ROLES.CURATOR, userStatus: USER.STATUSES.ACTIVE };
+        const result = await this.userCollection.aggregate([{ "$match": filters }]);
+
+        return result?.map((user) => ({
+            userID: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            createdAt: user.createdAt,
+            updateAt: user.updateAt,
+        })) || [];
+    }
+
     async getAdmin() {
         let result = await this.userCollection.aggregate([{
             "$match": {
