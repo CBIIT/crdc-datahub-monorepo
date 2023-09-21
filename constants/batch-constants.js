@@ -5,9 +5,9 @@ module.exports = Object.freeze({
             FILE: "file",
         },
         INTENTION: {
-            NEW: "New",
-            UPDATE: "Update",
-            DELETE: "Delete",
+            NEW: "new",
+            UPDATE: "update",
+            DELETE: "delete",
         },
         STATUSES: {
             NEW: "New",
