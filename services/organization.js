@@ -4,20 +4,45 @@ const {ORGANIZATION} = require("../constants/organization-constants");
 const {getCurrentTime} = require("../utility/time-utility");
 
 class Organization {
-  constructor(organizationCollection) {
+  constructor(organizationCollection, userCollection) {
       this.organizationCollection = organizationCollection;
+      this.userCollection = userCollection;
   }
 
+  /**
+   * Get Organization by ID API Interface.
+   *
+   * - `ADMIN` can call this API only
+   *
+   * @api
+   * @param {{ orgID: string }} params Endpoint parameters
+   * @param {{ cookie: Object, userInfo: Object }} context API request context
+   * @returns {Promise<Object | null>} The organization with the given `orgID` or null if not found
+   */
+  async getOrganizationAPI(params, context) {
+    if (!context?.userInfo?.email || !context?.userInfo?.IDP) {
+      throw new Error(ERROR.NOT_LOGGED_IN);
+    }
+    if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+        throw new Error(ERROR.INVALID_ROLE);
+    }
+    if (!params?.orgID) {
+        throw new Error(ERROR.INVALID_ORG_ID);
+    }
+
+    return this.getOrganizationByID(params.orgID);
+  }
+
+  /**
+   * Get an organization by it's `_id`
+   *
+   * @async
+   * @param {string} id The UUID of the organization to search for
+   * @returns {Promise<Object | null>} The organization with the given `id` or null if not found
+   */
   async getOrganizationByID(id) {
       const result = await this.organizationCollection.aggregate([{
           "$match": { _id: id }
-      }, {"$limit": 1}]);
-      return result?.length > 0 ? result[0] : null;
-  }
-
-  async getOrganizationByName(name) {
-      const result = await this.organizationCollection.aggregate([{
-          "$match": { name }
       }, {"$limit": 1}]);
       return result?.length > 0 ? result[0] : null;
   }
@@ -63,8 +88,42 @@ class Organization {
     return await this.organizationCollection.aggregate([{ "$match": filters }]);
   }
 
-  async editOrganization(params, userCollection) {
-      const currentOrg = await this.getOrganizationByID(params.orgID);
+  /**
+   * Edit Organization API Interface.
+   *
+   * - `ADMIN` can call this API only
+   *
+   * @api
+   * @param {EditOrganizationInput} params Endpoint parameters
+   * @param {{ cookie: Object, userInfo: Object }} context API request context
+   * @returns {Promise<Object>} The modified organization
+   */
+  async editOrganizationAPI(params, context) {
+    if (!context?.userInfo?.email || !context?.userInfo?.IDP) {
+      throw new Error(ERROR.NOT_LOGGED_IN);
+    }
+    if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+        throw new Error(ERROR.INVALID_ROLE);
+    }
+    if (!params?.orgID) {
+        throw new Error(ERROR.INVALID_ORG_ID);
+    }
+
+    return this.editOrganization(params.orgID, params);
+  }
+
+  /**
+   * List organizations by an optional set of filters
+   *
+   * @async
+   * @typedef {{ orgID: string, name: string, conciergeID: string, studies: Object[], status: string }} EditOrganizationInput
+   * @throws {Error} If the organization is not found or the update fails
+   * @param {string} orgID The ID of the organization to edit
+   * @param {EditOrganizationInput} params The organization input
+   * @returns {Promise<Object>} The modified organization
+   */
+  async editOrganization(orgID, params) {
+      const currentOrg = await this.getOrganizationByID(orgID);
       const updatedOrg = { updateAt: getCurrentTime() };
       if (!currentOrg) {
           throw new Error(ERROR.ORG_NOT_FOUND);
@@ -80,7 +139,7 @@ class Organization {
 
       if (params.conciergeID && params.conciergeID !== currentOrg.conciergeID) {
           const filters = { _id: params.conciergeID, role: USER.ROLES.CURATOR, userStatus: USER.STATUSES.ACTIVE };
-          const result = await userCollection.aggregate([{ "$match": filters }, { "$limit": 1 }]);
+          const result = await this.userCollection.aggregate([{ "$match": filters }, { "$limit": 1 }]);
           const conciergeUser = result?.[0];
           if (!conciergeUser) {
               throw new Error(ERROR.INVALID_ROLE_ASSIGNMENT);
@@ -111,6 +170,20 @@ class Organization {
 
       return { ...currentOrg, ...updatedOrg };
   }
+
+  /**
+   * Get an organization by it's name
+   *
+   * @async
+   * @param {string} name The name of the organization to search for
+   * @returns {Promise<Object | null>} The organization with the given `name` or null if not found
+   */
+  async getOrganizationByName(name) {
+    const result = await this.organizationCollection.aggregate([{
+        "$match": { name }
+    }, {"$limit": 1}]);
+    return result?.length > 0 ? result[0] : null;
+}
 }
 
 module.exports = {

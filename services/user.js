@@ -77,7 +77,34 @@ class User {
         return result || [];
     }
 
-    async listActiveCurators() {
+    /**
+     * List Active Curators API Interface.
+     *
+     * - `ADMIN` can call this API only
+     *
+     * @api
+     * @param {Object} params Endpoint parameters
+     * @param {{ cookie: Object, userInfo: Object }} context API request context
+     * @returns {Promise<Object[]>} An array of Curator Users
+     */
+    async listActiveCuratorsAPI(params, context) {
+        if (!context?.userInfo?.email || !context?.userInfo?.IDP) {
+            throw new Error(ERROR.NOT_LOGGED_IN);
+        }
+        if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+            throw new Error(ERROR.INVALID_ROLE);
+        };
+
+        return this.getActiveCurators();
+    }
+
+    /**
+     * Get all users with the `CURATOR` role and `ACTIVE` status.
+     *
+     * @async
+     * @returns {Promise<Object[]>} An array of Users
+     */
+    async getActiveCurators() {
         const filters = { role: USER.ROLES.CURATOR, userStatus: USER.STATUSES.ACTIVE };
         const result = await this.userCollection.aggregate([{ "$match": filters }]);
 
