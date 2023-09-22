@@ -163,7 +163,7 @@ class Organization {
           updatedOrg.status = params.status;
       }
 
-      const updateResult = await this.organizationCollection.update({ _id: params.orgID, ...updatedOrg });
+      const updateResult = await this.organizationCollection.update({ _id: orgID, ...updatedOrg });
       if (updateResult?.matchedCount !== 1) {
           throw new Error(ERROR.UPDATE_FAILED);
       }
@@ -183,7 +183,7 @@ class Organization {
         "$match": { name }
     }, {"$limit": 1}]);
     return result?.length > 0 ? result[0] : null;
-}
+  }
 }
 
 module.exports = {
