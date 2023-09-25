@@ -84,7 +84,7 @@ class Organization {
    * @param {Filters} [filters] Filters to apply to the query
    * @returns {Promise<Object[]>} An array of Organizations
    */
-  async listOrganizations(filters = []) {
+  async listOrganizations(filters = {}) {
     return await this.organizationCollection.aggregate([{ "$match": filters }]);
   }
 
@@ -113,7 +113,7 @@ class Organization {
   }
 
   /**
-   * List organizations by an optional set of filters
+   * Edit an organization by it's `_id` and a set of parameters
    *
    * @async
    * @typedef {{ orgID: string, name: string, conciergeID: string, studies: Object[], status: string }} EditOrganizationInput

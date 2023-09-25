@@ -85,7 +85,7 @@ class User {
      * @api
      * @param {Object} params Endpoint parameters
      * @param {{ cookie: Object, userInfo: Object }} context API request context
-     * @returns {Promise<Object[]>} An array of Curator Users
+     * @returns {Promise<Object[]>} An array of Curator Users mapped to the `UserInfo` type
      */
     async listActiveCuratorsAPI(params, context) {
         if (!context?.userInfo?.email || !context?.userInfo?.IDP) {
@@ -95,7 +95,14 @@ class User {
             throw new Error(ERROR.INVALID_ROLE);
         };
 
-        return this.getActiveCurators();
+        const curators = await this.getActiveCurators();
+        return curators?.map((user) => ({
+            userID: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            createdAt: user.createdAt,
+            updateAt: user.updateAt,
+        })) || [];
     }
 
     /**
@@ -108,13 +115,7 @@ class User {
         const filters = { role: USER.ROLES.CURATOR, userStatus: USER.STATUSES.ACTIVE };
         const result = await this.userCollection.aggregate([{ "$match": filters }]);
 
-        return result?.map((user) => ({
-            userID: user._id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            createdAt: user.createdAt,
-            updateAt: user.updateAt,
-        })) || [];
+        return result || [];
     }
 
     async getAdmin() {
