@@ -2,7 +2,8 @@ module.exports = Object.freeze({
     ERROR: {
         // TODO CRDC backend already has these error constants, let's merge it.
         NOT_LOGGED_IN: "A user must be logged in to call this API",
-        INVALID_USER_STATUS: "A user with an invalid status is prohibited from logging in. Please, verify that your account is disabled.",
+        INACTIVE_USER: "Login Failed: This user account has been marked as inactive and must be reactivated before it can be used",
+        INVALID_USER_STATUS: "This user account has does not have the correct status to perform this operation",
         INVALID_USERID: "A userID argument is required to call this API",
         INVALID_ROLE: "You do not have the correct role to perform this operation",
         NO_ORG_ASSIGNED: "You do not have an organization assigned to your account",
@@ -11,5 +12,7 @@ module.exports = Object.freeze({
         INVALID_ORG_ID: "The organization ID you provided is invalid",
         INVALID_ROLE_ASSIGNMENT: "The role you are trying to assign is invalid",
         USER_ORG_REQUIRED: "An organization is required for the role you are trying to assign",
+        // Utility
+        JSON_PARSING: "An error occurred while parsing a string to JSON.",
     },
 });
