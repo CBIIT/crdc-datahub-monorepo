@@ -24,7 +24,7 @@ router.post('/login', async function (req, res) {
         const reqIDP = config.getIdpOrDefault(req.body['IDP']);
         const { name, lastName, tokens, email, idp } = await idpClient.login(req.body['code'], reqIDP, config.getUrlOrDefault(reqIDP, req.body['redirectUri']));
         if (!await userService.isEmailAndIDPLoginPermitted(email, idp)) {
-            throw new Error(ERROR.INACTIVE_USER);
+            throw { statusCode: 403, message: ERROR.INACTIVE_USER };
         }
         req.session.userInfo = {
             email: email,
