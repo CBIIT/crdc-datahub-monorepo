@@ -6,6 +6,8 @@ const {MongoDBCollection} = require("../crdc-datahub-database-drivers/mongodb-co
 const {DATABASE_NAME, SESSION_COLLECTION} = require("../crdc-datahub-database-drivers/database-constants");
 const dbConnector = new DatabaseConnector(config.mongo_db_connection_string);
 const {ttlSessions} = require('../services/ttl-query')
+const {MongoDBHealthCheck} = require("../crdc-datahub-database-drivers/mongo-health-check");
+const {ERROR} = require("../crdc-datahub-database-drivers/constants/error-constants");
 
 
 router.get('/session-ttl',async function(req, res){
@@ -39,10 +41,16 @@ router.get('/ping', function (req, res, next) {
 });
 
 // /* GET version for health checking and version checking. */
-router.get('/version', function (req, res, next) {
-    res.json({
-        version: config.version, date: config.date
-    });
+router.get('/version', async function (req, res, next) {
+    let body = {
+        version: config.version,
+        date: config.date
+    };
+    if (!(await MongoDBHealthCheck(config.mongo_db_connection_string))) {
+        body.error = ERROR.MONGODB_HEALTH_CHECK_FAILED;
+        res.status(503);
+    }
+    res.json(body);
 });
 
 module.exports = router;
