@@ -12,6 +12,8 @@ module.exports = Object.freeze({
         INVALID_ORG_ID: "The organization ID you provided is invalid",
         INVALID_ROLE_ASSIGNMENT: "The role you are trying to assign is invalid",
         USER_ORG_REQUIRED: "An organization is required for the role you are trying to assign",
-        MONGODB_HEALTH_CHECK_FAILED: "The MongoDB health check failed, please see the logs for more information"
+        MONGODB_HEALTH_CHECK_FAILED: "The MongoDB health check failed, please see the logs for more information",
+        // Utility
+        JSON_PARSING: "An error occurred while parsing a string to JSON."
     },
 });
