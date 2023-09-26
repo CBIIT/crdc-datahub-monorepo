@@ -43,6 +43,9 @@ router.post('/login', async function (req, res) {
         } else {
             res.status(500);
         }
+        if (e.message && e.message.includes(ERROR.INACTIVE_USER)) {
+            res.status(403);
+        }
         res.json({error: e.message});
     }
 });
