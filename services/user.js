@@ -111,6 +111,16 @@ class User {
 
     }
 
+    async getOrgOwner(orgID) {
+        let result = await this.userCollection.aggregate([{
+            "$match": {
+                "organization.orgID": orgID,
+                role: "Organization Owner"
+            }
+        }]);
+        return result;
+    }
+
     async createNewUser(context) {
         let sessionCurrentTime = getCurrentTime();
         let email = context.userInfo.email;
