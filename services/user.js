@@ -111,6 +111,16 @@ class User {
 
     }
 
+    async getConcierge(orgID) {
+        let result = await this.userCollection.aggregate([{
+            "$match": {
+                "organization.orgID": orgID,
+                role: "Concierge"
+            }
+        }]);
+        return result;
+    }
+
     async getOrgOwner(orgID) {
         let result = await this.userCollection.aggregate([{
             "$match": {
