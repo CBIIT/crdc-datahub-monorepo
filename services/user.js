@@ -104,18 +104,28 @@ class User {
     async getAdmin() {
         let result = await this.userCollection.aggregate([{
             "$match": {
-                role: "Admin"
+                role: USER.ROLES.ADMIN
             }
         }]);
         return result;
 
     }
 
+    async getConcierge(orgID) {
+        let result = await this.userCollection.aggregate([{
+            "$match": {
+                "organization.orgID": orgID,
+                role: USER.ROLES.CONCIERGE
+            }
+        }]);
+        return result;
+    }
+
     async getOrgOwner(orgID) {
         let result = await this.userCollection.aggregate([{
             "$match": {
                 "organization.orgID": orgID,
-                role: "Organization Owner"
+                role: USER.ROLES.ORG_OWNER
             }
         }]);
         return result;
