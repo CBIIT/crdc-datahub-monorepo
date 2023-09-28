@@ -91,7 +91,7 @@ class User {
         let result = await this.userCollection.aggregate([{
             "$match": {
                 "organization.orgID": orgID,
-                role: USER.ROLES.CONCIERGE
+                role: USER.ROLES.CURATOR
             }
         }]);
         return result;
