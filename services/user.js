@@ -5,6 +5,9 @@ const {UpdateProfileEvent} = require("../domain/log-events");
 const {getCurrentTime, subtractDaysFromNow} = require("../utility/time-utility");
 const {LOGIN} = require("../constants/event-constants");
 const {v4} = require("uuid");
+const config = require("../../config")
+const jwt = require("jsonwebtoken");
+
 
 
 const isLoggedInOrThrow = (context) => {
@@ -16,11 +19,54 @@ const isValidUserStatus = (userStatus) => {
     if (userStatus && !validUserStatus.includes(userStatus)) throw new Error(ERROR.INVALID_USER_STATUS);
 }
 
+const createToken = (userInfo, token_secret, tokenTimeout)=> {
+    return jwt.sign(
+        userInfo,
+        token_secret,
+        { expiresIn: tokenTimeout });
+}
+
 class User {
     constructor(userCollection, logCollection, organizationCollection) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
+    }
+
+    async grantToken(params, context){
+        isLoggedInOrThrow(context);
+        isValidUserStatus(context?.userInfo?.userStatus);
+        let accessToken = createToken(context?.userInfo, config.token_secret, config.tokenTimeout)
+        let aUser = await this.linkTokentoUser(context, accessToken)
+        return {
+            tokens: [accessToken],
+            message: "This token can only be viewed once and will be lost if it is not saved by the user"
+        }
+    }
+
+    async linkTokentoUser(context, accessToken){
+        let sessionCurrentTime = getCurrentTime();
+        let user = await this.userCollection.find(context.userInfo._id);
+        const updateUser ={
+            _id: context.userInfo._id,
+            tokens: [accessToken],
+            updateAt: sessionCurrentTime
+        }
+        const updateResult = await this.userCollection.update(updateUser);
+
+        context.userInfo = {
+            ...context.userInfo,
+            ...updateUser,
+            updateAt: sessionCurrentTime
+        }
+        const result = {
+            ...user[0],
+            tokens: [accessToken],
+            updateAt: sessionCurrentTime
+        }
+
+        return result
+
     }
 
     async getUserByID(userID) {
