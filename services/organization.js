@@ -14,6 +14,19 @@ class Organization {
   }
 
   /**
+  * Retrieves an organization from the database by its name.
+  *
+  * @param {string} name - The name of the organization to search for.
+  * @returns {Object|null} - The organization object if found, or null if not found.
+  */
+  async getOrganizationByName(name) {
+      const result = await this.organizationCollection.aggregate([{
+          "$match": { name }
+      }, {"$limit": 1}]);
+      return result?.length > 0 ? result[0] : null;
+  }
+
+  /**
    * List Organizations API Interface.
    *
    * - `ADMIN` and `ORG_OWNER can call this API
