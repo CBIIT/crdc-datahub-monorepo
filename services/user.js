@@ -2,7 +2,7 @@ const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
 
-const {getCurrentTime, subtractDaysFromNow} = require("../utility/time-utility");
+const {getCurrentTime, subtractDaysFromNow, toISO} = require("../utility/time-utility");
 const {LOGIN} = require("../constants/event-constants");
 const {v4} = require("uuid");
 
@@ -17,10 +17,34 @@ const isValidUserStatus = (userStatus) => {
 }
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection) {
+    constructor(userCollection, logCollection, organizationService) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
-        this.organizationCollection = organizationCollection;
+        this.organizationService = organizationService;
+    }
+
+    // Note: This is a wrapper for the OrgService version which returns OrgInfo instead of Organization
+    async listOrganizations(params, context) {
+        isLoggedInOrThrow(context);
+        if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
+            throw new Error(ERROR.INVALID_ROLE);
+        }
+        if (context.userInfo.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
+            throw new Error(ERROR.NO_ORG_ASSIGNED);
+        }
+
+        const filters = {};
+        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
+            filters["_id"] = context?.userInfo?.organization?.orgID;
+        }
+
+        const data = await this.organizationService.listOrganizations(filters);
+        return (data || []).map(org => ({
+            orgID: org._id,
+            orgName: org.name,
+            createdAt: org.createdAt,
+            updateAt: org.updateAt,
+        }));
     }
 
     async getUserByID(userID) {
@@ -227,11 +251,7 @@ class User {
             throw new Error(ERROR.USER_ORG_REQUIRED);
         }
         if (params.organization && params.organization !== user[0]?.organization?.orgID) {
-            const result = await this.organizationCollection.aggregate([{
-                "$match": { _id: params.organization }
-            }, {"$limit": 1}]);
-            const newOrg = result?.[0];
-
+            const newOrg = await this.organizationService.getOrganizationByID(params.organization);
             if (!newOrg?._id || newOrg?._id !== params.organization) {
                 throw new Error(ERROR.INVALID_ORG_ID);
             }
