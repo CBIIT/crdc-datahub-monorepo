@@ -252,8 +252,10 @@ class User {
         if (params.status && Object.values(USER.STATUSES).includes(params.status)) {
             updatedUser.userStatus = params.status;
         }
-        const isDC_POC = (updatedUser.role && params.role === USER.ROLES.DC_POC) || (!updatedUser.role && user[0]?.role === USER.ROLES.DC_POC);
-        if (isDC_POC && Array.isArray(params.dataCommons)) {
+        if ((updatedUser.role && params.role === USER.ROLES.DC_POC) || (!updatedUser.role && user[0]?.role === USER.ROLES.DC_POC)) {
+            if (!params.dataCommons || params.dataCommons.length === 0) {
+                throw new Error(ERROR.USER_DC_REQUIRED);
+            }
             updatedUser.dataCommons = params.dataCommons;
         } else {
             updatedUser.dataCommons = [];
