@@ -225,11 +225,18 @@ class Organization {
       conciergeName: "",
       conciergeEmail: "",
       studies: [],
-      bucketName: null,
-      rootPath: null,
+      bucketName: "",
+      rootPath: "",
       createdAt: getCurrentTime(),
       updateAt: getCurrentTime(),
     };
+
+    if (!!process.env.SUBMISSION_BUCKET && !!newOrg._id) {
+        newOrg.bucketName = process.env.SUBMISSION_BUCKET;
+        newOrg.rootPath = `${newOrg._id}/`;
+    } else {
+        throw new Error(ERROR.NO_SUBMISSION_BUCKET);
+    }
 
     if (!!params?.name?.trim()) {
         const existingOrg = await this.getOrganizationByName(params.name);

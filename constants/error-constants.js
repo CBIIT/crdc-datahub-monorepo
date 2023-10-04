@@ -20,5 +20,6 @@ module.exports = Object.freeze({
         ORG_NOT_FOUND: "The organization you are trying to update does not exist",
         DUPLICATE_ORG_NAME: "An organization with the same name already exists",
         INVALID_ORG_NAME: "The organization name you provided is invalid",
+        NO_SUBMISSION_BUCKET: "Unable to create organization, no submission bucket is configured",
     },
 });
