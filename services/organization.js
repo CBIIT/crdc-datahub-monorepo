@@ -137,7 +137,9 @@ class Organization {
           updatedOrg.name = params.name;
       }
 
-      if (params.conciergeID && params.conciergeID !== currentOrg.conciergeID) {
+      const conciergeProvided = typeof params.conciergeID !== "undefined";
+      // Only update the concierge if it is provided and different from the currently assigned concierge
+      if (conciergeProvided && !!params.conciergeID && params.conciergeID !== currentOrg.conciergeID) {
           const filters = { _id: params.conciergeID, role: USER.ROLES.CURATOR, userStatus: USER.STATUSES.ACTIVE };
           const result = await this.userCollection.aggregate([{ "$match": filters }, { "$limit": 1 }]);
           const conciergeUser = result?.[0];
@@ -147,7 +149,8 @@ class Organization {
           updatedOrg.conciergeID = params.conciergeID;
           updatedOrg.conciergeName = `${conciergeUser.firstName} ${conciergeUser.lastName}`.trim();
           updatedOrg.conciergeEmail = conciergeUser.email;
-      } else if (!params.conciergeID && currentOrg.conciergeID) {
+      // Only remove the concierge if it is purposely set to null and there is a currently assigned concierge
+      } else if (conciergeProvided && !params.conciergeID && !!currentOrg.conciergeID) {
           updatedOrg.conciergeID = null;
           updatedOrg.conciergeName = null;
           updatedOrg.conciergeEmail = null;
