@@ -9,6 +9,11 @@ const {ttlSessions} = require('../services/ttl-query')
 const {MongoDBHealthCheck} = require("../crdc-datahub-database-drivers/mongo-health-check");
 const {ERROR} = require("../crdc-datahub-database-drivers/constants/error-constants");
 
+let dataInterface;
+dbConnector.connect().then( async () => {
+    const sessionCollection = new MongoDBCollection(dbConnector.client, DATABASE_NAME, SESSION_COLLECTION);
+    dataInterface = new ttlSessions(sessionCollection);
+});
 
 router.get('/session-ttl',async function(req, res){
     let sessionID
@@ -20,16 +25,10 @@ router.get('/session-ttl',async function(req, res){
         sessionID =  req.cookies["connect.sid"].match(':.*[.]')[0].slice(1,-1);
     }
     if (sessionID){
-        dbConnector.connect().then( async () => {
-            const sessionCollection = new MongoDBCollection(dbConnector.client, DATABASE_NAME, SESSION_COLLECTION);
-            const dataInterface = new ttlSessions(sessionCollection)
-            response = {
-                ttl: await dataInterface.getSession(sessionID),
-            }
-
-            res.send(response);
-
-        })
+        response = {
+            ttl: await dataInterface.getSession(sessionID)
+        }
+        res.send(response);
     }else{
         res.json({ttl: null, error: "No Session is found."});
     }
