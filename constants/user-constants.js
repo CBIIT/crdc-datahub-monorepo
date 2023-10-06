@@ -11,8 +11,7 @@ module.exports = Object.freeze({
         },
         STATUSES: {
             ACTIVE: "Active",
-            INACTIVE: "Inactive",
-            DISABLED: "Disabled"
+            INACTIVE: "Inactive"
         },
         IDPS: {
             NIH: "NIH",
