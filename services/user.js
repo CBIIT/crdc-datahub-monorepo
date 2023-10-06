@@ -37,37 +37,12 @@ class User {
         isLoggedInOrThrow(context);
         isValidUserStatus(context?.userInfo?.userStatus);
         let accessToken = createToken(context?.userInfo, config.token_secret, config.tokenTimeout)
-        let aUser = await this.linkTokentoUser(context, accessToken)
         return {
             tokens: [accessToken],
             message: "This token can only be viewed once and will be lost if it is not saved by the user"
         }
     }
 
-    async linkTokentoUser(context, accessToken){
-        let sessionCurrentTime = getCurrentTime();
-        let user = await this.userCollection.find(context.userInfo._id);
-        const updateUser ={
-            _id: context.userInfo._id,
-            tokens: [accessToken],
-            updateAt: sessionCurrentTime
-        }
-        const updateResult = await this.userCollection.update(updateUser);
-
-        context.userInfo = {
-            ...context.userInfo,
-            ...updateUser,
-            updateAt: sessionCurrentTime
-        }
-        const result = {
-            ...user[0],
-            tokens: [accessToken],
-            updateAt: sessionCurrentTime
-        }
-
-        return result
-
-    }
 
     async getUserByID(userID) {
         const result = await this.userCollection.aggregate([{
