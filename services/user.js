@@ -159,6 +159,7 @@ class User {
             userStatus: USER.STATUSES.ACTIVE,
             role: USER.ROLES.USER,
             organization: {},
+            dataCommons: [],
             firstName: context?.userInfo?.firstName || emailName,
             lastName: context.userInfo.lastName,
             createdAt: sessionCurrentTime,
@@ -264,10 +265,7 @@ class User {
         }
 
         const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
-        if (!params.organization && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(params.role)) {
-            throw new Error(ERROR.USER_ORG_REQUIRED);
-        }
-        if (params.organization && params.organization !== user[0]?.organization?.orgID) {
+        if (typeof(params.organization) !== "undefined" && params.organization && params.organization !== user[0]?.organization?.orgID) {
             const result = await this.organizationCollection.aggregate([{
                 "$match": { _id: params.organization }
             }, {"$limit": 1}]);
@@ -283,7 +281,7 @@ class User {
                 createdAt: newOrg.createdAt,
                 updateAt: newOrg.updateAt,
             };
-        } else if (!params.organization && user[0]?.organization?.orgID) {
+        } else if (typeof(params.organization) !== "undefined" && !params.organization && user[0]?.organization?.orgID) {
             updatedUser.organization = null;
         }
         if (params.role && Object.values(USER.ROLES).includes(params.role)) {
@@ -291,6 +289,28 @@ class User {
         }
         if (params.status && Object.values(USER.STATUSES).includes(params.status)) {
             updatedUser.userStatus = params.status;
+        }
+
+        const dataCommonsProvided = typeof params.dataCommons !== "undefined";
+        const userIsDcPOC = updatedUser.role === USER.ROLES.DC_POC || (typeof(updatedUser.role) === "undefined" && user[0]?.role === USER.ROLES.DC_POC);
+        if (userIsDcPOC && dataCommonsProvided && params.dataCommons?.length > 0) {
+            updatedUser.dataCommons = params.dataCommons;
+        } else if (userIsDcPOC && dataCommonsProvided && !params.dataCommons?.length) {
+            throw new Error(ERROR.USER_DC_REQUIRED);
+        } else if (!userIsDcPOC && user[0]?.dataCommons?.length > 0) {
+            updatedUser.dataCommons = [];
+        }
+
+        // Check if Data Commons is required and missing for the user's role
+        const userDataCommons = updatedUser.dataCommons?.length > 0 || (user[0]?.dataCommons?.length > 0 && !dataCommonsProvided);
+        if (userIsDcPOC && !userDataCommons) {
+            throw new Error(ERROR.USER_DC_REQUIRED);
+        }
+
+        // Check if an organization is required and missing for the user's role
+        const userHasOrg = !!updatedUser?.organization?.orgID || (user[0]?.organization?.orgID && typeof(updatedUser.organization) === "undefined");
+        if (!userHasOrg && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(updatedUser.role || user[0]?.role)) {
+            throw new Error(ERROR.USER_ORG_REQUIRED);
         }
 
         const updateResult = await this.userCollection.update(updatedUser);
