@@ -17,10 +17,12 @@ const isValidUserStatus = (userStatus) => {
 }
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, officialEmail) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
+        this.notificationsService = notificationsService;
+        this.officialEmail = officialEmail;
     }
 
     async getUserByID(userID) {
@@ -325,6 +327,13 @@ class User {
                 prevProfile[key] = user[0]?.[key];
                 newProfile[key] = updatedUser[key];
             });
+
+            const aUser = user[0];
+            const adminEmails = await this.getAdminUserEmails();
+            const CCs = adminEmails.filter((u)=> u.email).map((u)=> u.email);
+            await this.notificationsService.inactiveUserNotification(aUser.email,
+                CCs, {firstName: aUser.firstName},
+                {officialEmail: this.officialEmail});
 
             const log = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
             await this.logCollection.insert(log);
