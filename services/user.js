@@ -265,7 +265,7 @@ class User {
         }
 
         const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
-        if (!params.organization && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(params.role)) {
+        if (!params.organization && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(params?.role || user[0]?.role)) {
             throw new Error(ERROR.USER_ORG_REQUIRED);
         }
         if (params.organization && params.organization !== user[0]?.organization?.orgID) {
