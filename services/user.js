@@ -329,7 +329,7 @@ class User {
             });
 
             const aUser = user[0];
-            const isUserActivated = (aUser.userStatus) && (aUser.userStatus != USER.STATUSES.INACTIVE);
+            const isUserActivated = aUser?.userStatus !== USER.STATUSES.INACTIVE;
             const isStatusChange = params.status && params.status.toLowerCase() === USER.STATUSES.INACTIVE.toLowerCase();
             if (isUserActivated && isStatusChange) {
                 const adminEmails = await this.getAdminUserEmails();
