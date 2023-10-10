@@ -329,11 +329,15 @@ class User {
             });
 
             const aUser = user[0];
-            const adminEmails = await this.getAdminUserEmails();
-            const CCs = adminEmails.filter((u)=> u.email).map((u)=> u.email);
-            await this.notificationsService.inactiveUserNotification(aUser.email,
-                CCs, {firstName: aUser.firstName},
-                {officialEmail: this.officialEmail});
+            const isUserActivated = (aUser.userStatus) && (aUser.userStatus != USER.STATUSES.INACTIVE);
+            const isStatusChange = params.status && params.status.toLowerCase() === USER.STATUSES.INACTIVE.toLowerCase();
+            if (isUserActivated && isStatusChange) {
+                const adminEmails = await this.getAdminUserEmails();
+                const CCs = adminEmails.filter((u)=> u.email).map((u)=> u.email);
+                await this.notificationsService.inactiveUserNotification(aUser.email,
+                    CCs, {firstName: aUser.firstName},
+                    {officialEmail: this.officialEmail});
+            }
 
             const log = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
             await this.logCollection.insert(log);
