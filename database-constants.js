@@ -7,5 +7,6 @@ module.exports = Object.freeze({
     APPROVED_STUDIES_COLLECTION: 'approvedStudies',
     USER_COLLECTION: 'users',
     ORGANIZATION_COLLECTION: 'organization',
+    BATCH_COLLECTION: 'batch',
     LOG_COLLECTION: 'logs'
 });

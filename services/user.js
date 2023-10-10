@@ -472,6 +472,20 @@ class User {
         return result?.length === 0;
     }
 
+    /**
+     * getOrgOwnerByOrgName
+     * @param {*} orgName
+     * @returns {Promise<Array>} user[]
+     */
+    async getOrgOwnerByOrgName(orgName) {
+        const orgOwner= {
+            "userStatus": USER.STATUSES.ACTIVE,
+            "role": USER.ROLES.ORG_OWNER,
+            "organization.orgName": orgName
+        };
+        return await this.userCollection.aggregate([{"$match": orgOwner}]);
+    }
+
     isAdmin(role) {
         return role && role === USER.ROLES.ADMIN;
     }
