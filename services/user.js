@@ -5,6 +5,9 @@ const {UpdateProfileEvent} = require("../domain/log-events");
 const {getCurrentTime, subtractDaysFromNow} = require("../utility/time-utility");
 const {LOGIN} = require("../constants/event-constants");
 const {v4} = require("uuid");
+const config = require("../../config")
+const jwt = require("jsonwebtoken");
+
 
 
 const isLoggedInOrThrow = (context) => {
@@ -16,6 +19,13 @@ const isValidUserStatus = (userStatus) => {
     if (userStatus && !validUserStatus.includes(userStatus)) throw new Error(ERROR.INVALID_USER_STATUS);
 }
 
+const createToken = (userInfo, token_secret, tokenTimeout)=> {
+    return jwt.sign(
+        userInfo,
+        token_secret,
+        { expiresIn: tokenTimeout });
+}
+
 class User {
     constructor(userCollection, logCollection, organizationCollection, notificationsService, officialEmail) {
         this.userCollection = userCollection;
@@ -24,6 +34,17 @@ class User {
         this.notificationsService = notificationsService;
         this.officialEmail = officialEmail;
     }
+
+    async grantToken(params, context){
+        isLoggedInOrThrow(context);
+        isValidUserStatus(context?.userInfo?.userStatus);
+        let accessToken = createToken(context?.userInfo, config.token_secret, config.tokenTimeout)
+        return {
+            tokens: [accessToken],
+            message: "This token can only be viewed once and will be lost if it is not saved by the user"
+        }
+    }
+
 
     async getUserByID(userID) {
         const result = await this.userCollection.aggregate([{
