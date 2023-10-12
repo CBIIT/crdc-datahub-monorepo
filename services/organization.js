@@ -51,8 +51,7 @@ class Organization {
   /**
    * List Organizations API Interface.
    *
-   * - `ADMIN` and `ORG_OWNER can call this API
-   * - `ORG_OWNER` is limited to only their organization
+   * Any authenticated users can retrieve all organizations, no matter what role a user has or what organization a user is associated with.
    *
    * @api
    * @param {Object} params Endpoint parameters
@@ -63,19 +62,8 @@ class Organization {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) {
         throw new Error(ERROR.NOT_LOGGED_IN)
     }
-    if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
-        throw new Error(ERROR.INVALID_ROLE);
-    }
-    if (context.userInfo.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
-        throw new Error(ERROR.NO_ORG_ASSIGNED);
-    }
 
-    const filters = {};
-    if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
-        filters["_id"] = context?.userInfo?.organization?.orgID;
-    }
-
-    return this.listOrganizations(filters);
+    return this.listOrganizations({});
   }
 
   /**
