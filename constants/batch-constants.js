@@ -16,5 +16,12 @@ module.exports = Object.freeze({
             LOADED: "Loaded",
             REJECTED: "Rejected"
         }
+    },
+    FILE: {
+        UPLOAD_STATUSES: {
+            NEW: "New",
+            UPLOADED: "Uploaded",
+            FAILED: "Failed",
+        }
     }
 });
