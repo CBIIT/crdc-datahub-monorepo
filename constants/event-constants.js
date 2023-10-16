@@ -7,5 +7,6 @@ module.exports = Object.freeze({
     CREATE_APPLICATION: 'Create_Application',
     UPDATE_APPLICATION_STATE: 'Update_Application_State',
     CREATE_BATCH: 'Create_Batch',
-    UPDATE_BATCH: 'Update_Batch'
+    UPDATE_BATCH: 'Update_Batch',
+    SUBMISSION_ACTION: 'Submission_Action'
 });
