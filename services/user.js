@@ -146,11 +146,21 @@ class User {
     async getAdmin() {
         let result = await this.userCollection.aggregate([{
             "$match": {
-                role: USER.ROLES.ADMIN
+                role: USER.ROLES.ADMIN,
+                userStatus: USER.STATUSES.ACTIVE
             }
         }]);
-        return result;
+        return result || [];
+    }
 
+    async getPOCs() {
+        let result = await this.userCollection.aggregate([{
+            "$match": {
+                role: USER.ROLES.DC_POC,
+                userStatus: USER.STATUSES.ACTIVE
+            }
+        }]);
+        return result || [];
     }
 
     async getConcierge(orgID) {
@@ -167,7 +177,8 @@ class User {
         let result = await this.userCollection.aggregate([{
             "$match": {
                 "organization.orgID": orgID,
-                role: USER.ROLES.ORG_OWNER
+                role: USER.ROLES.ORG_OWNER,
+                userStatus: USER.STATUSES.ACTIVE
             }
         }]);
         return result;
