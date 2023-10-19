@@ -5,9 +5,11 @@ const {getCurrentTime} = require("../utility/time-utility");
 const {v4} = require("uuid");
 
 class Organization {
-  constructor(organizationCollection, userCollection) {
+  constructor(organizationCollection, userCollection, submissionCollection, applicationCollection) {
       this.organizationCollection = organizationCollection;
       this.userCollection = userCollection;
+      this.submissionCollection = submissionCollection;
+      this.applicationCollection = applicationCollection;
   }
 
   /**
@@ -158,6 +160,23 @@ class Organization {
       const updateResult = await this.organizationCollection.update({ _id: orgID, ...updatedOrg });
       if (updateResult?.matchedCount !== 1) {
           throw new Error(ERROR.UPDATE_FAILED);
+      }
+
+      // Update all dependent objects only if the Organization Name has changed
+      // NOTE: We're not waiting for these updates to complete before returning the updatedOrg
+      if (updatedOrg.name) {
+          this.submissionCollection.updateMany(
+              { "organization._id": orgID },
+              { "organization.name": updatedOrg.name }
+          );
+          this.userCollection.updateMany(
+              { "organization.orgID": orgID },
+              { "organization.orgName": updatedOrg.name, "organization.updateAt": updatedOrg.updateAt }
+          );
+          this.applicationCollection.updateMany(
+            { "organization._id": orgID },
+            { "organization.name": updatedOrg.name }
+          );
       }
 
       return { ...currentOrg, ...updatedOrg };
