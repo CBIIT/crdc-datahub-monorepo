@@ -1,5 +1,5 @@
 const {LOGIN, LOGOUT, PROFILE_UPDATE, CREATE_ACCESS_TOKEN, CREATE_APPLICATION, UPDATE_APPLICATION_STATE, CREATE_BATCH,
-    UPDATE_BATCH, REGISTRATION
+    UPDATE_BATCH, REGISTRATION, SUBMISSION_ACTION
 } = require("../constants/event-constants");
 
 const {v4} = require("uuid");
@@ -131,6 +131,21 @@ const UpdateBatchEvent = class extends AbstractLog {
     }
 }
 
+const SubmissionActionEvent = class extends AbstractLog {
+    constructor(userID, userEmail, userIDP, submissionID, action, prevStatus, newStatus) {
+        super();
+        this.setUser(userID, userEmail, userIDP);
+        this.setEventType(SUBMISSION_ACTION);
+        this.submissionID = submissionID;
+        this.action = action
+        this.prevState = prevStatus;
+        this.newState = newStatus;
+    }
+    static create(userID, userEmail, userIDP, submissionID, action, prevStatus, newStatus) {
+        return new SubmissionActionEvent(userID, userEmail, userIDP, submissionID, action, prevStatus, newStatus);
+    }
+}
+
 module.exports = {
     LoginEvent,
     LogoutEvent,
@@ -140,5 +155,6 @@ module.exports = {
     CreateApplicationEvent,
     UpdateApplicationStateEvent,
     CreateBatchEvent,
-    UpdateBatchEvent
+    UpdateBatchEvent,
+    SubmissionActionEvent
 }
