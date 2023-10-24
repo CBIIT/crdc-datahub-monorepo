@@ -6,7 +6,7 @@ Following environmental variables are needed
 - VERSION : version number
 - DATE : build date
 - IDP : default identification provider, enabled if IDP is not provided from the client side e.g., "nih" 
-- COOKIE_SECRET : secret used to sign cookies
+- SESSION_SECRET : secret used to sign cookies
 - SESSION_TIMEOUT : session timeout in seconds, default is 30 minutes
 
 # Testing

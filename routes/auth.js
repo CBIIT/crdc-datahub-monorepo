@@ -3,12 +3,29 @@ const router = express.Router();
 const idpClient = require('../idps');
 const config = require('../config');
 const {logout} = require('../controllers/auth-api')
+const {DatabaseConnector} = require("../crdc-datahub-database-drivers/database-connector");
+const {MongoDBCollection} = require("../crdc-datahub-database-drivers/mongodb-collection");
+const {DATABASE_NAME, LOG_COLLECTION, USER_COLLECTION} = require("../crdc-datahub-database-drivers/database-constants");
+const {LoginEvent, LogoutEvent} = require("../crdc-datahub-database-drivers/domain/log-events");
+const {User} = require("../crdc-datahub-database-drivers/services/user");
+const {ERROR} = require("../crdc-datahub-database-drivers/constants/error-constants");
+const dbConnector = new DatabaseConnector(config.mongo_db_connection_string);
+let logCollection;
+let userService;
+dbConnector.connect().then(() => {
+    logCollection = new MongoDBCollection(dbConnector.client, DATABASE_NAME, LOG_COLLECTION);
+    const userCollection = new MongoDBCollection(dbConnector.client, DATABASE_NAME, USER_COLLECTION);
+    userService = new User(userCollection, logCollection);
+});
 
 /* Login */
 router.post('/login', async function (req, res) {
     try {
         const reqIDP = config.getIdpOrDefault(req.body['IDP']);
         const { name, lastName, tokens, email, idp } = await idpClient.login(req.body['code'], reqIDP, config.getUrlOrDefault(reqIDP, req.body['redirectUri']));
+        if (!await userService.isEmailAndIDPLoginPermitted(email, idp)) {
+            throw { statusCode: 403, message: ERROR.INACTIVE_USER };
+        }
         req.session.userInfo = {
             email: email,
             IDP: idp,
@@ -17,6 +34,7 @@ router.post('/login', async function (req, res) {
         };
         req.session.tokens = tokens;
         res.json({name, email, "timeout": config.session_timeout / 1000});
+        await logCollection.insert(LoginEvent.create(email, idp));
     } catch (e) {
         if (e.code && parseInt(e.code)) {
             res.status(e.code);
@@ -33,9 +51,9 @@ router.post('/login', async function (req, res) {
 router.post('/logout', async function (req, res, next) {
     try {
         const idp = config.getIdpOrDefault(req.body['IDP']);
+        const userInfo = req?.session?.userInfo;
+        if (userInfo?.email && userInfo?.IDP) await logCollection.insert(LogoutEvent.create(userInfo.email, userInfo.IDP));
         await idpClient.logout(idp, req.session.tokens);
-        let userInfo = req.session.userInfo;
-        // Remove User Session
         return logout(req, res);
     } catch (e) {
         console.log(e);
@@ -59,17 +77,5 @@ router.post('/authenticated', async function (req, res, next) {
     }
 });
 
-
-/* GET ping-ping for health checking. */
-router.get('/ping', function (req, res, next) {
-    res.send(`pong`);
-});
-
-/* GET version for health checking and version checking. */
-router.get('/version', function (req, res, next) {
-    res.json({
-        version: config.version, date: config.date
-    });
-});
 
 module.exports = router;
