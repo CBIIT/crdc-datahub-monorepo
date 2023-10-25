@@ -3,6 +3,7 @@ const {USER} = require("../constants/user-constants");
 const {ORGANIZATION} = require("../constants/organization-constants");
 const {getCurrentTime} = require("../utility/time-utility");
 const {v4} = require("uuid");
+const {ApprovedStudies} = require("../domain/approved-studies");
 
 class Organization {
   constructor(organizationCollection, userCollection, submissionCollection, applicationCollection) {
@@ -281,6 +282,21 @@ class Organization {
     }
 
     return { ...newOrg };
+  }
+
+  /**
+  * Stores approved studies in the organization's collection.
+  *
+  * @param {string} studyName - The name of the study.
+  * @param {string} studyAbbreviation - The abbreviation of the study.
+  * @returns {void}
+  */
+  async storeApprovedStudies(studyName, studyAbbreviation) {
+      const approvedStudies = ApprovedStudies.createApprovedStudies(studyName, studyAbbreviation);
+      const res = await this.organizationCollection.findOneAndUpdate({studyName, studyAbbreviation}, approvedStudies);
+      if (!res?.ok) {
+          console.error(ERROR.APPROVED_STUDIES_INSERTION + ` studyName: ${studyName}`);
+      }
   }
 }
 
