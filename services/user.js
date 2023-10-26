@@ -58,6 +58,10 @@ class User {
         }
         const updateResult = await this.userCollection.update(updateUser);
 
+        if (!updateResult?.matchedCount === 1) {
+            throw new Error(ERROR.UPDATE_FAILED);
+        }
+
         context.userInfo = {
             ...context.userInfo,
             ...updateUser,
