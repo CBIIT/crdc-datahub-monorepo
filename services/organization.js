@@ -287,7 +287,7 @@ class Organization {
   /**
   * Stores approved studies in the organization's collection.
   *
-   @param {string} orgID - The organization ID.
+  * @param {string} orgID - The organization ID.
   * @param {string} studyName - The name of the study.
   * @param {string} studyAbbreviation - The abbreviation of the study.
   * @returns {void}
