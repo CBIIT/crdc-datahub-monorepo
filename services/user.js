@@ -40,10 +40,33 @@ class User {
     async grantToken(params, context){
         isLoggedInOrThrow(context);
         isValidUserStatus(context?.userInfo?.userStatus);
-        let accessToken = createToken(context?.userInfo, config.token_secret, config.tokenTimeout)
+        if(context?.userInfo?.tokens){
+            context.userInfo.tokens = []
+        }
+        const accessToken = createToken(context?.userInfo, config.token_secret, config.tokenTimeout);
+        await this.linkTokentoUser(context, accessToken);
         return {
             tokens: [accessToken],
             message: "This token can only be viewed once and will be lost if it is not saved by the user"
+        }
+    }
+
+    async linkTokentoUser(context, accessToken){
+        const sessionCurrentTime = getCurrentTime();
+        const updateUser ={
+            _id: context.userInfo._id,
+            tokens: [accessToken],
+            updateAt: sessionCurrentTime
+        }
+        const updateResult = await this.userCollection.update(updateUser);
+
+        if (!updateResult?.matchedCount === 1) {
+            throw new Error(ERROR.UPDATE_FAILED);
+        }
+
+        context.userInfo = {
+            ...context.userInfo,
+            ...updateUser
         }
     }
 
