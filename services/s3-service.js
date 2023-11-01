@@ -12,7 +12,7 @@ class S3Service {
                 Key: `${prefix}/${fileName}`,
                 Expires: 3600, // 1 hour
                 ACL: 'private', // files to be publicly inaccessible
-                ContentType: 'application/octet-stream',
+                ContentType: 'text/tab-separated-values',
                 ContentDisposition: `attachment; filename="${fileName}"`,
             };
             return new Promise((resolve, reject) => {
