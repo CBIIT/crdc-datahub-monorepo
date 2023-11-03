@@ -40,7 +40,7 @@ class User {
     async grantToken(params, context){
         isLoggedInOrThrow(context);
         isValidUserStatus(context?.userInfo?.userStatus);
-        let accessToken = createToken(context?.userInfo, config.token_secret, config.tokenTimeout)
+        let accessToken = createToken(context?.userInfo, config.token_secret, config.token_timeout)
         return {
             tokens: [accessToken],
             message: "This token can only be viewed once and will be lost if it is not saved by the user"
@@ -385,7 +385,7 @@ class User {
             if (isUserActivated && isStatusChange) {
                 const adminEmails = await this.getAdminUserEmails();
                 const CCs = adminEmails.filter((u)=> u.email).map((u)=> u.email);
-                await this.notificationsService.inactiveUserNotification(aUser.email,
+                await this.notificationsService.deactivateUserNotification(aUser.email,
                     CCs, {firstName: aUser.firstName},
                     {officialEmail: this.officialEmail});
             }
