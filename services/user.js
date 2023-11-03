@@ -19,11 +19,11 @@ const isValidUserStatus = (userStatus) => {
     if (userStatus && !validUserStatus.includes(userStatus)) throw new Error(ERROR.INVALID_USER_STATUS);
 }
 
-const createToken = (userInfo, token_secret, tokenTimeout)=> {
+const createToken = (userInfo, token_secret, token_timeout)=> {
     return jwt.sign(
         userInfo,
         token_secret,
-        { expiresIn: tokenTimeout });
+        { expiresIn: token_timeout });
 }
 
 class User {
@@ -44,7 +44,7 @@ class User {
         if(context?.userInfo?.tokens){
             context.userInfo.tokens = []
         }
-        const accessToken = createToken(context?.userInfo, config.token_secret, config.tokenTimeout);
+        const accessToken = createToken(context?.userInfo, config.token_secret, config.token_timeout);
         await this.linkTokentoUser(context, accessToken);
         return {
             tokens: [accessToken],
