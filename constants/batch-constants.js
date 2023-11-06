@@ -10,7 +10,7 @@ module.exports = Object.freeze({
             DELETE: "delete",
         },
         STATUSES: {
-            NEW: "New",
+            UPLOADING: "Uploading",
             UPLOADED: "Uploaded",
             FAILED: "Upload Failed",
             LOADED: "Loaded",
