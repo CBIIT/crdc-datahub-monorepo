@@ -244,7 +244,7 @@ class Organization {
 
     if (!!process.env.SUBMISSION_BUCKET && !!newOrg._id) {
         newOrg.bucketName = process.env.SUBMISSION_BUCKET;
-        newOrg.rootPath = `/${newOrg._id}`;
+        newOrg.rootPath = newOrg._id;
     } else {
         throw new Error(ERROR.NO_SUBMISSION_BUCKET);
     }
