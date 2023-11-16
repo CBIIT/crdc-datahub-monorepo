@@ -19,15 +19,15 @@ const isValidUserStatus = (userStatus) => {
     if (userStatus && !validUserStatus.includes(userStatus)) throw new Error(ERROR.INVALID_USER_STATUS);
 }
 
-const createToken = (userInfo, token_secret, tokenTimeout)=> {
+const createToken = (userInfo, token_secret, token_timeout)=> {
     return jwt.sign(
         userInfo,
         token_secret,
-        { expiresIn: tokenTimeout });
+        { expiresIn: token_timeout });
 }
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, devTier) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
@@ -35,15 +35,39 @@ class User {
         this.submissionsCollection = submissionsCollection;
         this.applicationCollection = applicationCollection;
         this.officialEmail = officialEmail;
+        this.devTier = devTier;
     }
 
     async grantToken(params, context){
         isLoggedInOrThrow(context);
         isValidUserStatus(context?.userInfo?.userStatus);
-        let accessToken = createToken(context?.userInfo, config.token_secret, config.tokenTimeout)
+        if(context?.userInfo?.tokens){
+            context.userInfo.tokens = []
+        }
+        const accessToken = createToken(context?.userInfo, config.token_secret, config.token_timeout);
+        await this.linkTokentoUser(context, accessToken);
         return {
             tokens: [accessToken],
             message: "This token can only be viewed once and will be lost if it is not saved by the user"
+        }
+    }
+
+    async linkTokentoUser(context, accessToken){
+        const sessionCurrentTime = getCurrentTime();
+        const updateUser ={
+            _id: context.userInfo._id,
+            tokens: [accessToken],
+            updateAt: sessionCurrentTime
+        }
+        const updateResult = await this.userCollection.update(updateUser);
+
+        if (!updateResult?.matchedCount === 1) {
+            throw new Error(ERROR.UPDATE_FAILED);
+        }
+
+        context.userInfo = {
+            ...context.userInfo,
+            ...updateUser
         }
     }
 
@@ -387,7 +411,8 @@ class User {
                 const CCs = adminEmails.filter((u)=> u.email).map((u)=> u.email);
                 await this.notificationsService.inactiveUserNotification(aUser.email,
                     CCs, {firstName: aUser.firstName},
-                    {officialEmail: this.officialEmail});
+                    {officialEmail: this.officialEmail}
+                ,this.devTier);
             }
 
             const log = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
