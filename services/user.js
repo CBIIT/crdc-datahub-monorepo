@@ -409,7 +409,7 @@ class User {
             if (isUserActivated && isStatusChange) {
                 const adminEmails = await this.getAdminUserEmails();
                 const CCs = adminEmails.filter((u)=> u.email).map((u)=> u.email);
-                await this.notificationsService.inactiveUserNotification(aUser.email,
+                await this.notificationsService.deactivateUserNotification(aUser.email,
                     CCs, {firstName: aUser.firstName},
                     {officialEmail: this.officialEmail}
                 ,this.devTier);
