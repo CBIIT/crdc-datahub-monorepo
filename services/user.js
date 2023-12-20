@@ -27,7 +27,7 @@ const createToken = (userInfo, token_secret, token_timeout)=> {
 }
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, devTier) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, tier) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
@@ -35,7 +35,7 @@ class User {
         this.submissionsCollection = submissionsCollection;
         this.applicationCollection = applicationCollection;
         this.officialEmail = officialEmail;
-        this.devTier = devTier;
+        this.tier = tier;
     }
 
     async grantToken(params, context){
@@ -412,7 +412,7 @@ class User {
                 await this.notificationsService.deactivateUserNotification(aUser.email,
                     CCs, {firstName: aUser.firstName},
                     {officialEmail: this.officialEmail}
-                ,this.devTier);
+                ,this.tier);
             }
 
             const log = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
