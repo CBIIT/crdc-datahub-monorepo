@@ -87,10 +87,17 @@ class MongoDBCollection {
         }
     }
 
+
+    /**
+     * Finds the distinct values for a specified field across a single collection.
+     * Applies the specified filter to a collection then returns the distinct values of the specified field in the filter results as an array.
+     * @param field A string value for which the distinct values are returned.
+     * @param filter An object containing the filter to apply to the collection before retrieving the distinct values. Example: {color: "green", shape: "square"}
+     * @returns {Promise<*>} A promise that will return an array of distinct values when resolved
+     */
     async distinct(field, filter){
         try{
-            const distinctValues = await this.collection.distinct(field, filter);
-            return distinctValues;
+            return await this.collection.distinct(field, filter);
         }
         catch (e){
             logAndThrow("An exception occurred during a distinct operation", e);
