@@ -86,6 +86,16 @@ class MongoDBCollection {
             logAndThrow("An exception occurred during a delete operation", e);
         }
     }
+
+    async distinct(field, filter){
+        try{
+            const distinctValues = await this.collection.distinct(field, filter);
+            return distinctValues;
+        }
+        catch (e){
+            logAndThrow("An exception occurred during a distinct operation", e);
+        }
+    }
 }
 
 function logAndThrow(message, error){
