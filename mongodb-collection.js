@@ -14,6 +14,15 @@ class MongoDBCollection {
         }
     }
 
+    async countDoc(query){
+        try{
+            return await this.collection.countDocuments(query);
+        }
+        catch (e){
+            logAndThrow("An exception occurred during count documents", e);
+        }
+    }
+
     async aggregate(pipeline){
         try{
             return await this.collection.aggregate(pipeline).toArray()
