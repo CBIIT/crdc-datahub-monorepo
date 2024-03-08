@@ -2,9 +2,12 @@ const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
 
-const {getCurrentTime, subtractDaysFromNow, toISO} = require("../utility/time-utility");
+const {getCurrentTime, subtractDaysFromNow} = require("../utility/time-utility");
 const {LOGIN} = require("../constants/event-constants");
 const {v4} = require("uuid");
+const config = require("../../config")
+const jwt = require("jsonwebtoken");
+
 
 
 const isLoggedInOrThrow = (context) => {
@@ -16,36 +19,58 @@ const isValidUserStatus = (userStatus) => {
     if (userStatus && !validUserStatus.includes(userStatus)) throw new Error(ERROR.INVALID_USER_STATUS);
 }
 
+const createToken = (userInfo, token_secret, token_timeout)=> {
+    return jwt.sign(
+        userInfo,
+        token_secret,
+        { expiresIn: token_timeout });
+}
+
 class User {
-    constructor(userCollection, logCollection, organizationService) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, devTier) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
-        this.organizationService = organizationService;
+        this.organizationCollection = organizationCollection;
+        this.notificationsService = notificationsService;
+        this.submissionsCollection = submissionsCollection;
+        this.applicationCollection = applicationCollection;
+        this.officialEmail = officialEmail;
+        this.devTier = devTier;
     }
 
-    // Note: This is a wrapper for the OrgService version which returns OrgInfo instead of Organization
-    async listOrganizations(params, context) {
+    async grantToken(params, context){
         isLoggedInOrThrow(context);
-        if (context?.userInfo?.role !== USER.ROLES.ADMIN && context?.userInfo.role !== USER.ROLES.ORG_OWNER) {
-            throw new Error(ERROR.INVALID_ROLE);
+        isValidUserStatus(context?.userInfo?.userStatus);
+        if(context?.userInfo?.tokens){
+            context.userInfo.tokens = []
         }
-        if (context.userInfo.role === USER.ROLES.ORG_OWNER && !context?.userInfo?.organization?.orgID) {
-            throw new Error(ERROR.NO_ORG_ASSIGNED);
+        const accessToken = createToken(context?.userInfo, config.token_secret, config.token_timeout);
+        await this.linkTokentoUser(context, accessToken);
+        return {
+            tokens: [accessToken],
+            message: "This token can only be viewed once and will be lost if it is not saved by the user"
         }
-
-        const filters = {};
-        if (context?.userInfo?.role === USER.ROLES.ORG_OWNER) {
-            filters["_id"] = context?.userInfo?.organization?.orgID;
-        }
-
-        const data = await this.organizationService.listOrganizations(filters);
-        return (data || []).map(org => ({
-            orgID: org._id,
-            orgName: org.name,
-            createdAt: org.createdAt,
-            updateAt: org.updateAt,
-        }));
     }
+
+    async linkTokentoUser(context, accessToken){
+        const sessionCurrentTime = getCurrentTime();
+        const updateUser ={
+            _id: context.userInfo._id,
+            tokens: [accessToken],
+            updateAt: sessionCurrentTime
+        }
+        const updateResult = await this.userCollection.update(updateUser);
+
+        if (!updateResult?.matchedCount === 1) {
+            throw new Error(ERROR.UPDATE_FAILED);
+        }
+
+        context.userInfo = {
+            ...context.userInfo,
+            ...updateUser
+        }
+    }
+
 
     async getUserByID(userID) {
         const result = await this.userCollection.aggregate([{
@@ -101,14 +126,65 @@ class User {
         return result || [];
     }
 
+    /**
+     * List Active Curators API Interface.
+     *
+     * - `ADMIN` can call this API only
+     *
+     * @api
+     * @param {Object} params Endpoint parameters
+     * @param {{ cookie: Object, userInfo: Object }} context API request context
+     * @returns {Promise<Object[]>} An array of Curator Users mapped to the `UserInfo` type
+     */
+    async listActiveCuratorsAPI(params, context) {
+        if (!context?.userInfo?.email || !context?.userInfo?.IDP) {
+            throw new Error(ERROR.NOT_LOGGED_IN);
+        }
+        if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+            throw new Error(ERROR.INVALID_ROLE);
+        };
+
+        const curators = await this.getActiveCurators();
+        return curators?.map((user) => ({
+            userID: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            createdAt: user.createdAt,
+            updateAt: user.updateAt,
+        })) || [];
+    }
+
+    /**
+     * Get all users with the `CURATOR` role and `ACTIVE` status.
+     *
+     * @async
+     * @returns {Promise<Object[]>} An array of Users
+     */
+    async getActiveCurators() {
+        const filters = { role: USER.ROLES.CURATOR, userStatus: USER.STATUSES.ACTIVE };
+        const result = await this.userCollection.aggregate([{ "$match": filters }]);
+
+        return result || [];
+    }
+
     async getAdmin() {
         let result = await this.userCollection.aggregate([{
             "$match": {
-                role: USER.ROLES.ADMIN
+                role: USER.ROLES.ADMIN,
+                userStatus: USER.STATUSES.ACTIVE
             }
         }]);
-        return result;
+        return result || [];
+    }
 
+    async getPOCs() {
+        let result = await this.userCollection.aggregate([{
+            "$match": {
+                role: USER.ROLES.DC_POC,
+                userStatus: USER.STATUSES.ACTIVE
+            }
+        }]);
+        return result || [];
     }
 
     async getConcierge(orgID) {
@@ -125,7 +201,8 @@ class User {
         let result = await this.userCollection.aggregate([{
             "$match": {
                 "organization.orgID": orgID,
-                role: USER.ROLES.ORG_OWNER
+                role: USER.ROLES.ORG_OWNER,
+                userStatus: USER.STATUSES.ACTIVE
             }
         }]);
         return result;
@@ -142,6 +219,7 @@ class User {
             userStatus: USER.STATUSES.ACTIVE,
             role: USER.ROLES.USER,
             organization: {},
+            dataCommons: [],
             firstName: context?.userInfo?.firstName || emailName,
             lastName: context.userInfo.lastName,
             createdAt: sessionCurrentTime,
@@ -217,6 +295,23 @@ class User {
             throw new Error(error)
         }
 
+        // Update all dependent objects only if the User's Name has changed
+        // NOTE: We're not waiting for these async updates to complete before returning the updated User
+        if (updateUser.firstName !== user[0].firstName || updateUser.lastName !== user[0].lastName) {
+            this.submissionsCollection.updateMany(
+                { "submitterID": updateUser._id },
+                { "submitterName": `${updateUser.firstName} ${updateUser.lastName}` }
+            );
+            this.organizationCollection.updateMany(
+                { "conciergeID": updateUser._id },
+                { "conciergeName": `${updateUser.firstName} ${updateUser.lastName}` }
+            );
+            this.applicationCollection.updateMany(
+                { "applicant.applicantID": updateUser._id },
+                { "applicant.applicantName": `${updateUser.firstName} ${updateUser.lastName}` }
+            );
+        }
+
         context.userInfo = {
             ...context.userInfo,
             ...updateUser,
@@ -247,11 +342,12 @@ class User {
         }
 
         const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
-        if (!params.organization && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(params.role)) {
-            throw new Error(ERROR.USER_ORG_REQUIRED);
-        }
-        if (params.organization && params.organization !== user[0]?.organization?.orgID) {
-            const newOrg = await this.organizationService.getOrganizationByID(params.organization);
+        if (typeof(params.organization) !== "undefined" && params.organization && params.organization !== user[0]?.organization?.orgID) {
+            const result = await this.organizationCollection.aggregate([{
+                "$match": { _id: params.organization }
+            }, {"$limit": 1}]);
+            const newOrg = result?.[0];
+
             if (!newOrg?._id || newOrg?._id !== params.organization) {
                 throw new Error(ERROR.INVALID_ORG_ID);
             }
@@ -262,7 +358,7 @@ class User {
                 createdAt: newOrg.createdAt,
                 updateAt: newOrg.updateAt,
             };
-        } else if (!params.organization && user[0]?.organization?.orgID) {
+        } else if (typeof(params.organization) !== "undefined" && !params.organization && user[0]?.organization?.orgID) {
             updatedUser.organization = null;
         }
         if (params.role && Object.values(USER.ROLES).includes(params.role)) {
@@ -270,6 +366,28 @@ class User {
         }
         if (params.status && Object.values(USER.STATUSES).includes(params.status)) {
             updatedUser.userStatus = params.status;
+        }
+
+        const dataCommonsProvided = typeof params.dataCommons !== "undefined";
+        const userIsDcPOC = updatedUser.role === USER.ROLES.DC_POC || (typeof(updatedUser.role) === "undefined" && user[0]?.role === USER.ROLES.DC_POC);
+        if (userIsDcPOC && dataCommonsProvided && params.dataCommons?.length > 0) {
+            updatedUser.dataCommons = params.dataCommons;
+        } else if (userIsDcPOC && dataCommonsProvided && !params.dataCommons?.length) {
+            throw new Error(ERROR.USER_DC_REQUIRED);
+        } else if (!userIsDcPOC && user[0]?.dataCommons?.length > 0) {
+            updatedUser.dataCommons = [];
+        }
+
+        // Check if Data Commons is required and missing for the user's role
+        const userDataCommons = updatedUser.dataCommons?.length > 0 || (user[0]?.dataCommons?.length > 0 && !dataCommonsProvided);
+        if (userIsDcPOC && !userDataCommons) {
+            throw new Error(ERROR.USER_DC_REQUIRED);
+        }
+
+        // Check if an organization is required and missing for the user's role
+        const userHasOrg = !!updatedUser?.organization?.orgID || (user[0]?.organization?.orgID && typeof(updatedUser.organization) === "undefined");
+        if (!userHasOrg && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(updatedUser.role || user[0]?.role)) {
+            throw new Error(ERROR.USER_ORG_REQUIRED);
         }
 
         const updateResult = await this.userCollection.update(updatedUser);
@@ -284,6 +402,18 @@ class User {
                 prevProfile[key] = user[0]?.[key];
                 newProfile[key] = updatedUser[key];
             });
+
+            const aUser = user[0];
+            const isUserActivated = aUser?.userStatus !== USER.STATUSES.INACTIVE;
+            const isStatusChange = params.status && params.status.toLowerCase() === USER.STATUSES.INACTIVE.toLowerCase();
+            if (isUserActivated && isStatusChange) {
+                const adminEmails = await this.getAdminUserEmails();
+                const CCs = adminEmails.filter((u)=> u.email).map((u)=> u.email);
+                await this.notificationsService.inactiveUserNotification(aUser.email,
+                    CCs, {firstName: aUser.firstName},
+                    {officialEmail: this.officialEmail}
+                ,this.devTier);
+            }
 
             const log = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
             await this.logCollection.insert(log);
@@ -395,6 +525,20 @@ class User {
             throw new Error("An database error occurred while querying login permission");
         }
         return result?.length === 0;
+    }
+
+    /**
+     * getOrgOwnerByOrgName
+     * @param {*} orgName
+     * @returns {Promise<Array>} user[]
+     */
+    async getOrgOwnerByOrgName(orgName) {
+        const orgOwner= {
+            "userStatus": USER.STATUSES.ACTIVE,
+            "role": USER.ROLES.ORG_OWNER,
+            "organization.orgName": orgName
+        };
+        return await this.userCollection.aggregate([{"$match": orgOwner}]);
     }
 
     isAdmin(role) {
