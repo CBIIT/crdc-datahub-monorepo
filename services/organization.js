@@ -295,15 +295,37 @@ class Organization {
   async storeApprovedStudies(orgID, studyName, studyAbbreviation) {
       const aOrg = await this.getOrganizationByID(orgID);
       const orgApprovedStudies = aOrg?.studies || [];
-      const isStudyExists = orgApprovedStudies.some((study)=> study?.studyName === studyName && study?.studyAbbreviation === studyAbbreviation);
+      const isStudyExists = orgApprovedStudies.some((study)=> study?.studyName === studyName);
+
+      if (isStudyExists) {
+          const updated = this.#updateStudyAbbreviation(orgApprovedStudies, studyName, studyAbbreviation);
+          if (updated) {
+              await this.#updateApprovedStudyOrganization(aOrg, studyName);
+          }
+      }
+
       if (!aOrg || isStudyExists) {
           return;
       }
       orgApprovedStudies.push(ApprovedStudies.createApprovedStudies(studyName, studyAbbreviation));
       aOrg.studies = orgApprovedStudies;
+      await this.#updateApprovedStudyOrganization(aOrg, studyName);
+  }
+
+  #updateStudyAbbreviation(studies, studyName, studyAbb) {
+      for (let study of studies) {
+          if (study?.studyName === studyName && study?.studyAbbreviation !== studyAbb) {
+              study.studyAbbreviation = studyAbb;
+              return true;
+          }
+      }
+      return false;
+  }
+
+  async #updateApprovedStudyOrganization(aOrg, studyName) {
       const res = await this.organizationCollection.update(aOrg);
       if (res?.modifiedCount !== 1) {
-          console.error(ERROR.APPROVED_STUDIES_INSERTION + ` studyName: ${studyName}`);
+          console.error(ERROR.ORGANIZATION_APPROVED_STUDIES_INSERTION + ` studyName: ${studyName}`);
       }
   }
 }
