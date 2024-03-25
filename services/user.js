@@ -443,11 +443,25 @@ class User {
                     $lt: subtractDaysFromNow(inactiveDays)
                 }
             }},
-            {"$project": {
-                _id: 0, // Exclude _id field
-                email: "$_id.userEmail",
-                IDP: "$_id.userIDP"
-            }}
+            {"$lookup": {
+                from: "users",
+                let: {"logEmail": "$_id.userEmail", "logIDP": "$_id.userIDP"},
+                pipeline: [
+                    {
+                        "$match": {
+                            "$expr": {
+                                "$and": [
+                                    {"$eq": ["$email", "$$logEmail"]},
+                                    {"$eq": ["$IDP", "$$logIDP"]}
+                                ]
+                            }
+                        }
+                    },
+                    {"$project": { "_id": 0, "email": 1, "idp": 1, "userStatus": 1 }}
+                ],
+                "as": "userDetails"}},
+            {"$unwind": {path: "$userDetails"}},
+            {"$project": {_id: 0, email: "$_id.userEmail",IDP: "$_id.userIDP",userStatus: "$userDetails.userStatus"}}
         ];
         return await this.logCollection.aggregate(query) || [];
     }
@@ -482,7 +496,7 @@ class User {
             userStatus: { $in: [USER.STATUSES.ACTIVE]
             }
         }}
-        return await this.userCollection.aggregate([condition,{$project: { _id: 0, email: 1, IDP: 1 }}]);
+        return await this.userCollection.aggregate([condition,{$project: { _id: 0, email: 1, IDP: 1, userStatus: 1 }}]);
     }
     /**
      * Disable users matching specific user conditions.
