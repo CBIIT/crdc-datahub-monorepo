@@ -480,6 +480,7 @@ class User {
     }
 
     async checkForInactiveUsers(qualifyingEvents) {
+        // users collection field names
         const USER_FIELDS = {
             ID: "_id",
             FIRST_NAME: "firstName",
@@ -487,21 +488,27 @@ class User {
             IDP: "IDP",
             STATUS: "userStatus"
         };
+        // logs collection field names
         const LOGS_FIELDS = {
             EMAIL: "userEmail",
             IDP: "userIDP",
             EVENT_TYPE: "eventType",
             TIMESTAMP: "timestamp"
         };
+        // fields added by pipeline
         const LOGS_ARRAY = "log_events_array";
         const LATEST_LOG = "latest_log_event";
 
         let pipeline = [];
+        // filter out users where status is not "Active"
         pipeline.push({
             $match: {
                 [USER_FIELDS.STATUS]: USER.STATUSES.ACTIVE
             }
         });
+        // collect log events where the log event email matches the user's email and store the events in an array
+        // NOTE: we can only match on one field here so log events where the IDP does not match will be filtered out in
+        // the next stage
         pipeline.push({
             $lookup: {
                 from: LOG_COLLECTION,
@@ -510,6 +517,8 @@ class User {
                 as: LOGS_ARRAY
             }
         });
+        // filter out the log events where the IDP does not match the user's IDP and the log events where the event type
+        // is not included in the qualifying events array
         pipeline.push({
             $set: {
                 [LOGS_ARRAY]: {
@@ -530,6 +539,7 @@ class User {
                 }
             }
         });
+        // store the most recent log event in a new field
         pipeline.push({
             $set: {
                 [LATEST_LOG]: {
@@ -544,6 +554,7 @@ class User {
                 }
             }
         });
+        // filter out users that have qualifying log event types recent enough to fall within the inactive user days period
         pipeline.push({
             $match: {
                 $or: [
@@ -560,6 +571,7 @@ class User {
                 ]
             }
         });
+        // format the output
         pipeline.push({
             $project: {
                 [USER_FIELDS.ID]: 1,
