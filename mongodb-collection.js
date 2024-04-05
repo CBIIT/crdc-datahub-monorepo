@@ -41,6 +41,19 @@ class MongoDBCollection {
         }
     }
 
+    async insertMany(inputs){
+        try{
+            let bulkOperation = this.collection.initializeOrderedBulkOp()
+            inputs.filter((x) => {
+                bulkOperation.insert(x);
+            });
+            return await bulkOperation.execute();
+        }
+        catch (e){
+            logAndThrow("An exception occurred during an insert operation", e);
+        }
+    }
+
 
     async findOneAndUpdate(query, doc) {
         const updateDoc = {
