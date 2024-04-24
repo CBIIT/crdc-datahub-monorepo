@@ -28,6 +28,28 @@ class S3Service {
             console.error('Error generating pre-signed URL:', error);
         }
     }
+
+    async deleteFile(bucketName, fileKey) {
+        return new Promise((resolve, reject) => {
+            const params = {
+                Bucket: bucketName,
+                Key: fileKey
+            };
+            try {
+                this.s3.deleteObject(params, (err, data)=> {
+                    if (err) {
+                        console.error(`Failed to delete file "${fileKey}" from bucket "${bucketName}": ${err.message}`);
+                        reject(err);
+                        return;
+                    }
+                    resolve(data);
+                });
+            } catch (err) {
+                console.error(`Failed to delete file "${fileKey}" from bucket "${bucketName}": ${err.message}`);
+                reject(err);
+            }
+        });
+    }
 }
 
 module.exports = {
