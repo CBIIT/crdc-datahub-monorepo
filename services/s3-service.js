@@ -29,20 +29,22 @@ class S3Service {
         }
     }
 
+    /**
+     * Asynchronously deletes a file from an AWS S3 bucket.
+     * @param {string} bucketName - The name of the S3 bucket from which the file will be deleted.
+     * @param {string} fileKey - The key (path including the filename) of the file to delete.
+     * @returns {Promise<Object>} A promise that resolves to the result of the delete operation if successful.
+     */
     async deleteFile(bucketName, fileKey) {
         return new Promise((resolve, reject) => {
-            const params = {
-                Bucket: bucketName,
-                Key: fileKey
-            };
             try {
-                this.s3.deleteObject(params, (err, data)=> {
+                this.s3.deleteObject({Bucket: bucketName, Key: fileKey}, (err, data)=> {
                     if (err) {
                         console.error(`Failed to delete file "${fileKey}" from bucket "${bucketName}": ${err.message}`);
                         reject(err);
-                        return;
+                    } else {
+                        resolve(data);
                     }
-                    resolve(data);
                 });
             } catch (err) {
                 console.error(`Failed to delete file "${fileKey}" from bucket "${bucketName}": ${err.message}`);
