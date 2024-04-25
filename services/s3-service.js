@@ -53,6 +53,13 @@ class S3Service {
         });
     }
 
+    /**
+     * Asynchronously lists objects in an S3 bucket that match a given file key prefix.
+     *
+     * @param {string} bucketName - The name of the S3 bucket.
+     * @param {string} fileKey - The prefix of the file keys to list.
+     * @returns {Promise<Object>} A promise that resolves with the list of objects if successful, or rejects with an error.
+     */
     async listFile(bucketName, fileKey) {
         return new Promise((resolve, reject) => {
             this.s3.listObjects({Bucket: bucketName, Prefix: fileKey}, (err, data) => {
