@@ -52,6 +52,18 @@ class S3Service {
             }
         });
     }
+
+    async listFile(bucketName, fileKey) {
+        return new Promise((resolve, reject) => {
+            this.s3.listObjects({Bucket: bucketName, Prefix: fileKey}, (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data);
+                }
+            });
+        });
+    }
 }
 
 module.exports = {
