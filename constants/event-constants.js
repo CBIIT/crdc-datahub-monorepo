@@ -3,6 +3,7 @@ module.exports = Object.freeze({
     LOGIN: 'Login',
     LOGOUT: 'Logout',
     PROFILE_UPDATE: 'Profile_Update',
+    REACTIVATE_USER: 'Reactivate_User',
     CREATE_ACCESS_TOKEN: 'Create_Access_Token',
     CREATE_APPLICATION: 'Create_Application',
     UPDATE_APPLICATION_STATE: 'Update_Application_State',

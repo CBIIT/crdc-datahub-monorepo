@@ -2,11 +2,11 @@ const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent} = require("../domain/log-events");
 
-const {getCurrentTime, subtractDaysFromNow} = require("../utility/time-utility");
-const {LOGIN} = require("../constants/event-constants");
+const {getCurrentTime, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
 const {v4} = require("uuid");
 const config = require("../../config")
 const jwt = require("jsonwebtoken");
+const {LOG_COLLECTION} = require("../database-constants");
 
 
 
@@ -432,72 +432,6 @@ class User {
         return await this.userCollection.aggregate([{"$match": orgOwnerOrAdminRole}]) || [];
     }
 
-    async getInactiveUsers(inactiveDays) {
-        const query = [
-            {"$match": {
-                eventType: LOGIN
-            }},
-            {"$group": {_id: { userEmail: "$userEmail", userIDP: "$userIDP" }, lastLogin: { $max: "$localtime" }}},
-            {"$match": { // inactive conditions
-                lastLogin: {
-                    $lt: subtractDaysFromNow(inactiveDays)
-                }
-            }},
-            {"$lookup": {
-                from: "users",
-                let: {"logEmail": "$_id.userEmail", "logIDP": "$_id.userIDP"},
-                pipeline: [
-                    {
-                        "$match": {
-                            "$expr": {
-                                "$and": [
-                                    {"$eq": ["$email", "$$logEmail"]},
-                                    {"$eq": ["$IDP", "$$logIDP"]}
-                                ]
-                            }
-                        }
-                    },
-                    {"$project": { "_id": 0, "email": 1, "idp": 1, "userStatus": 1 }}
-                ],
-                "as": "userDetails"}},
-            {"$unwind": {path: "$userDetails"}},
-            {"$project": {_id: 0, email: "$_id.userEmail",IDP: "$_id.userIDP",userStatus: "$userDetails.userStatus"}}
-        ];
-        return await this.logCollection.aggregate(query) || [];
-    }
-    /**
-     * Finds all users.
-     *
-     * @returns {Promise<Array>} - An array of log aggregation result projecting email and idp only.
-     */
-    async getAllUsersByEmailAndIDP() {
-        return await this.logCollection.aggregate([
-            {"$match": {
-                    eventType: LOGIN
-            }},
-            {"$group": {_id: { userEmail: "$userEmail", userIDP: "$userIDP" }}},
-            {"$project": {
-                _id: 0,
-                email: "$_id.userEmail",
-                IDP: "$_id.userIDP"
-            }}
-        ]);
-    }
-    /**
-     * Finds users excluding specific user conditions.
-     *
-     * @param {Array} users - An array of user conditions for $nor.
-     * @returns {Promise<Array>} - An array of user aggregation result projecting email and idp only.
-     */
-    async findUsersExcludingEmailAndIDP(users) {
-        const condition = {"$match": {
-            ...(users && users?.length > 0) ? {$nor: users} : {},
-            // valid user-statuses
-            userStatus: { $in: [USER.STATUSES.ACTIVE]
-            }
-        }}
-        return await this.userCollection.aggregate([condition,{$project: { _id: 0, email: 1, IDP: 1, userStatus: 1 }}]);
-    }
     /**
      * Disable users matching specific user conditions.
      *
@@ -514,6 +448,99 @@ class User {
         }
         return [];
     }
+
+    async checkForInactiveUsers(qualifyingEvents) {
+        const USER_FIELDS = {
+            ID: "_id",
+            FIRST_NAME: "firstName",
+            EMAIL: "email",
+            IDP: "IDP",
+            STATUS: "userStatus"
+        };
+        const LOGS_FIELDS = {
+            EMAIL: "userEmail",
+            IDP: "userIDP",
+            EVENT_TYPE: "eventType",
+            TIMESTAMP: "timestamp"
+        };
+        const LOGS_ARRAY = "log_events_array";
+        const LATEST_LOG = "latest_log_event";
+
+        let pipeline = [];
+        pipeline.push({
+            $match: {
+                [USER_FIELDS.STATUS]: USER.STATUSES.ACTIVE
+            }
+        });
+        pipeline.push({
+            $lookup: {
+                from: LOG_COLLECTION,
+                localField: USER_FIELDS.EMAIL,
+                foreignField: LOGS_FIELDS.EMAIL,
+                as: LOGS_ARRAY
+            }
+        });
+        pipeline.push({
+            $set: {
+                [LOGS_ARRAY]: {
+                    $filter: {
+                        input: "$" + LOGS_ARRAY,
+                        as: "log",
+                        cond: {
+                            $and: [
+                                {
+                                    $eq: ["$$log." + LOGS_FIELDS.IDP, "$" + USER_FIELDS.IDP],
+                                },
+                                {
+                                    $in: ["$$log." + LOGS_FIELDS.EVENT_TYPE, qualifyingEvents]
+                                },
+                            ],
+                        }
+                    }
+                }
+            }
+        });
+        pipeline.push({
+            $set: {
+                [LATEST_LOG]: {
+                    $first: {
+                        $sortArray: {
+                            input: "$" + LOGS_ARRAY,
+                            sortBy: {
+                                timestamp: -1
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        pipeline.push({
+            $match: {
+                $or: [
+                    {
+                        [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
+                            $exists: 0
+                        }
+                    },
+                    {
+                        [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
+                            $lt: subtractDaysFromNowTimestamp(config.inactive_user_days)
+                        }
+                    },
+                ]
+            }
+        });
+        pipeline.push({
+            $project: {
+                [USER_FIELDS.ID]: 1,
+                [USER_FIELDS.EMAIL]: 1,
+                [USER_FIELDS.IDP]: 1,
+                [USER_FIELDS.FIRST_NAME]: 1,
+            }
+        });
+        return await this.userCollection.aggregate(pipeline);
+    }
+
     /**
      * Check if login with an email and identity provider (IDP) is permitted.
      *
