@@ -4,6 +4,11 @@ module.exports = Object.freeze({
             METADATA: "metadata",
             DATA_FILE: "data file"
         },
+        INTENTION: {
+            NEW: "Add",
+            UPDATE: "Add/Change",
+            DELETE: "Remove",
+        },
         STATUSES: {
             UPLOADING: "Uploading",
             UPLOADED: "Uploaded",
