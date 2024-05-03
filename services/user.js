@@ -1,8 +1,10 @@
 const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
-const {UpdateProfileEvent} = require("../domain/log-events");
+const {UpdateProfileEvent, ReactivateUserEvent} = require("../domain/log-events");
 
-const {getCurrentTime, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
+
+const {getCurrentTime, subtractDaysFromNow, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
+const {LOGIN, REACTIVATE_USER} = require("../constants/event-constants");
 const {v4} = require("uuid");
 const config = require("../../config")
 const jwt = require("jsonwebtoken");
@@ -415,8 +417,19 @@ class User {
                 ,this.tier);
             }
 
-            const log = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
-            await this.logCollection.insert(log);
+            // create an array to store new events
+            let logEvents = [];
+            // create an profile update event and store it in the events array
+            const updateProfileEvent = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
+            logEvents.push(updateProfileEvent);
+            // if the user has been reactivated during the update
+            if (prevProfile?.userStatus === USER.STATUSES.INACTIVE && newProfile?.userStatus === USER.STATUSES.ACTIVE){
+                // create Reactivate User event and add it to the events array
+                const reactivateUserEvent = ReactivateUserEvent.create(user[0]._id, user[0].email, user[0].IDP);
+                logEvents.push(reactivateUserEvent);
+            }
+            // insert all of the events in the events array into the log collection
+            await this.logCollection.insertMany(logEvents);
         } else {
             throw new Error(ERROR.UPDATE_FAILED);
         }
@@ -568,6 +581,7 @@ class User {
         return result?.length === 0;
     }
 
+
     /**
      * getOrgOwnerByOrgName
      * @param {*} orgName
@@ -584,6 +598,110 @@ class User {
 
     isAdmin(role) {
         return role && role === USER.ROLES.ADMIN;
+    }
+
+    async checkForInactiveUsers(qualifyingEvents) {
+        // users collection field names
+        const USER_FIELDS = {
+            ID: "_id",
+            FIRST_NAME: "firstName",
+            EMAIL: "email",
+            IDP: "IDP",
+            STATUS: "userStatus"
+        };
+        // logs collection field names
+        const LOGS_FIELDS = {
+            EMAIL: "userEmail",
+            IDP: "userIDP",
+            EVENT_TYPE: "eventType",
+            TIMESTAMP: "timestamp"
+        };
+        // fields added by pipeline
+        const LOGS_ARRAY = "log_events_array";
+        const LATEST_LOG = "latest_log_event";
+
+        let pipeline = [];
+        // filter out users where status is not "Active"
+        pipeline.push({
+            $match: {
+                [USER_FIELDS.STATUS]: USER.STATUSES.ACTIVE
+            }
+        });
+        // collect log events where the log event email matches the user's email and store the events in an array
+        // NOTE: we can only match on one field here so log events where the IDP does not match will be filtered out in
+        // the next stage
+        pipeline.push({
+            $lookup: {
+                from: LOG_COLLECTION,
+                localField: USER_FIELDS.EMAIL,
+                foreignField: LOGS_FIELDS.EMAIL,
+                as: LOGS_ARRAY
+            }
+        });
+        // filter out the log events where the IDP does not match the user's IDP and the log events where the event type
+        // is not included in the qualifying events array
+        pipeline.push({
+            $set: {
+                [LOGS_ARRAY]: {
+                    $filter: {
+                        input: "$" + LOGS_ARRAY,
+                        as: "log",
+                        cond: {
+                            $and: [
+                                {
+                                    $eq: ["$$log." + LOGS_FIELDS.IDP, "$" + USER_FIELDS.IDP],
+                                },
+                                {
+                                    $in: ["$$log." + LOGS_FIELDS.EVENT_TYPE, qualifyingEvents]
+                                },
+                            ],
+                        }
+                    }
+                }
+            }
+        });
+        // store the most recent log event in a new field
+        pipeline.push({
+            $set: {
+                [LATEST_LOG]: {
+                    $first: {
+                        $sortArray: {
+                            input: "$" + LOGS_ARRAY,
+                            sortBy: {
+                                timestamp: -1
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        // filter out users that have qualifying log event types recent enough to fall within the inactive user days period
+        pipeline.push({
+            $match: {
+                $or: [
+                    {
+                        [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
+                            $exists: 0
+                        }
+                    },
+                    {
+                        [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
+                            $lt: subtractDaysFromNowTimestamp(config.inactive_user_days)
+                        }
+                    },
+                ]
+            }
+        });
+        // format the output
+        pipeline.push({
+            $project: {
+                [USER_FIELDS.ID]: 1,
+                [USER_FIELDS.EMAIL]: 1,
+                [USER_FIELDS.IDP]: 1,
+                [USER_FIELDS.FIRST_NAME]: 1,
+            }
+        });
+        return await this.userCollection.aggregate(pipeline);
     }
 }
 
