@@ -109,6 +109,14 @@ class MongoDBCollection {
         }
     }
 
+    async deleteMany(query) {
+        try{
+            return await this.collection.deleteMany(query);
+        }
+        catch (e){
+            logAndThrow("An exception occurred during a delete operation", e);
+        }
+    }
 
     /**
      * Finds the distinct values for a specified field across a single collection.

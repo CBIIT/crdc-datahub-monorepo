@@ -71,6 +71,35 @@ class S3Service {
             });
         });
     }
+    /**
+     * delete objects under dir recursively
+     * @param {*} bucket 
+     * @param {*} dir 
+     * @returns 
+     */
+    async deleteDirectory(bucket, dir) {
+        const listParams = {
+            Bucket: bucket,
+            Prefix: (dir.endsWith("/"))? dir : dir + "/"
+        };
+    
+        const listedObjects = await this.s3.listObjectsV2(listParams).promise();
+    
+        if (listedObjects.Contents.length === 0) return;
+    
+        const deleteParams = {
+            Bucket: bucket,
+            Delete: { Objects: [] }
+        };
+    
+        listedObjects.Contents.forEach(({ Key }) => {
+            deleteParams.Delete.Objects.push({ Key });
+        });
+    
+        await this.s3.deleteObjects(deleteParams).promise();
+    
+        if (listedObjects.IsTruncated) await deleteDirectory(bucket, dir);
+    }
 }
 
 module.exports = {
