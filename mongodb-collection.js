@@ -14,6 +14,16 @@ class MongoDBCollection {
         }
     }
 
+    // Returns all documents in the collection
+    async findAll() {
+        try{
+            return await this.collection.find().toArray();
+        }
+        catch (e){
+            logAndThrow("An exception occurred during a findAll operation", e);
+        }
+    }
+
     async countDoc(query){
         try{
             return await this.collection.countDocuments(query);

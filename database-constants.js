@@ -9,5 +9,6 @@ module.exports = Object.freeze({
     ORGANIZATION_COLLECTION: 'organization',
     BATCH_COLLECTION: 'batch',
     LOG_COLLECTION: 'logs',
-    DATA_RECORDS_COLLECTION: 'dataRecords'
+    DATA_RECORDS_COLLECTION: 'dataRecords',
+    INSTITUTION_COLLECTION: 'institutions'
 });
