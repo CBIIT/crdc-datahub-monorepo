@@ -85,7 +85,7 @@ class S3Service {
     
         const listedObjects = await this.s3.listObjectsV2(listParams).promise();
     
-        if (listedObjects.Contents.length === 0) return;
+        if (listedObjects.Contents.length === 0) return true;  //no files to delete;
     
         const deleteParams = {
             Bucket: bucket,
@@ -98,7 +98,8 @@ class S3Service {
     
         await this.s3.deleteObjects(deleteParams).promise();
     
-        if (listedObjects.IsTruncated) await deleteDirectory(bucket, dir);
+        if (listedObjects.IsTruncated) await deleteDirectory(bucket, dir); // finally delete the dir
+        return true; // if no errors
     }
 }
 
