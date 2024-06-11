@@ -82,7 +82,7 @@ class S3Service {
     async listFileInDir(bucket, dir) {
         const listParams = {
             Bucket: bucket,
-            Prefix: (prefix.endsWith("/"))? dir : dir + "/"
+            Prefix: (dir.endsWith("/"))? dir : dir + "/"
         };
         return new Promise((resolve, reject) => {
             this.s3.listObjectsV2(listParams, (err, data) => {
