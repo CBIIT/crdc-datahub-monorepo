@@ -71,6 +71,7 @@ class S3Service {
             });
         });
     }
+
     /**
      * delete objects under dir recursively
      * @param {*} bucket 
@@ -100,6 +101,29 @@ class S3Service {
     
         if (listedObjects.IsTruncated) await deleteDirectory(bucket, dir); // finally delete the dir
         return true; // if no errors
+    }
+
+    /**
+     * Asynchronously lists objects in an S3 bucket that match a given file key prefix.
+     *
+     * @param {string} bucketName - The name of the S3 bucket.
+     * @param {string} dir - The prefix of the files to list.
+     * @returns {Promise<Object>} A promise that resolves with the list of objects if successful, or rejects with an error.
+     */
+    async listFileInDir(bucket, dir) {
+        const listParams = {
+            Bucket: bucket,
+            Prefix: (dir.endsWith("/"))? dir : dir + "/"
+        };
+        return new Promise((resolve, reject) => {
+            this.s3.listObjectsV2(listParams, (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data);
+                }
+            });
+        });
     }
 }
 
