@@ -73,6 +73,37 @@ class S3Service {
     }
 
     /**
+     * delete objects under dir recursively
+     * @param {*} bucket 
+     * @param {*} dir 
+     * @returns 
+     */
+    async deleteDirectory(bucket, dir) {
+        const listParams = {
+            Bucket: bucket,
+            Prefix: (dir.endsWith("/"))? dir : dir + "/"
+        };
+    
+        const listedObjects = await this.s3.listObjectsV2(listParams).promise();
+    
+        if (listedObjects.Contents.length === 0) return true;  //no files to delete;
+    
+        const deleteParams = {
+            Bucket: bucket,
+            Delete: { Objects: [] }
+        };
+    
+        listedObjects.Contents.forEach(({ Key }) => {
+            deleteParams.Delete.Objects.push({ Key });
+        });
+    
+        await this.s3.deleteObjects(deleteParams).promise();
+    
+        if (listedObjects.IsTruncated) await deleteDirectory(bucket, dir); // finally delete the dir
+        return true; // if no errors
+    }
+
+    /**
      * Asynchronously lists objects in an S3 bucket that match a given file key prefix.
      *
      * @param {string} bucketName - The name of the S3 bucket.
