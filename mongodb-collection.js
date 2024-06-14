@@ -65,12 +65,12 @@ class MongoDBCollection {
     }
 
 
-    async findOneAndUpdate(query, doc) {
+    async findOneAndUpdate(query, doc, option) {
         const updateDoc = {
             $set: doc
         };
         try{
-            return await this.collection.findOneAndUpdate(query, updateDoc, { upsert: true});
+            return await this.collection.findOneAndUpdate(query, updateDoc, option ? option : { upsert: true});
         }
         catch (e){
             logAndThrow("An exception occurred during an findOne and update operation", e);
