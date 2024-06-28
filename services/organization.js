@@ -3,7 +3,6 @@ const {USER} = require("../constants/user-constants");
 const {ORGANIZATION} = require("../constants/organization-constants");
 const {getCurrentTime} = require("../utility/time-utility");
 const {v4} = require("uuid");
-const {ApprovedStudies} = require("../domain/approved-studies");
 
 class Organization {
   constructor(organizationCollection, userCollection, submissionCollection, applicationCollection) {
@@ -288,23 +287,17 @@ class Organization {
   * Stores approved studies in the organization's collection.
   *
   * @param {string} orgID - The organization ID.
-  * @param {string} studyName - The name of the study.
-  * @param {string} studyAbbreviation - The abbreviation of the study.
   * @returns {void}
   */
-  async storeApprovedStudies(orgID, studyName, studyAbbreviation) {
+  async storeApprovedStudies(orgID, approvedStudies) {
       const aOrg = await this.getOrganizationByID(orgID);
-      const orgApprovedStudies = aOrg?.studies || [];
-      const isStudyExists = orgApprovedStudies.some((study)=> study?.studyName === studyName && study?.studyAbbreviation === studyAbbreviation);
-
-      if (!aOrg || isStudyExists) {
+      if (!aOrg) {
           return;
       }
-      orgApprovedStudies.push(ApprovedStudies.createApprovedStudies(studyName, studyAbbreviation));
-      aOrg.studies = orgApprovedStudies;
+      aOrg.studies = approvedStudies;
       const res = await this.organizationCollection.update(aOrg);
       if (res?.modifiedCount !== 1) {
-          console.error(ERROR.ORGANIZATION_APPROVED_STUDIES_INSERTION + ` studyName: ${studyName}`);
+          console.error(ERROR.ORGANIZATION_APPROVED_STUDIES_INSERTION + ` orgID: ${orgID}`);
       }
   }
 }
