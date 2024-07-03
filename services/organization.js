@@ -5,11 +5,12 @@ const {getCurrentTime} = require("../utility/time-utility");
 const {v4} = require("uuid");
 
 class Organization {
-  constructor(organizationCollection, userCollection, submissionCollection, applicationCollection) {
+  constructor(organizationCollection, userCollection, submissionCollection, applicationCollection, approvedStudiesCollection) {
       this.organizationCollection = organizationCollection;
       this.userCollection = userCollection;
       this.submissionCollection = submissionCollection;
       this.applicationCollection = applicationCollection;
+      this.approvedStudiesCollection = approvedStudiesCollection;
   }
 
   /**
@@ -148,7 +149,7 @@ class Organization {
       }
 
       if (params.studies && Array.isArray(params.studies)) {
-          updatedOrg.studies = params.studies;
+          updatedOrg.studies = await this.#getApprovedStudies(params.studies);
       } else {
           updatedOrg.studies = [];
       }
@@ -272,7 +273,7 @@ class Organization {
 
     if (params.studies && Array.isArray(params.studies)) {
         // @ts-ignore Incorrect linting type assertion
-        newOrg.studies = params.studies;
+        newOrg.studies = await this.#getApprovedStudies(params.studies);
     }
 
     const result = await this.organizationCollection.insert(newOrg);
@@ -299,6 +300,30 @@ class Organization {
       if (res?.modifiedCount !== 1) {
           console.error(ERROR.ORGANIZATION_APPROVED_STUDIES_INSERTION + ` orgID: ${orgID}`);
       }
+  }
+    /**
+     * Retrieves approved studies in the approved studies collection.
+     *
+     * @param {object} studies - The studies object with studyID.
+     * @returns {Promise<Object>} The approved studies
+     */
+  async #getApprovedStudies(studies) {
+      const studyIDs = studies
+          .filter((study)=> study?.studyID)
+          .map((study)=> study.studyID);
+        const approvedStudies = await Promise.all(studyIDs.map(async (id) => {
+            const study = (await this.approvedStudiesCollection.find(id))?.pop();
+            if (!study) {
+                throw new Error(ERROR.INVALID_APPROVED_STUDY_ID);
+            }
+            return study;
+        }));
+      return approvedStudies?.map((study) => ({
+          _id: study?._id,
+          studyName: study?.studyName,
+          studyAbbreviation: study?.studyAbbreviation,
+          controlledAccess: study?.controlledAccess
+      }));
   }
 }
 
