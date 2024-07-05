@@ -298,7 +298,7 @@ class Organization {
       }
       const newStudies = [];
       approvedStudies.forEach(approvedStudy => {
-          const matchingStudy = aOrg?.studies.find((study) => approvedStudy._id === study?._id);
+          const matchingStudy = aOrg?.studies.find((study) => approvedStudy?._id === study?._id);
           if (!matchingStudy) {
               newStudies.push(approvedStudy);
           }
