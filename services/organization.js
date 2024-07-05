@@ -288,6 +288,7 @@ class Organization {
   * Stores approved studies in the organization's collection.
   *
   * @param {string} orgID - The organization ID.
+   * @param {object} approvedStudies - The approved study array.
   * @returns {void}
   */
   async storeApprovedStudies(orgID, approvedStudies) {
@@ -295,10 +296,21 @@ class Organization {
       if (!aOrg) {
           return;
       }
-      aOrg.studies = approvedStudies;
-      const res = await this.organizationCollection.update(aOrg);
-      if (res?.modifiedCount !== 1) {
-          console.error(ERROR.ORGANIZATION_APPROVED_STUDIES_INSERTION + ` orgID: ${orgID}`);
+      const newStudies = [];
+      approvedStudies.forEach(approvedStudy => {
+          const matchingStudy = aOrg?.studies.find((study) => approvedStudy._id === study?._id);
+          if (!matchingStudy) {
+              newStudies.push(approvedStudy);
+          }
+      });
+
+      if (newStudies.length > 0) {
+          aOrg.studies = aOrg.studies || [];
+          aOrg.studies = aOrg.studies.concat(newStudies);
+          const res = await this.organizationCollection.update(aOrg);
+          if (res?.modifiedCount !== 1) {
+              console.error(ERROR.ORGANIZATION_APPROVED_STUDIES_INSERTION + ` orgID: ${orgID}`);
+          }
       }
   }
     /**
