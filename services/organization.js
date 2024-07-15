@@ -307,6 +307,7 @@ class Organization {
       if (newStudies.length > 0) {
           aOrg.studies = aOrg.studies || [];
           aOrg.studies = aOrg.studies.concat(newStudies);
+          aOrg.updateAt = getCurrentTime();
           const res = await this.organizationCollection.update(aOrg);
           if (res?.modifiedCount !== 1) {
               console.error(ERROR.ORGANIZATION_APPROVED_STUDIES_INSERTION + ` orgID: ${orgID}`);
