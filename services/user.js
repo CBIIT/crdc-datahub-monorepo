@@ -3,8 +3,7 @@ const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent, ReactivateUserEvent} = require("../domain/log-events");
 
 
-const {getCurrentTime, subtractDaysFromNow, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
-const {LOGIN, REACTIVATE_USER} = require("../constants/event-constants");
+const {getCurrentTime, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
 const {v4} = require("uuid");
 const config = require("../../config")
 const jwt = require("jsonwebtoken");
@@ -29,7 +28,7 @@ const createToken = (userInfo, token_secret, token_timeout)=> {
 }
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, tier) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, tier, organizationService) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
@@ -38,6 +37,7 @@ class User {
         this.applicationCollection = applicationCollection;
         this.officialEmail = officialEmail;
         this.tier = tier;
+        this.organizationService = organizationService;
     }
 
     async grantToken(params, context){
@@ -257,6 +257,11 @@ class User {
         if (!user){
             user = await this.createNewUser(context);
         }
+
+        if (user?.organization?.orgID) {
+            const aOrg = await this.organizationService.getOrganizationByID(user?.organization?.orgID);
+            user.organization = UserOrganization.create(aOrg._id, aOrg.name, aOrg.status, aOrg.createdAt, aOrg.updateAt);
+        }
         context.userInfo = {
             ...context.userInfo,
             ...user
@@ -354,12 +359,7 @@ class User {
                 throw new Error(ERROR.INVALID_ORG_ID);
             }
 
-            updatedUser.organization = {
-                orgID: newOrg._id,
-                orgName: newOrg.name,
-                createdAt: newOrg.createdAt,
-                updateAt: newOrg.updateAt,
-            };
+            updatedUser.organization = UserOrganization.create(newOrg._id, newOrg.name, newOrg.status, newOrg.createdAt, newOrg.updateAt);
         } else if (typeof(params.organization) !== "undefined" && !params.organization && user[0]?.organization?.orgID) {
             updatedUser.organization = null;
         }
@@ -702,6 +702,19 @@ class User {
             }
         });
         return await this.userCollection.aggregate(pipeline);
+    }
+}
+
+class UserOrganization {
+    constructor(id, name, status, createdAt, updateAt) {
+        this.orgID = id;
+        this.orgName = name;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.updateAt = updateAt;
+    }
+    static create(id, name, status, createdAt, updateAt) {
+        return new UserOrganization(id, name, status, createdAt, updateAt);
     }
 }
 
