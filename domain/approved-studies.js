@@ -3,7 +3,7 @@ const {v4} = require("uuid");
 const {isUndefined} = require("../../utility/string-util");
 
 class ApprovedStudies {
-    constructor(studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess) {
+    constructor(studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess, ORCID) {
         this._id = v4();
         this.studyName = studyName;
         this.studyAbbreviation = studyAbbreviation;
@@ -14,15 +14,17 @@ class ApprovedStudies {
         if (organizationName) {
             this.originalOrg = organizationName;
         }
-
+        if (ORCID) {
+            this.ORCID = ORCID;
+        }
         if (!isUndefined(controlledAccess)) {
             this.controlledAccess = controlledAccess;
         }
         this.createdAt = this.updatedAt = getCurrentTime();
     }
 
-    static createApprovedStudies(studyName, studyAbbreviation, dbGaPID, organization, controlledAccess) {
-        return new ApprovedStudies(studyName, studyAbbreviation, dbGaPID, organization, controlledAccess);
+    static createApprovedStudies(studyName, studyAbbreviation, dbGaPID, organization, controlledAccess, ORCID) {
+        return new ApprovedStudies(studyName, studyAbbreviation, dbGaPID, organization, controlledAccess, ORCID);
     }
 }
 

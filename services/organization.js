@@ -335,7 +335,8 @@ class Organization {
           _id: study?._id,
           studyName: study?.studyName,
           studyAbbreviation: study?.studyAbbreviation,
-          controlledAccess: study?.controlledAccess
+          controlledAccess: study?.controlledAccess,
+          ORCID: study?.ORCID,
       }));
   }
 }
