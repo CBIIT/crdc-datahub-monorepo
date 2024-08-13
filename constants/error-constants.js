@@ -23,5 +23,7 @@ module.exports = Object.freeze({
         DUPLICATE_ORG_NAME: "An organization with the same name already exists",
         INVALID_ORG_NAME: "The organization name you provided is invalid",
         NO_SUBMISSION_BUCKET: "Unable to create organization, no submission bucket is configured",
+        // Dashboard
+        NO_VALID_DASHBOARD_TYPE: "The dashboard name you provided does not exist"
     },
 });
