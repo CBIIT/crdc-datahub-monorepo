@@ -2,7 +2,7 @@ const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent, ReactivateUserEvent} = require("../domain/log-events");
 
-
+const {includesAll} = require("../utility/string-utility")
 const {getCurrentTime, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
 const config = require("../../config")
 const jwt = require("jsonwebtoken");
@@ -26,6 +26,8 @@ const createToken = (userInfo, token_secret, token_timeout)=> {
         token_secret,
         { expiresIn: token_timeout });
 }
+
+
 
 class User {
     constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, tier) {
@@ -275,7 +277,7 @@ class User {
 
     async editUser(params, context) {
         isLoggedInOrThrow(context);
-        if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+        if (![USER.ROLES.ADMIN, USER.ROLES.FEDERAL_MONITOR].includes(context?.userInfo?.role)) {
             throw new Error(ERROR.INVALID_ROLE);
         }
         if (!params.userID) {
@@ -289,6 +291,7 @@ class User {
         }
 
         const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
+        let userOrg = null;
         if (typeof(params.organization) !== "undefined" && params.organization && params.organization !== user[0]?.organization?.orgID) {
             const result = await this.organizationCollection.aggregate([{
                 "$match": { _id: params.organization }
@@ -324,6 +327,35 @@ class User {
         const userDataCommons = updatedUser.dataCommons?.length > 0 || (user[0]?.dataCommons?.length > 0 && !dataCommonsProvided);
         if (userIsDcPOC && !userDataCommons) {
             throw new Error(ERROR.USER_DC_REQUIRED);
+        }
+
+        // add studies to user.
+        let user_org = updatedUser.organization ;
+        if (params.studies &&  params.studies.length > 0) {
+            if (!user_org) {
+               const result = await this.organizationCollection.aggregate([{
+                    "$match": { _id: params.organization }
+                    }, {"$limit": 1}]);
+                if (!result?.[0]?._id) {
+                    throw new Error(ERROR.INVALID_ORG_ID);
+                }
+                user_org = result[0];
+            }
+            const approvedStudies = user_org?.studies;
+            if (!approvedStudies || approvedStudies.length === 0) {
+                throw new Error(ERROR.INVALID_NO_STUDIES);
+            }
+
+            if (!includesAll(approvedStudies, params.studies)) {
+                throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
+            }
+            updatedUser.studies = params?.studies;
+        }
+        if (params?.status){
+            if (! [USER.STATUSES.ACTIVE, USER.STATUSES.INACTIVE].includes(params.status))
+                throw new Error(ERROR.INVALID_USER_STATUS);
+
+            updatedUser.status = params.status
         }
 
         // Check if an organization is required and missing for the user's role
