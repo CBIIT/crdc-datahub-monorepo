@@ -536,6 +536,18 @@ class User {
         return await this.userCollection.aggregate([{"$match": orgOwner}]);
     }
 
+    /**
+     * getFederalMonitors
+     * @returns {Promise<Array>} user[]
+     */
+    async getFederalMonitors() {
+        const query= {
+            "userStatus": USER.STATUSES.ACTIVE,
+            "role": USER.ROLES.FEDERAL_MONITOR
+        };
+        return await this.userCollection.aggregate([{"$match": query}]);
+    }
+
     isAdmin(role) {
         return role && role === USER.ROLES.ADMIN;
     }
