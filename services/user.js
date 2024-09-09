@@ -347,7 +347,7 @@ class User {
             }
 
 
-            const approvedStudyArr = approvedStudies.map((study) => study.studyName)
+            const approvedStudyArr = approvedStudies.map((study) => study._id)
             if (!includesAll(approvedStudyArr, params.studies)) {
                 throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
             }
