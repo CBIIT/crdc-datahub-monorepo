@@ -346,7 +346,9 @@ class User {
                 throw new Error(ERROR.INVALID_NO_STUDIES);
             }
 
-            if (!includesAll(approvedStudies, params.studies)) {
+
+            const approvedStudyArr = approvedStudies.map((study) => study.studyName)
+            if (!includesAll(approvedStudyArr, params.studies)) {
                 throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
             }
             updatedUser.studies = params?.studies;
