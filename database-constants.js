@@ -13,5 +13,6 @@ module.exports = Object.freeze({
     INSTITUTION_COLLECTION: 'institutions',
     VALIDATION_COLLECTION: 'validation',
     CONFIGURATION_COLLECTION: 'configuration',
-    CDE_COLLECTION : 'CDE'
+    CDE_COLLECTION : 'CDE',
+    DATA_RECORDS_ARCHIVE_COLLECTION: 'dataRecordsArchived',
 });
