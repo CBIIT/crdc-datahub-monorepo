@@ -277,7 +277,7 @@ class User {
 
     async editUser(params, context) {
         isLoggedInOrThrow(context);
-        if (![USER.ROLES.ADMIN, USER.ROLES.FEDERAL_MONITOR].includes(context?.userInfo?.role)) {
+        if (![USER.ROLES.ADMIN].includes(context?.userInfo?.role)) {
             throw new Error(ERROR.INVALID_ROLE);
         }
         if (!params.userID) {
@@ -331,27 +331,30 @@ class User {
         // add studies to user.
         let user_org = updatedUser.organization ;
         if (params.studies &&  params.studies.length > 0) {
-            if (!user_org) {
-               const result = await this.organizationCollection.aggregate([{
-                    "$match": { _id: params.organization }
-                    }, {"$limit": 1}]);
-                if (!result?.[0]?._id) {
-                    throw new Error(ERROR.INVALID_ORG_ID);
-                }
-                user_org = result[0];
-            }
-            const approvedStudies = user_org?.studies;
-            if (!approvedStudies || approvedStudies.length === 0) {
-                throw new Error(ERROR.INVALID_NO_STUDIES);
-            }
-
-
-            const approvedStudyArr = approvedStudies.map((study) => study._id)
-            if (!includesAll(approvedStudyArr, params.studies)) {
-                throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
+            if (![USER.ROLES.FEDERAL_MONITOR].includes(updatedUser.role || user[0]?.role))
+            {
+                if (!user_org || !user_org.studies) {
+                    const result = await this.organizationCollection.aggregate([{
+                         "$match": { _id: params.organization }
+                         }, {"$limit": 1}]);
+                     if (!result?.[0]?._id) {
+                         throw new Error(ERROR.INVALID_ORG_ID);
+                     }
+                     user_org = result[0];
+                 }
+                 const approvedStudies = user_org?.studies;
+                 if (!approvedStudies || approvedStudies.length === 0) {
+                     throw new Error(ERROR.INVALID_NO_STUDIES);
+                 }
+                 const approvedStudyArr = approvedStudies.map((study) => study._id)
+                 if (!includesAll(approvedStudyArr, params.studies)) {
+                     throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
+                 }
             }
             updatedUser.studies = params?.studies;
         }
+        else
+            updatedUser.studies = null
         if (params?.status){
             if (! [USER.STATUSES.ACTIVE, USER.STATUSES.INACTIVE].includes(params.status))
                 throw new Error(ERROR.INVALID_USER_STATUS);
@@ -361,7 +364,7 @@ class User {
 
         // Check if an organization is required and missing for the user's role
         const userHasOrg = !!updatedUser?.organization?.orgID || (user[0]?.organization?.orgID && typeof(updatedUser.organization) === "undefined");
-        if (!userHasOrg && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER].includes(updatedUser.role || user[0]?.role)) {
+        if (!userHasOrg && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER, USER.ROLES.FEDERAL_MONITOR].includes(updatedUser.role || user[0]?.role)) {
             throw new Error(ERROR.USER_ORG_REQUIRED);
         }
 
