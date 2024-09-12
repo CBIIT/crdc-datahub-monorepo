@@ -354,7 +354,7 @@ class User {
             updatedUser.studies = params?.studies;
         }
         else
-            updatedUser.studies = null
+            updatedUser.studies = []
         if (params?.status){
             if (! [USER.STATUSES.ACTIVE, USER.STATUSES.INACTIVE].includes(params.status))
                 throw new Error(ERROR.INVALID_USER_STATUS);
