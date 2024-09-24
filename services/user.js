@@ -84,6 +84,21 @@ class User {
         return (result?.length > 0) ? result[0] : null;
     }
 
+    /**
+     * Retrieves user documents from the userCollection by matching multiple user IDs.
+     * @param {Array} userIDs - An array of user IDs
+     * @returns {Array} - An array of user documents.
+     */
+    async getUsersByIDs(userIDs) {
+        const result = await this.userCollection.aggregate([{
+            "$match": {
+                _id: { "$in": userIDs } // userIDs should be an array of IDs
+            }
+        }]);
+        return (result?.length > 0) ? result : [];
+    }
+
+
     async getUser(params, context) {
         isLoggedInOrThrow(context);
         if (!params?.userID) {
