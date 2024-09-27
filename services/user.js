@@ -308,6 +308,7 @@ class User {
         }
 
         const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
+        const isCurator = updatedUser?.role === USER.ROLES.CURATOR || user[0]?.role === USER.ROLES.CURATOR || params?.role === USER.ROLES.CURATOR;
         if (typeof(params.organization) !== "undefined" && params.organization && params.organization !== user[0]?.organization?.orgID) {
             const result = await this.organizationCollection.aggregate([{
                 "$match": { _id: params.organization }
@@ -319,8 +320,7 @@ class User {
             }
 
             updatedUser.organization = orgToUserOrg(newOrg);
-        } else if ((typeof(params.organization) !== "undefined" && !params.organization && user[0]?.organization?.orgID)
-            || [USER.ROLES.CURATOR].includes(updatedUser.role || user[0]?.role)) { // Data Curator should not be assigned any Org
+        } else if ((typeof(params.organization) !== "undefined" && !params.organization && user[0]?.organization?.orgID) || isCurator) { // Data Curator should not be assigned any Org
             updatedUser.organization = null;
         }
         if (params.role && Object.values(USER.ROLES).includes(params.role)) {
