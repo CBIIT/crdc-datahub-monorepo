@@ -8,6 +8,7 @@ const config = require("../../config")
 const jwt = require("jsonwebtoken");
 const {LOG_COLLECTION} = require("../database-constants");
 const orgToUserOrg = require("../utility/org-to-userOrg-converter");
+const {isUndefined} = require("../../utility/string-util");
 
 
 
@@ -318,7 +319,8 @@ class User {
             }
 
             updatedUser.organization = orgToUserOrg(newOrg);
-        } else if (typeof(params.organization) !== "undefined" && !params.organization && user[0]?.organization?.orgID) {
+        } else if ((typeof(params.organization) !== "undefined" && !params.organization && user[0]?.organization?.orgID)
+            || [USER.ROLES.CURATOR].includes(updatedUser.role || user[0]?.role)) { // Data Curator should not be assigned any Org
             updatedUser.organization = null;
         }
         if (params.role && Object.values(USER.ROLES).includes(params.role)) {
@@ -328,37 +330,22 @@ class User {
             updatedUser.userStatus = params.status;
         }
 
-        const dataCommonsProvided = typeof params.dataCommons !== "undefined";
-        const userIsDcPOC = updatedUser.role === USER.ROLES.DC_POC || (typeof(updatedUser.role) === "undefined" && user[0]?.role === USER.ROLES.DC_POC);
-        if (userIsDcPOC && dataCommonsProvided && params.dataCommons?.length > 0) {
-            updatedUser.dataCommons = params.dataCommons;
-        } else if (userIsDcPOC && dataCommonsProvided && !params.dataCommons?.length) {
-            throw new Error(ERROR.USER_DC_REQUIRED);
-        } else if (!userIsDcPOC && user[0]?.dataCommons?.length > 0) {
-            updatedUser.dataCommons = [];
-        }
-
-        // Check if Data Commons is required and missing for the user's role
-        const userDataCommons = updatedUser.dataCommons?.length > 0 || (user[0]?.dataCommons?.length > 0 && !dataCommonsProvided);
-        if (userIsDcPOC && !userDataCommons) {
-            throw new Error(ERROR.USER_DC_REQUIRED);
-        }
-
+        updatedUser.dataCommons = DataCommon.get(user[0]?.role, user[0]?.dataCommons, params?.role, params?.dataCommons);
         // add studies to user.
-        let user_org = updatedUser.organization ;
+        let userOrg = updatedUser.organization;
         if (params.studies &&  params.studies.length > 0) {
             if (![USER.ROLES.FEDERAL_MONITOR].includes(updatedUser.role || user[0]?.role))
             {
-                if (!user_org || !user_org.studies) {
+                if (!userOrg || !userOrg.studies) {
                     const result = await this.organizationCollection.aggregate([{
                          "$match": { _id: params.organization }
                          }, {"$limit": 1}]);
                      if (!result?.[0]?._id) {
                          throw new Error(ERROR.INVALID_ORG_ID);
                      }
-                     user_org = result[0];
+                     userOrg = result[0];
                  }
-                 const approvedStudies = user_org?.studies;
+                 const approvedStudies = userOrg?.studies;
                  if (!approvedStudies || approvedStudies.length === 0) {
                      throw new Error(ERROR.INVALID_NO_STUDIES);
                  }
@@ -411,7 +398,7 @@ class User {
 
             // create an array to store new events
             let logEvents = [];
-            // create an profile update event and store it in the events array
+            // create a profile update event and store it in the events array
             const updateProfileEvent = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
             logEvents.push(updateProfileEvent);
             // if the user has been reactivated during the update
@@ -632,6 +619,65 @@ class User {
         return await this.userCollection.aggregate(pipeline);
     }
 }
+
+class DataCommon {
+
+    constructor(currentRole, currentDataCommons, newRole, newDataCommons) {
+        this.currentRole = currentRole;
+        this.currentDataCommons = currentDataCommons;
+        this.newRole = newRole;
+        this.newDataCommons = newDataCommons;
+    }
+
+    /**
+     * Get the new data commons based on the user's role & data commons.
+     *
+     * @param {string} currentRole - The user's current role.
+     * @param {Array} currentDataCommons - The current data commons in the user collection.
+     * @param {string} newRole - The user's new role.
+     * @param {Array} newDataCommons - The new data commons to update the user.
+     * @returns {Array} - return a data commons array.
+     */
+    static get(currentRole, currentDataCommons, newRole, newDataCommons) {
+        const dataCommons = new DataCommon(currentRole, currentDataCommons, newRole, newDataCommons);
+        return dataCommons.#getDataCommons();
+    }
+
+    #getDataCommons() {
+        this.#validate(this.currentRole, this.currentDataCommons, this.newRole, this.newDataCommons);
+        const isValidRole = this.#isDcPOC(this.currentRole, this.newRole) || this.#isCurator(this.currentRole, this.newRole);
+        if (isValidRole) {
+            return isUndefined(this.newDataCommons) ? this.currentDataCommons : this.newDataCommons;
+        }
+
+        if (!isValidRole && this.currentDataCommons?.length > 0) {
+            return [];
+        }
+        return [];
+    }
+
+    #isDcPOC(currentRole, newRole) {
+        return newRole === USER.ROLES.DC_POC || (!newRole && currentRole === USER.ROLES.DC_POC);
+    }
+
+    #isCurator(currentRole, newRole) {
+        return newRole === USER.ROLES.CURATOR || (!newRole && currentRole === USER.ROLES.CURATOR);
+    }
+
+    #validate(currentRole, currentDataCommons, newRole, newDataCommons) {
+        const isValidRole = this.#isDcPOC(currentRole, newRole) || this.#isCurator(currentRole, newRole);
+        if (isValidRole && newDataCommons?.length === 0) {
+            throw new Error(ERROR.USER_DC_REQUIRED);
+        }
+
+        // Check if Data Commons is required and missing for the user's role
+        const isValidDataCommons = newDataCommons?.length > 0 || (currentDataCommons?.length > 0 && isUndefined(newDataCommons));
+        if (isValidRole && !isValidDataCommons) {
+            throw new Error(ERROR.USER_DC_REQUIRED);
+        }
+    }
+}
+
 
 module.exports = {
     User
