@@ -12,7 +12,7 @@ module.exports = Object.freeze({
         CREATE_FAILED: "Unknown error occurred while creating object",
         INVALID_ROLE_ASSIGNMENT: "The role you are trying to assign is invalid",
         USER_ORG_REQUIRED: "An organization is required for this user role",
-        USER_DC_REQUIRED: "One or more Data Commons are required for this user role",
+        USER_DC_REQUIRED: "At least one Data Commons is required for this user role.",
         MONGODB_HEALTH_CHECK_FAILED: "The MongoDB health check failed, please see the logs for more information",
         // Utility
         JSON_PARSING: "An error occurred while parsing a string to JSON.",
