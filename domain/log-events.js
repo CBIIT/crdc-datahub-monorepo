@@ -177,7 +177,7 @@ const DeleteRecordEvent = class extends AbstractLog {
         }
     }
     static create(userID, userEmail, userName, submissionID, nodeType, nodeIDs) {
-        return new SubmissionActionEvent(userID, userEmail, userName, submissionID, nodeType, nodeIDs);
+        return new DeleteRecordEvent(userID, userEmail, userName, submissionID, nodeType, nodeIDs);
     }
 }
 
