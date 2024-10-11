@@ -197,11 +197,17 @@ class User {
         return result || [];
     }
 
-    async getPOCs() {
-        let result = await this.userCollection.aggregate([{
+    /**
+     * Retrieves user documents from the userCollection by matching multiple data commons.
+     * @param {Array} dataCommons - An array of data commons IDs
+     * @returns {Array} - An array of user documents.
+     */
+    async getPOCs(dataCommons) {
+        const result = await this.userCollection.aggregate([{
             "$match": {
                 role: USER.ROLES.DC_POC,
-                userStatus: USER.STATUSES.ACTIVE
+                userStatus: USER.STATUSES.ACTIVE,
+                "dataCommons": {$in: Array.isArray(dataCommons) ? dataCommons : [dataCommons]}
             }
         }]);
         return result || [];
