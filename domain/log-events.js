@@ -1,5 +1,5 @@
 const {LOGIN, LOGOUT, PROFILE_UPDATE, CREATE_ACCESS_TOKEN, CREATE_APPLICATION, UPDATE_APPLICATION_STATE, CREATE_BATCH,
-    UPDATE_BATCH, REGISTRATION, SUBMISSION_ACTION, REACTIVATE_USER
+    UPDATE_BATCH, REGISTRATION, SUBMISSION_ACTION, REACTIVATE_USER, DELETE_DATA
 } = require("../constants/event-constants");
 
 const {v4} = require("uuid");
@@ -15,7 +15,13 @@ class AbstractLog {
     setUser(id, email, idp) {
         this.userID = id;
         this.userEmail = email;
-        this.userIDP = idp;
+        if (idp) {
+            this.userIDP = idp;
+        }
+    }
+
+    setUserName(userName) {
+        this.userName = userName;
     }
 
     setEventType(eventType) {
@@ -144,9 +150,9 @@ const UpdateBatchEvent = class extends AbstractLog {
 }
 
 const SubmissionActionEvent = class extends AbstractLog {
-    constructor(userID, userEmail, userIDP, submissionID, action, prevStatus, newStatus) {
+    constructor(userID, userEmail, submissionID, action, prevStatus, newStatus) {
         super();
-        this.setUser(userID, userEmail, userIDP);
+        this.setUser(userID, userEmail);
         this.setEventType(SUBMISSION_ACTION);
         this.submissionID = submissionID;
         this.action = action
@@ -155,6 +161,23 @@ const SubmissionActionEvent = class extends AbstractLog {
     }
     static create(userID, userEmail, userIDP, submissionID, action, prevStatus, newStatus) {
         return new SubmissionActionEvent(userID, userEmail, userIDP, submissionID, action, prevStatus, newStatus);
+    }
+}
+
+const DeleteRecordEvent = class extends AbstractLog {
+    constructor(userID, userEmail, userName, submissionID, nodeType, nodeIDs) {
+        super();
+        this.setUser(userID, userEmail);
+        this.setUserName(userName);
+        this.setEventType(DELETE_DATA);
+        this.eventDetail = {
+            submissionID: submissionID,
+            nodeType: nodeType,
+            nodeIDs: nodeIDs
+        }
+    }
+    static create(userID, userEmail, userName, submissionID, nodeType, nodeIDs) {
+        return new DeleteRecordEvent(userID, userEmail, userName, submissionID, nodeType, nodeIDs);
     }
 }
 
@@ -170,4 +193,5 @@ module.exports = {
     UpdateBatchEvent,
     SubmissionActionEvent,
     ReactivateUserEvent,
+    DeleteRecordEvent
 }
