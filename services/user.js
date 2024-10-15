@@ -31,7 +31,7 @@ const createToken = (userInfo, token_secret, token_timeout)=> {
 
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, tier) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, helpDeskEmail, appUrl, tier) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
@@ -39,6 +39,8 @@ class User {
         this.submissionsCollection = submissionsCollection;
         this.applicationCollection = applicationCollection;
         this.officialEmail = officialEmail;
+        this.helpDeskEmail = helpDeskEmail;
+        this.appUrl = appUrl;
         this.tier = tier;
     }
 
@@ -98,6 +100,21 @@ class User {
             }
         }]);
         return (result?.length > 0) ? result : [];
+    }
+
+    async #findStudiesNames(studiesIDs) {
+        const organizationsWithStudies = await this.organizationCollection.aggregate([{
+            "$match": {
+                "studies._id": { "$in": studiesIDs } // userIDs should be an array of IDs
+            }
+        }]);
+        const studyNameSet = new Set();
+        for (let org of organizationsWithStudies) {
+            for (let study of org?.studies || []) {
+                    studyNameSet.add(study.studyName)
+            }
+        }
+        return studyNameSet.toArray();
     }
 
 
@@ -377,19 +394,11 @@ class User {
             throw new Error(ERROR.USER_ORG_REQUIRED);
         }
 
-        const updateResult = await this.userCollection.update(updatedUser);
-        if (updateResult?.matchedCount === 1) {
-            const prevProfile = {}, newProfile = {};
-
-            Object.keys(updatedUser).forEach(key => {
-                if (["_id", "updateAt"].includes(key)) {
-                    return;
-                }
-
-                prevProfile[key] = user[0]?.[key];
-                newProfile[key] = updatedUser[key];
-            });
-
+        // TODO refactor this
+        const res = await this.userCollection.findOneAndUpdate({ _id: params.userID }, updatedUser, {returnDocument: 'after'});
+        const userAfterUpdate = res.value;
+        const prevUser = user[0];
+        if (userAfterUpdate) {
             const aUser = user[0];
             const isUserActivated = aUser?.userStatus !== USER.STATUSES.INACTIVE;
             const isStatusChange = params.status && params.status.toLowerCase() === USER.STATUSES.INACTIVE.toLowerCase();
@@ -402,8 +411,107 @@ class User {
                 ,this.tier);
             }
 
+            // 1. role change
+            const baseRoleCondition = params.role && Object.values(USER.ROLES).includes(params.role);
+            const isRoleChange = baseRoleCondition && prevUser.role !== userAfterUpdate.role;
+            // 2. organization change
+            const isOrgChange = prevUser.organization !== userAfterUpdate.organization;
+            const isDataCommonsChange = prevUser.dataCommons !== userAfterUpdate.dataCommons;
+            const isStudiesChange = prevUser.studies !== userAfterUpdate.studies;
+            if (isRoleChange || isOrgChange || isDataCommonsChange || isStudiesChange) {
+                let CCs = [];
+                let orgName;
+                let userDataCommons;
+                let fedStudiesNames;
+                if ([USER.ROLES.SUBMITTER, USER.ROLES.ORG_OWNER].includes(userAfterUpdate.role)) {
+                    const orgOwners = await this.getOrgOwnerByOrgID(userAfterUpdate.organization?.orgID) || [];
+                    // set CCs
+                    CCs = Array.from(orgOwners).map(owner => owner.email);
+                    orgName = userAfterUpdate.organization?.orgName;
+                }
+
+                if ([USER.ROLES.DC_POC, USER.ROLES.CURATOR].includes(userAfterUpdate.role)) {
+                    userDataCommons = userAfterUpdate.dataCommons;
+                }
+
+                if (USER.ROLES.FEDERAL_MONITOR === aUser?.role) {
+                    fedStudiesNames = await this.#findStudiesNames(userAfterUpdate.studies);
+                }
+
+                await this.notificationsService.userRoleChangeNotification(userAfterUpdate.email,
+                    CCs, {firstName: userAfterUpdate.firstName,
+                        accountType: userAfterUpdate.IDP,
+                        email: userAfterUpdate.email,
+                        role: userAfterUpdate.role,
+                        org: orgName,
+                        dataCommons: userDataCommons,
+                        studies: fedStudiesNames
+                    },
+                    {url: this.appUrl, helpDesk: this.helpDeskEmail}
+                    ,this.tier);
+            }
+            // 2. organization change
+
+
+            // 3. data commons change
+
+
+            // 4. studies changed
+            // params.role
+            // aUser; database user
+            // check is alwayys run by admin
+            if (params.role && Object.values(USER.ROLES).includes(params.role) && params.role !== user.role) {
+                // let CCs = [];
+                // // Cc: Organization Owner(s) (Only if the assigned role is [Submitter, Org Owner])
+                // // const orgOwners = await this.getOrgOwnerByOrgName(aUser.organization?.name) || [];
+                // // TODO updated organization? or current organization
+                // const orgName = (params.role === USER.ROLES.SUBMITTER || params.role === USER.ROLES.ORG_OWNER ||
+                //     aUser.organization === USER.ROLES.SUBMITTER || params.role === USER.ROLES.ORG_OWNER)
+                // ) ? aUser.organization?.orgName || "NA" : null;
+                // if (params.role === USER.ROLES.SUBMITTER || params.role === USER.ROLES.ORG_OWNER
+                //     || aUser.role === USER.ROLES.SUBMITTER || aUser.role === USER.ROLES.ORG_OWNER) {
+                //     const orgID = params?.organization || aUser.organization?.orgID;
+                //     if (!orgID) {
+                //         console.error("the submitter role / org owner is not assigned any organization");
+                //     }
+                //     const orgOwners = await this.getOrgOwnerByOrgID(orgID);
+                //     // orgOwner Emails
+                //     CCs = Array.from(orgOwners)
+                //         .map((u)=>u.email);
+                // }
+                //
+                //
+                //
+                // // TODO updated organization? or current organization
+                // const userDataCommons = params.role === USER.ROLES.DC_POC || params.role === USER.ROLES.CURATOR ? aUser.dataCommons : null;
+                // // TODO updated organization? or current organization
+                // const fedStudies = async (role, studyIDs) => {
+                //     if (aUser?.role === USER.ROLES.FEDERAL_MONITOR) {
+                //         return await this.#findStudiesNames(role, studyIDs);
+                //     }
+                //     return [];
+                // }
+                //
+                // await this.notificationsService.userRoleChangeNotification(aUser.email,
+                //     CCs, {firstName: aUser.firstName, accountType: aUser.IDP,
+                //         email: aUser.email, role: aUser.role,
+                //         org: orgName,
+                //         dataCommons: userDataCommons,
+                //         studies: await fedStudies(aUser)
+                //     },
+                //     {officialEmail: this.officialEmail}
+                //     ,this.tier);
+            }
             // create an array to store new events
             let logEvents = [];
+            const prevProfile = {}, newProfile = {};
+            Object.keys(updatedUser).forEach(key => {
+                if (["_id", "updateAt"].includes(key)) {
+                    return;
+                }
+                prevProfile[key] = user[0]?.[key];
+                newProfile[key] = updatedUser[key];
+            });
             // create a profile update event and store it in the events array
             const updateProfileEvent = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
             logEvents.push(updateProfileEvent);
@@ -485,6 +593,20 @@ class User {
             "userStatus": USER.STATUSES.ACTIVE,
             "role": USER.ROLES.ORG_OWNER,
             "organization.orgName": orgName
+        };
+        return await this.userCollection.aggregate([{"$match": orgOwner}]);
+    }
+
+    /**
+     * getOrgOwnerByOrgName
+     * @param {*} orgID
+     * @returns {Promise<Array>} user[]
+     */
+    async getOrgOwnerByOrgID(orgID) {
+        const orgOwner= {
+            "userStatus": USER.STATUSES.ACTIVE,
+            "role": USER.ROLES.ORG_OWNER,
+            "organization.orgID": orgID
         };
         return await this.userCollection.aggregate([{"$match": orgOwner}]);
     }
