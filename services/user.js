@@ -31,7 +31,7 @@ const createToken = (userInfo, token_secret, token_timeout)=> {
 
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, helpDeskEmail, appUrl, tier) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, appUrl, tier) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
@@ -39,7 +39,6 @@ class User {
         this.submissionsCollection = submissionsCollection;
         this.applicationCollection = applicationCollection;
         this.officialEmail = officialEmail;
-        this.helpDeskEmail = helpDeskEmail;
         this.appUrl = appUrl;
         this.tier = tier;
     }
@@ -111,7 +110,9 @@ class User {
         const studyNameSet = new Set();
         for (let org of organizationsWithStudies) {
             for (let study of org?.studies || []) {
+                if (studiesIDs.includes(study._id)) {
                     studyNameSet.add(study.studyName)
+                }
             }
         }
         return studyNameSet.toArray();
@@ -417,7 +418,7 @@ class User {
             // 2. organization change
             const isOrgChange = prevUser.organization !== userAfterUpdate.organization;
             const isDataCommonsChange = prevUser.dataCommons !== userAfterUpdate.dataCommons;
-            const isStudiesChange = prevUser.studies !== userAfterUpdate.studies;
+            const isStudiesChange = userAfterUpdate.studies?.length > 0 && JSON.stringify(prevUser.studies) !== JSON.stringify(userAfterUpdate.studies);
             if (isRoleChange || isOrgChange || isDataCommonsChange || isStudiesChange) {
                 let CCs = [];
                 let orgName;
@@ -434,7 +435,7 @@ class User {
                     userDataCommons = userAfterUpdate.dataCommons;
                 }
 
-                if (USER.ROLES.FEDERAL_MONITOR === aUser?.role) {
+                if (USER.ROLES.FEDERAL_MONITOR === userAfterUpdate?.role) {
                     fedStudiesNames = await this.#findStudiesNames(userAfterUpdate.studies);
                 }
 
@@ -447,60 +448,8 @@ class User {
                         dataCommons: userDataCommons,
                         studies: fedStudiesNames
                     },
-                    {url: this.appUrl, helpDesk: this.helpDeskEmail}
+                    {url: this.appUrl, helpDesk: this.officialEmail}
                     ,this.tier);
-            }
-            // 2. organization change
-
-
-            // 3. data commons change
-
-
-            // 4. studies changed
-            // params.role
-            // aUser; database user
-            // check is alwayys run by admin
-            if (params.role && Object.values(USER.ROLES).includes(params.role) && params.role !== user.role) {
-                // let CCs = [];
-                // // Cc: Organization Owner(s) (Only if the assigned role is [Submitter, Org Owner])
-                // // const orgOwners = await this.getOrgOwnerByOrgName(aUser.organization?.name) || [];
-                // // TODO updated organization? or current organization
-                // const orgName = (params.role === USER.ROLES.SUBMITTER || params.role === USER.ROLES.ORG_OWNER ||
-                //     aUser.organization === USER.ROLES.SUBMITTER || params.role === USER.ROLES.ORG_OWNER)
-                // ) ? aUser.organization?.orgName || "NA" : null;
-                // if (params.role === USER.ROLES.SUBMITTER || params.role === USER.ROLES.ORG_OWNER
-                //     || aUser.role === USER.ROLES.SUBMITTER || aUser.role === USER.ROLES.ORG_OWNER) {
-                //     const orgID = params?.organization || aUser.organization?.orgID;
-                //     if (!orgID) {
-                //         console.error("the submitter role / org owner is not assigned any organization");
-                //     }
-                //     const orgOwners = await this.getOrgOwnerByOrgID(orgID);
-                //     // orgOwner Emails
-                //     CCs = Array.from(orgOwners)
-                //         .map((u)=>u.email);
-                // }
-                //
-                //
-                //
-                // // TODO updated organization? or current organization
-                // const userDataCommons = params.role === USER.ROLES.DC_POC || params.role === USER.ROLES.CURATOR ? aUser.dataCommons : null;
-                // // TODO updated organization? or current organization
-                // const fedStudies = async (role, studyIDs) => {
-                //     if (aUser?.role === USER.ROLES.FEDERAL_MONITOR) {
-                //         return await this.#findStudiesNames(role, studyIDs);
-                //     }
-                //     return [];
-                // }
-                //
-                // await this.notificationsService.userRoleChangeNotification(aUser.email,
-                //     CCs, {firstName: aUser.firstName, accountType: aUser.IDP,
-                //         email: aUser.email, role: aUser.role,
-                //         org: orgName,
-                //         dataCommons: userDataCommons,
-                //         studies: await fedStudies(aUser)
-                //     },
-                //     {officialEmail: this.officialEmail}
-                //     ,this.tier);
             }
             // create an array to store new events
             let logEvents = [];
