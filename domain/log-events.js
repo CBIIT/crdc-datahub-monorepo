@@ -1,5 +1,5 @@
 const {LOGIN, LOGOUT, PROFILE_UPDATE, CREATE_ACCESS_TOKEN, CREATE_APPLICATION, UPDATE_APPLICATION_STATE, CREATE_BATCH,
-    UPDATE_BATCH, REGISTRATION, SUBMISSION_ACTION
+    UPDATE_BATCH, REGISTRATION, SUBMISSION_ACTION, REACTIVATE_USER
 } = require("../constants/event-constants");
 
 const {v4} = require("uuid");
@@ -66,6 +66,18 @@ const UpdateProfileEvent = class extends AbstractLog {
     }
     static create(userID, userEmail, userIDP,prevProfile, newProfile) {
         return new UpdateProfileEvent(userID, userEmail, userIDP,prevProfile, newProfile);
+    }
+}
+
+const ReactivateUserEvent = class extends AbstractLog {
+    constructor(userID, userEmail, userIDP) {
+        super();
+        this.setUser(userID, userEmail, userIDP);
+        this.setEventType(REACTIVATE_USER);
+    }
+
+    static create(userID, userEmail, userIDP) {
+        return new ReactivateUserEvent(userID, userEmail, userIDP);
     }
 }
 
@@ -156,5 +168,6 @@ module.exports = {
     UpdateApplicationStateEvent,
     CreateBatchEvent,
     UpdateBatchEvent,
-    SubmissionActionEvent
+    SubmissionActionEvent,
+    ReactivateUserEvent,
 }

@@ -1,12 +1,13 @@
 const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
-const {UpdateProfileEvent} = require("../domain/log-events");
+const {UpdateProfileEvent, ReactivateUserEvent} = require("../domain/log-events");
 
-const {getCurrentTime, subtractDaysFromNow} = require("../utility/time-utility");
-const {LOGIN} = require("../constants/event-constants");
-const {v4} = require("uuid");
+
+const {getCurrentTime, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
 const config = require("../../config")
 const jwt = require("jsonwebtoken");
+const {LOG_COLLECTION} = require("../database-constants");
+const orgToUserOrg = require("../utility/org-to-userOrg-converter");
 
 
 
@@ -27,7 +28,7 @@ const createToken = (userInfo, token_secret, token_timeout)=> {
 }
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, devTier) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, tier) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
@@ -35,7 +36,7 @@ class User {
         this.submissionsCollection = submissionsCollection;
         this.applicationCollection = applicationCollection;
         this.officialEmail = officialEmail;
-        this.devTier = devTier;
+        this.tier = tier;
     }
 
     async grantToken(params, context){
@@ -208,60 +209,6 @@ class User {
         return result;
     }
 
-    async createNewUser(context) {
-        let sessionCurrentTime = getCurrentTime();
-        let email = context.userInfo.email;
-        let emailName = email.split("@")[0];
-        const newUser = {
-            _id: v4(),
-            email: email,
-            IDP: context.userInfo.IDP,
-            userStatus: USER.STATUSES.ACTIVE,
-            role: USER.ROLES.USER,
-            organization: {},
-            dataCommons: [],
-            firstName: context?.userInfo?.firstName || emailName,
-            lastName: context.userInfo.lastName,
-            createdAt: sessionCurrentTime,
-            updateAt: sessionCurrentTime
-        };
-        const result = await this.userCollection.insert(newUser);
-        if (!result?.acknowledged){
-            let error = "An error occurred while creating a new user";
-            console.error(error)
-            throw new Error(error)
-        }
-        return newUser;
-    }
-
-    async getMyUser(params, context) {
-        isLoggedInOrThrow(context);
-        let result = await this.userCollection.aggregate([
-            {
-                "$match": {
-                    email: context.userInfo.email,
-                    IDP: context.userInfo.IDP,
-                }
-            },
-            {"$sort": {createdAt: -1}}, // sort descending
-            {"$limit": 1} // return one
-        ]);
-        if (!result){
-            let error = "there is an error getting the result";
-            console.error(error)
-            throw new Error(error)
-        }
-        let user =  result[0];
-        if (!user){
-            user = await this.createNewUser(context);
-        }
-        context.userInfo = {
-            ...context.userInfo,
-            ...user
-        }
-        return context.userInfo;
-    }
-
     async updateMyUser(params, context) {
         isLoggedInOrThrow(context);
         isValidUserStatus(context?.userInfo?.userStatus);
@@ -352,12 +299,7 @@ class User {
                 throw new Error(ERROR.INVALID_ORG_ID);
             }
 
-            updatedUser.organization = {
-                orgID: newOrg._id,
-                orgName: newOrg.name,
-                createdAt: newOrg.createdAt,
-                updateAt: newOrg.updateAt,
-            };
+            updatedUser.organization = orgToUserOrg(newOrg);
         } else if (typeof(params.organization) !== "undefined" && !params.organization && user[0]?.organization?.orgID) {
             updatedUser.organization = null;
         }
@@ -409,14 +351,25 @@ class User {
             if (isUserActivated && isStatusChange) {
                 const adminEmails = await this.getAdminUserEmails();
                 const CCs = adminEmails.filter((u)=> u.email).map((u)=> u.email);
-                await this.notificationsService.inactiveUserNotification(aUser.email,
+                await this.notificationsService.deactivateUserNotification(aUser.email,
                     CCs, {firstName: aUser.firstName},
                     {officialEmail: this.officialEmail}
-                ,this.devTier);
+                ,this.tier);
             }
 
-            const log = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
-            await this.logCollection.insert(log);
+            // create an array to store new events
+            let logEvents = [];
+            // create an profile update event and store it in the events array
+            const updateProfileEvent = UpdateProfileEvent.create(user[0]._id, user[0].email, user[0].IDP, prevProfile, newProfile);
+            logEvents.push(updateProfileEvent);
+            // if the user has been reactivated during the update
+            if (prevProfile?.userStatus === USER.STATUSES.INACTIVE && newProfile?.userStatus === USER.STATUSES.ACTIVE){
+                // create Reactivate User event and add it to the events array
+                const reactivateUserEvent = ReactivateUserEvent.create(user[0]._id, user[0].email, user[0].IDP);
+                logEvents.push(reactivateUserEvent);
+            }
+            // insert all of the events in the events array into the log collection
+            await this.logCollection.insertMany(logEvents);
         } else {
             throw new Error(ERROR.UPDATE_FAILED);
         }
@@ -432,58 +385,6 @@ class User {
         return await this.userCollection.aggregate([{"$match": orgOwnerOrAdminRole}]) || [];
     }
 
-    async getInactiveUsers(inactiveDays) {
-        const query = [
-            {"$match": {
-                eventType: LOGIN
-            }},
-            {"$group": {_id: { userEmail: "$userEmail", userIDP: "$userIDP" }, lastLogin: { $max: "$localtime" }}},
-            {"$match": { // inactive conditions
-                lastLogin: {
-                    $lt: subtractDaysFromNow(inactiveDays)
-                }
-            }},
-            {"$project": {
-                _id: 0, // Exclude _id field
-                email: "$_id.userEmail",
-                IDP: "$_id.userIDP"
-            }}
-        ];
-        return await this.logCollection.aggregate(query) || [];
-    }
-    /**
-     * Finds all users.
-     *
-     * @returns {Promise<Array>} - An array of log aggregation result projecting email and idp only.
-     */
-    async getAllUsersByEmailAndIDP() {
-        return await this.logCollection.aggregate([
-            {"$match": {
-                    eventType: LOGIN
-            }},
-            {"$group": {_id: { userEmail: "$userEmail", userIDP: "$userIDP" }}},
-            {"$project": {
-                _id: 0,
-                email: "$_id.userEmail",
-                IDP: "$_id.userIDP"
-            }}
-        ]);
-    }
-    /**
-     * Finds users excluding specific user conditions.
-     *
-     * @param {Array} users - An array of user conditions for $nor.
-     * @returns {Promise<Array>} - An array of user aggregation result projecting email and idp only.
-     */
-    async findUsersExcludingEmailAndIDP(users) {
-        const condition = {"$match": {
-            ...(users && users?.length > 0) ? {$nor: users} : {},
-            // valid user-statuses
-            userStatus: { $in: [USER.STATUSES.ACTIVE]
-            }
-        }}
-        return await this.userCollection.aggregate([condition,{$project: { _id: 0, email: 1, IDP: 1 }}]);
-    }
     /**
      * Disable users matching specific user conditions.
      *
@@ -500,6 +401,99 @@ class User {
         }
         return [];
     }
+
+    async checkForInactiveUsers(qualifyingEvents) {
+        const USER_FIELDS = {
+            ID: "_id",
+            FIRST_NAME: "firstName",
+            EMAIL: "email",
+            IDP: "IDP",
+            STATUS: "userStatus"
+        };
+        const LOGS_FIELDS = {
+            EMAIL: "userEmail",
+            IDP: "userIDP",
+            EVENT_TYPE: "eventType",
+            TIMESTAMP: "timestamp"
+        };
+        const LOGS_ARRAY = "log_events_array";
+        const LATEST_LOG = "latest_log_event";
+
+        let pipeline = [];
+        pipeline.push({
+            $match: {
+                [USER_FIELDS.STATUS]: USER.STATUSES.ACTIVE
+            }
+        });
+        pipeline.push({
+            $lookup: {
+                from: LOG_COLLECTION,
+                localField: USER_FIELDS.EMAIL,
+                foreignField: LOGS_FIELDS.EMAIL,
+                as: LOGS_ARRAY
+            }
+        });
+        pipeline.push({
+            $set: {
+                [LOGS_ARRAY]: {
+                    $filter: {
+                        input: "$" + LOGS_ARRAY,
+                        as: "log",
+                        cond: {
+                            $and: [
+                                {
+                                    $eq: ["$$log." + LOGS_FIELDS.IDP, "$" + USER_FIELDS.IDP],
+                                },
+                                {
+                                    $in: ["$$log." + LOGS_FIELDS.EVENT_TYPE, qualifyingEvents]
+                                },
+                            ],
+                        }
+                    }
+                }
+            }
+        });
+        pipeline.push({
+            $set: {
+                [LATEST_LOG]: {
+                    $first: {
+                        $sortArray: {
+                            input: "$" + LOGS_ARRAY,
+                            sortBy: {
+                                timestamp: -1
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        pipeline.push({
+            $match: {
+                $or: [
+                    {
+                        [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
+                            $exists: 0
+                        }
+                    },
+                    {
+                        [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
+                            $lt: subtractDaysFromNowTimestamp(config.inactive_user_days)
+                        }
+                    },
+                ]
+            }
+        });
+        pipeline.push({
+            $project: {
+                [USER_FIELDS.ID]: 1,
+                [USER_FIELDS.EMAIL]: 1,
+                [USER_FIELDS.IDP]: 1,
+                [USER_FIELDS.FIRST_NAME]: 1,
+            }
+        });
+        return await this.userCollection.aggregate(pipeline);
+    }
+
     /**
      * Check if login with an email and identity provider (IDP) is permitted.
      *
@@ -527,6 +521,7 @@ class User {
         return result?.length === 0;
     }
 
+
     /**
      * getOrgOwnerByOrgName
      * @param {*} orgName
@@ -543,6 +538,110 @@ class User {
 
     isAdmin(role) {
         return role && role === USER.ROLES.ADMIN;
+    }
+
+    async checkForInactiveUsers(qualifyingEvents) {
+        // users collection field names
+        const USER_FIELDS = {
+            ID: "_id",
+            FIRST_NAME: "firstName",
+            EMAIL: "email",
+            IDP: "IDP",
+            STATUS: "userStatus"
+        };
+        // logs collection field names
+        const LOGS_FIELDS = {
+            EMAIL: "userEmail",
+            IDP: "userIDP",
+            EVENT_TYPE: "eventType",
+            TIMESTAMP: "timestamp"
+        };
+        // fields added by pipeline
+        const LOGS_ARRAY = "log_events_array";
+        const LATEST_LOG = "latest_log_event";
+
+        let pipeline = [];
+        // filter out users where status is not "Active"
+        pipeline.push({
+            $match: {
+                [USER_FIELDS.STATUS]: USER.STATUSES.ACTIVE
+            }
+        });
+        // collect log events where the log event email matches the user's email and store the events in an array
+        // NOTE: we can only match on one field here so log events where the IDP does not match will be filtered out in
+        // the next stage
+        pipeline.push({
+            $lookup: {
+                from: LOG_COLLECTION,
+                localField: USER_FIELDS.EMAIL,
+                foreignField: LOGS_FIELDS.EMAIL,
+                as: LOGS_ARRAY
+            }
+        });
+        // filter out the log events where the IDP does not match the user's IDP and the log events where the event type
+        // is not included in the qualifying events array
+        pipeline.push({
+            $set: {
+                [LOGS_ARRAY]: {
+                    $filter: {
+                        input: "$" + LOGS_ARRAY,
+                        as: "log",
+                        cond: {
+                            $and: [
+                                {
+                                    $eq: ["$$log." + LOGS_FIELDS.IDP, "$" + USER_FIELDS.IDP],
+                                },
+                                {
+                                    $in: ["$$log." + LOGS_FIELDS.EVENT_TYPE, qualifyingEvents]
+                                },
+                            ],
+                        }
+                    }
+                }
+            }
+        });
+        // store the most recent log event in a new field
+        pipeline.push({
+            $set: {
+                [LATEST_LOG]: {
+                    $first: {
+                        $sortArray: {
+                            input: "$" + LOGS_ARRAY,
+                            sortBy: {
+                                timestamp: -1
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        // filter out users that have qualifying log event types recent enough to fall within the inactive user days period
+        pipeline.push({
+            $match: {
+                $or: [
+                    {
+                        [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
+                            $exists: 0
+                        }
+                    },
+                    {
+                        [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
+                            $lt: subtractDaysFromNowTimestamp(config.inactive_user_days)
+                        }
+                    },
+                ]
+            }
+        });
+        // format the output
+        pipeline.push({
+            $project: {
+                [USER_FIELDS.ID]: 1,
+                [USER_FIELDS.EMAIL]: 1,
+                [USER_FIELDS.IDP]: 1,
+                [USER_FIELDS.FIRST_NAME]: 1,
+            }
+        });
+        return await this.userCollection.aggregate(pipeline);
     }
 }
 

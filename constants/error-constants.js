@@ -16,7 +16,8 @@ module.exports = Object.freeze({
         MONGODB_HEALTH_CHECK_FAILED: "The MongoDB health check failed, please see the logs for more information",
         // Utility
         JSON_PARSING: "An error occurred while parsing a string to JSON.",
-
+        // Organization Service
+        INVALID_APPROVED_STUDY_ID: "The organization can't be created/edited because of the invalid approved id",
         INVALID_ORG_ID: "The organization ID you provided is invalid",
         ORG_NOT_FOUND: "The organization you are trying to update does not exist",
         DUPLICATE_ORG_NAME: "An organization with the same name already exists",

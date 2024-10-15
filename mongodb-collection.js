@@ -14,6 +14,25 @@ class MongoDBCollection {
         }
     }
 
+    // Returns all documents in the collection
+    async findAll() {
+        try{
+            return await this.collection.find().toArray();
+        }
+        catch (e){
+            logAndThrow("An exception occurred during a findAll operation", e);
+        }
+    }
+
+    async countDoc(query){
+        try{
+            return await this.collection.countDocuments(query);
+        }
+        catch (e){
+            logAndThrow("An exception occurred during count documents", e);
+        }
+    }
+
     async aggregate(pipeline){
         try{
             return await this.collection.aggregate(pipeline).toArray()
@@ -32,13 +51,26 @@ class MongoDBCollection {
         }
     }
 
+    async insertMany(inputs){
+        try{
+            let bulkOperation = this.collection.initializeOrderedBulkOp()
+            inputs.filter((x) => {
+                bulkOperation.insert(x);
+            });
+            return await bulkOperation.execute();
+        }
+        catch (e){
+            logAndThrow("An exception occurred during an insert operation", e);
+        }
+    }
 
-    async findOneAndUpdate(query, doc) {
+
+    async findOneAndUpdate(query, doc, option) {
         const updateDoc = {
             $set: doc
         };
         try{
-            return await this.collection.findOneAndUpdate(query, updateDoc, { upsert: true});
+            return await this.collection.findOneAndUpdate(query, updateDoc, option ? option : { upsert: true});
         }
         catch (e){
             logAndThrow("An exception occurred during an findOne and update operation", e);
@@ -73,7 +105,18 @@ class MongoDBCollection {
             logAndThrow("An exception occurred during an updateMany operation", e);
         }
     }
-
+    async updateOne(query, document, option) {
+        const updateDoc = {
+            $set: document,
+            ...option
+        };
+        try{
+            return await this.collection.updateOne(query, updateDoc);
+        }
+        catch (e){
+            logAndThrow("An exception occurred during an updateMany operation", e);
+        }
+    }
     async deleteOneById(id) {
         return await this.deleteOne({_id: id});
     }
@@ -84,6 +127,31 @@ class MongoDBCollection {
         }
         catch (e){
             logAndThrow("An exception occurred during a delete operation", e);
+        }
+    }
+
+    async deleteMany(query) {
+        try{
+            return await this.collection.deleteMany(query);
+        }
+        catch (e){
+            logAndThrow("An exception occurred during a delete operation", e);
+        }
+    }
+
+    /**
+     * Finds the distinct values for a specified field across a single collection.
+     * Applies the specified filter to a collection then returns the distinct values of the specified field in the filter results as an array.
+     * @param field A string value for which the distinct values are returned.
+     * @param filter An object containing the filter to apply to the collection before retrieving the distinct values. Example: {color: "green", shape: "square"}
+     * @returns {Promise<*>} A promise that will return an array of distinct values when resolved
+     */
+    async distinct(field, filter){
+        try{
+            return await this.collection.distinct(field, filter);
+        }
+        catch (e){
+            logAndThrow("An exception occurred during a distinct operation", e);
         }
     }
 }
