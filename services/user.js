@@ -415,7 +415,6 @@ class User {
         return { ...user[0], ...updatedUser };
     }
 
-
     async #notifyUpdatedUser(prevUser, newUser, newRole) {
         const baseRoleCondition = newRole && Object.values(USER.ROLES).includes(newRole);
         const isRoleChange = baseRoleCondition && prevUser.role !== newUser.role;
@@ -434,7 +433,7 @@ class User {
                 ? await this.#findStudiesNames(newUser.studies)
                 : undefined;
 
-            await this.notificationsService.userRoleChangeNotification("iheaven0129@gmail.com",
+            await this.notificationsService.userRoleChangeNotification(newUser.email,
                 CCs, {
                     accountType: newUser.IDP,
                     email: newUser.email,
