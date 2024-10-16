@@ -422,7 +422,7 @@ class User {
         const isDataCommonsChange = newUser?.dataCommons?.length > 0 && JSON.stringify(prevUser?.dataCommons) !== JSON.stringify(newUser?.dataCommons);
         const isStudiesChange = newUser.studies?.length > 0 && JSON.stringify(prevUser.studies) !== JSON.stringify(newUser.studies);
         if (isRoleChange || isOrgChange || isDataCommonsChange || isStudiesChange) {
-            const isSubmitterOrOrgOwner = [USER.ROLES.SUBMITTER, USER.ROLES.ORG_OWNER,].includes(newUser.role);
+            const isSubmitterOrOrgOwner = [USER.ROLES.SUBMITTER, USER.ROLES.ORG_OWNER].includes(newUser.role);
             const CCs = isSubmitterOrOrgOwner ? (
                     await this.getOrgOwnerByOrgID(newUser.organization?.orgID))
                     ?.map((owner) => owner.email)
