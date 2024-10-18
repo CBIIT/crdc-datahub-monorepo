@@ -15,4 +15,5 @@ module.exports = Object.freeze({
     CONFIGURATION_COLLECTION: 'configuration',
     CDE_COLLECTION : 'CDE',
     DATA_RECORDS_ARCHIVE_COLLECTION: 'dataRecordsArchived',
+    QC_RESULTS_COLLECTION: 'qcResults',
 });
