@@ -14,6 +14,15 @@ class MongoDBCollection {
         }
     }
 
+    async findOne(id){
+        try{
+            return await this.collection.findOne({_id: id});
+        }
+        catch (e){
+            logAndThrow("An exception occurred during a find operation", e);
+        }
+    }
+
     // Returns all documents in the collection
     async findAll() {
         try{
