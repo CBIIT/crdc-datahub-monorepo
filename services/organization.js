@@ -333,34 +333,34 @@ class Organization {
     return { ...newOrg };
   }
 
-  /**
-  * Stores approved studies in the organization's collection.
-  *
-  * @param {string} orgID - The organization ID.
-   * @param {object} orgApprovedStudy - The approved study array.
-  * @returns {void}
-  */
-  async storeApprovedStudies(orgID, orgApprovedStudy) {
-      const aOrg = await this.getOrganizationByID(orgID);
-      if (!aOrg || !orgApprovedStudy?._id) {
-          return;
-      }
-      const newStudies = [];
-      const matchingStudy = aOrg?.studies.find((study) => orgApprovedStudy?._id === study?._id);
-      if (!matchingStudy) {
-          newStudies.push({ _id: orgApprovedStudy?._id });
-      }
+    /**
+    * Stores approved studies in the organization's collection.
+    *
+    * @param {string} orgID - The organization ID.
+    * @param {object} studyID - The approved study ID
+    * @returns {Promise<void>}
+    */
+    async storeApprovedStudies(orgID, studyID) {
+        const aOrg = await this.getOrganizationByID(orgID);
+        if (!aOrg || !studyID) {
+            return;
+        }
+        const newStudies = [];
+        const matchingStudy = aOrg?.studies.find((study) => studyID === study?._id);
+        if (!matchingStudy) {
+            newStudies.push({ _id: studyID });
+        }
 
-      if (newStudies.length > 0) {
-          aOrg.studies = aOrg.studies || [];
-          aOrg.studies = aOrg.studies.concat(newStudies);
-          aOrg.updateAt = getCurrentTime();
-          const res = await this.organizationCollection.update(aOrg);
-          if (res?.modifiedCount !== 1) {
-              console.error(ERROR.ORGANIZATION_APPROVED_STUDIES_INSERTION + ` orgID: ${orgID}`);
-          }
-      }
-  }
+        if (newStudies.length > 0) {
+            aOrg.studies = aOrg.studies || [];
+            aOrg.studies = aOrg.studies.concat(newStudies);
+            aOrg.updateAt = getCurrentTime();
+            const res = await this.organizationCollection.update(aOrg);
+            if (res?.modifiedCount !== 1) {
+                console.error(ERROR.ORGANIZATION_APPROVED_STUDIES_INSERTION + ` orgID: ${orgID}`);
+            }
+        }
+    }
 
     /**
      * List Organization IDs by a studyName API.
