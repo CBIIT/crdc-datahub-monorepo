@@ -2,6 +2,7 @@ const {ERROR} = require("../constants/error-constants");
 const {USER} = require("../constants/user-constants");
 const {ORGANIZATION} = require("../constants/organization-constants");
 const {getCurrentTime} = require("../utility/time-utility");
+const { APPROVED_STUDIES_COLLECTION } = require("../database-constants");
 const {v4} = require("uuid");
 
 class Organization {
@@ -34,7 +35,7 @@ class Organization {
         throw new Error(ERROR.INVALID_ORG_ID);
     }
 
-    return this.getOrganizationByID(params.orgID);
+    return this.getOrganizationByID(params.orgID, false);
   }
 
   /**
@@ -42,12 +43,28 @@ class Organization {
    *
    * @async
    * @param {string} id The UUID of the organization to search for
+   * @param {boolean} [omitStudies] Whether to omit the study lookup in the pipeline. Default is true
    * @returns {Promise<Object | null>} The organization with the given `id` or null if not found
    */
-  async getOrganizationByID(id) {
-      const result = await this.organizationCollection.aggregate([{
-          "$match": { _id: id }
-      }, {"$limit": 1}]);
+  async getOrganizationByID(id, omitStudies = true) {
+      const pipeline = [];
+
+      if (!omitStudies) {
+          pipeline.push(
+              {
+                  $lookup: {
+                      from: APPROVED_STUDIES_COLLECTION,
+                      localField: "studies._id",
+                      foreignField: "_id",
+                      as: "studies"
+                  }
+              },
+          );
+      }
+
+      pipeline.push({ "$match": { _id: id } });
+      pipeline.push({ "$limit": 1 });
+      const result = await this.organizationCollection.aggregate(pipeline);
       return result?.length > 0 ? result[0] : null;
   }
 
@@ -74,11 +91,27 @@ class Organization {
    *
    * @typedef {Object<string, any>} Filters K:V pairs of filters
    * @param {Filters} [filters] Filters to apply to the query
+   * @param {boolean} [omitStudies] Whether to omit the study lookup in the pipeline. Default is false
    * @returns {Promise<Object[]>} An array of Organizations
    */
-  async listOrganizations(filters = {}) {
-    return await this.organizationCollection.aggregate([{ "$match": filters }]);
-  }
+    async listOrganizations(filters = {}, omitStudies = false) {
+        const pipeline = [];
+        if (!omitStudies) {
+            pipeline.push(
+                {
+                    $lookup: {
+                        from: APPROVED_STUDIES_COLLECTION,
+                        localField: "studies._id",
+                        foreignField: "_id",
+                        as: "studies"
+                    }
+                },
+            );
+        }
+
+        pipeline.push({ "$match": filters });
+        return await this.organizationCollection.aggregate(pipeline);
+    }
 
   /**
    * Edit Organization API Interface.
@@ -188,12 +221,28 @@ class Organization {
    *
    * @async
    * @param {string} name The name of the organization to search for
+   * @param {boolean} [omitStudies] Whether to omit the study lookup in the pipeline. Default is true
    * @returns {Promise<Object | null>} The organization with the given `name` or null if not found
    */
-  async getOrganizationByName(name) {
-    const result = await this.organizationCollection.aggregate([{
-        "$match": { name }
-    }, {"$limit": 1}]);
+  async getOrganizationByName(name, omitStudies = true) {
+    const pipeline = [];
+
+    if (!omitStudies) {
+        pipeline.push(
+            {
+                $lookup: {
+                    from: APPROVED_STUDIES_COLLECTION,
+                    localField: "studies._id",
+                    foreignField: "_id",
+                    as: "studies"
+                }
+            },
+        );
+    }
+
+    pipeline.push({ "$match": { name } });
+    pipeline.push({ "$limit": 1 });
+    const result = await this.organizationCollection.aggregate(pipeline); 
     return result?.length > 0 ? result[0] : null;
   }
 
@@ -293,13 +342,13 @@ class Organization {
   */
   async storeApprovedStudies(orgID, orgApprovedStudy) {
       const aOrg = await this.getOrganizationByID(orgID);
-      if (!aOrg) {
+      if (!aOrg || !orgApprovedStudy?._id) {
           return;
       }
       const newStudies = [];
       const matchingStudy = aOrg?.studies.find((study) => orgApprovedStudy?._id === study?._id);
       if (!matchingStudy) {
-          newStudies.push(orgApprovedStudy);
+          newStudies.push({ _id: orgApprovedStudy?._id });
       }
 
       if (newStudies.length > 0) {
@@ -331,22 +380,17 @@ class Organization {
      */
   async #getApprovedStudies(studies) {
       const studyIDs = studies
-          .filter((study)=> study?.studyID)
-          .map((study)=> study.studyID);
-        const approvedStudies = await Promise.all(studyIDs.map(async (id) => {
-            const study = (await this.approvedStudiesCollection.find(id))?.pop();
-            if (!study) {
-                throw new Error(ERROR.INVALID_APPROVED_STUDY_ID);
-            }
-            return study;
-        }));
-      return approvedStudies?.map((study) => ({
-          _id: study?._id,
-          studyName: study?.studyName,
-          studyAbbreviation: study?.studyAbbreviation,
-          controlledAccess: study?.controlledAccess,
-          ORCID: study?.ORCID,
+          .filter((study) => study?.studyID)
+          .map((study) => study.studyID);
+      const approvedStudies = await Promise.all(studyIDs.map(async (id) => {
+          const study = (await this.approvedStudiesCollection.find(id))?.pop();
+          if (!study) {
+              throw new Error(ERROR.INVALID_APPROVED_STUDY_ID);
+          }
+          return study;
       }));
+
+      return approvedStudies?.map((study) => ({ _id: study?._id }));
   }
 }
 
