@@ -43,13 +43,13 @@ class Organization {
    *
    * @async
    * @param {string} id The UUID of the organization to search for
-   * @param {boolean} [omitStudies] Whether to omit the study lookup in the pipeline. Default is true
+   * @param {boolean} [omitStudyLookup] Whether to omit the study lookup in the pipeline. For backward compatibility, default is false.
    * @returns {Promise<Object | null>} The organization with the given `id` or null if not found
    */
-  async getOrganizationByID(id, omitStudies = true) {
+  async getOrganizationByID(id, omitStudyLookup = false) {
       const pipeline = [];
 
-      if (!omitStudies) {
+      if (!omitStudyLookup) {
           pipeline.push(
               {
                   $lookup: {
@@ -91,12 +91,12 @@ class Organization {
    *
    * @typedef {Object<string, any>} Filters K:V pairs of filters
    * @param {Filters} [filters] Filters to apply to the query
-   * @param {boolean} [omitStudies] Whether to omit the study lookup in the pipeline. Default is false
+   * @param {boolean} [omitStudyLookup] Whether to omit the study lookup in the pipeline. Default is false
    * @returns {Promise<Object[]>} An array of Organizations
    */
-    async listOrganizations(filters = {}, omitStudies = false) {
+    async listOrganizations(filters = {}, omitStudyLookup = false) {
         const pipeline = [];
-        if (!omitStudies) {
+        if (!omitStudyLookup) {
             pipeline.push(
                 {
                     $lookup: {
@@ -221,13 +221,13 @@ class Organization {
    *
    * @async
    * @param {string} name The name of the organization to search for
-   * @param {boolean} [omitStudies] Whether to omit the study lookup in the pipeline. Default is true
+   * @param {boolean} [omitStudyLookup] Whether to omit the study lookup in the pipeline. Default is true
    * @returns {Promise<Object | null>} The organization with the given `name` or null if not found
    */
-  async getOrganizationByName(name, omitStudies = true) {
+  async getOrganizationByName(name, omitStudyLookup = true) {
     const pipeline = [];
 
-    if (!omitStudies) {
+    if (!omitStudyLookup) {
         pipeline.push(
             {
                 $lookup: {
@@ -341,7 +341,7 @@ class Organization {
     * @returns {Promise<void>}
     */
     async storeApprovedStudies(orgID, studyID) {
-        const aOrg = await this.getOrganizationByID(orgID);
+        const aOrg = await this.getOrganizationByID(orgID, true);
         if (!aOrg || !studyID) {
             return;
         }
