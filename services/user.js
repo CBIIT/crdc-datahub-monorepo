@@ -31,7 +31,7 @@ const createToken = (userInfo, token_secret, token_timeout)=> {
 
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, appUrl, tier) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, appUrl, tier, approvedStudiesCollection) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
@@ -41,6 +41,7 @@ class User {
         this.officialEmail = officialEmail;
         this.appUrl = appUrl;
         this.tier = tier;
+        this.approvedStudiesCollection = approvedStudiesCollection;
     }
 
     async grantToken(params, context){
@@ -102,20 +103,13 @@ class User {
     }
 
     async #findStudiesNames(studiesIDs) {
-        const organizationsWithStudies = await this.organizationCollection.aggregate([{
+        const approvedStudies = await this.approvedStudiesCollection.aggregate([{
             "$match": {
-                "studies._id": { "$in": studiesIDs } // userIDs should be an array of IDs
+                "_id": { "$in": studiesIDs } // userIDs should be an array of IDs
             }
         }]);
-        const studyNameSet = new Set();
-        for (let org of organizationsWithStudies) {
-            for (let study of org?.studies || []) {
-                if (studiesIDs.includes(study._id)) {
-                    studyNameSet.add(study.studyName)
-                }
-            }
-        }
-        return studyNameSet.toArray();
+        return approvedStudies
+            .map((study) => study.studyName);
     }
 
 
