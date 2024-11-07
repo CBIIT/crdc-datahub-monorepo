@@ -1,3 +1,4 @@
+const {v4} = require("uuid");
 const DATABASE_ERROR = new Error("Database operation failed, please see logs for more information");
 class MongoDBCollection {
 
@@ -76,7 +77,8 @@ class MongoDBCollection {
 
     async findOneAndUpdate(query, doc, option) {
         const updateDoc = {
-            $set: doc
+            $set: doc,
+            $setOnInsert: { _id: v4() }
         };
         try{
             return await this.collection.findOneAndUpdate(query, updateDoc, option ? option : { upsert: true});
