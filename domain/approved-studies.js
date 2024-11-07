@@ -1,10 +1,8 @@
 const {getCurrentTime} = require("../utility/time-utility");
-const {v4} = require("uuid");
 const {isUndefined} = require("../../utility/string-util");
 
 class ApprovedStudies {
     constructor(studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess, ORCID, PI, openAccess) {
-        this._id = v4();
         this.studyName = studyName;
         this.studyAbbreviation = studyAbbreviation;
         if (dbGaPID) {
