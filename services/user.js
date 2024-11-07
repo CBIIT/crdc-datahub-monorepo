@@ -325,7 +325,7 @@ class User {
             throw new Error(ERROR.USER_NOT_FOUND);
         }
 
-        const updatedUser = { _id: params.userID, updateAt: sessionCurrentTime };
+        const updatedUser = { updateAt: sessionCurrentTime };
         const isCurator = updatedUser?.role === USER.ROLES.CURATOR || user[0]?.role === USER.ROLES.CURATOR || params?.role === USER.ROLES.CURATOR;
         if (typeof(params.organization) !== "undefined" && params.organization && params.organization !== user[0]?.organization?.orgID) {
             const result = await this.organizationCollection.aggregate([{
