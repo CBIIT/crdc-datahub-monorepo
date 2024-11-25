@@ -1,5 +1,4 @@
 const {getCurrentTime} = require("../utility/time-utility");
-const {isUndefined} = require("../../utility/string-util");
 
 class ApprovedStudies {
     constructor(studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess, ORCID, PI, openAccess) {
@@ -15,14 +14,14 @@ class ApprovedStudies {
         if (ORCID) {
             this.ORCID = ORCID;
         }
-        if (!isUndefined(controlledAccess)) {
+        if (!controlledAccess === undefined) {
             this.controlledAccess = controlledAccess;
         }
         if (PI) {
             this.PI = PI;
         }
 
-        if (!isUndefined(openAccess)) {
+        if (!openAccess === undefined) {
             this.openAccess = openAccess;
         }
         this.createdAt = this.updatedAt = getCurrentTime();
