@@ -8,7 +8,7 @@ const config = require("../../config")
 const jwt = require("jsonwebtoken");
 const {LOG_COLLECTION} = require("../database-constants");
 const orgToUserOrg = require("../utility/org-to-userOrg-converter");
-const {isUndefined} = require("../../utility/string-util");
+const {isUndefined} = require("../../util/string-util");
 
 
 
