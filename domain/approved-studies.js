@@ -25,7 +25,7 @@ class ApprovedStudies {
             this.openAccess = openAccess;
         }
 
-        if (!isUndefined(programName)) {
+        if (!programName === undefined) {
             this.programName = programName;
         }
         this.createdAt = this.updatedAt = getCurrentTime();
