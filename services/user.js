@@ -2,7 +2,7 @@ const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent, ReactivateUserEvent} = require("../domain/log-events");
 
-const {includesAll, isUndefined} = require("../utility/string-utility")
+const {includesAll} = require("../utility/string-utility")
 const {getCurrentTime, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
 const config = require("../../config")
 const jwt = require("jsonwebtoken");
