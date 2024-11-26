@@ -1,7 +1,7 @@
 const {getCurrentTime} = require("../utility/time-utility");
 
 class ApprovedStudies {
-    constructor(studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess, ORCID, PI, openAccess) {
+    constructor(studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess, ORCID, PI, openAccess, programName) {
         this.studyName = studyName;
         this.studyAbbreviation = studyAbbreviation;
         if (dbGaPID) {
@@ -24,11 +24,15 @@ class ApprovedStudies {
         if (!openAccess === undefined) {
             this.openAccess = openAccess;
         }
+
+        if (!isUndefined(programName)) {
+            this.programName = programName;
+        }
         this.createdAt = this.updatedAt = getCurrentTime();
     }
 
-    static createApprovedStudies(studyName, studyAbbreviation, dbGaPID, organization, controlledAccess, ORCID, PI, openAccess) {
-        return new ApprovedStudies(studyName, studyAbbreviation, dbGaPID, organization, controlledAccess, ORCID, PI, openAccess);
+    static createApprovedStudies(studyName, studyAbbreviation, dbGaPID, organization, controlledAccess, ORCID, PI, openAccess, programName) {
+        return new ApprovedStudies(studyName, studyAbbreviation, dbGaPID, organization, controlledAccess, ORCID, PI, openAccess, programName);
     }
 }
 
