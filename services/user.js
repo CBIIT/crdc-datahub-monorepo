@@ -725,7 +725,7 @@ class DataCommon {
         this.#validate(this.currentRole, this.currentDataCommons, this.newRole, this.newDataCommons);
         const isValidRole = this.#isDcPOC(this.currentRole, this.newRole) || this.#isCurator(this.currentRole, this.newRole);
         if (isValidRole) {
-            return isUndefined(this.newDataCommons) ? this.currentDataCommons : this.newDataCommons;
+            return this.newDataCommons === undefined ? this.currentDataCommons : this.newDataCommons;
         }
 
         if (!isValidRole && this.currentDataCommons?.length > 0) {
@@ -749,7 +749,7 @@ class DataCommon {
         }
 
         // Check if Data Commons is required and missing for the user's role
-        const isValidDataCommons = newDataCommons?.length > 0 || (currentDataCommons?.length > 0 && isUndefined(newDataCommons));
+        const isValidDataCommons = newDataCommons?.length > 0 || (currentDataCommons?.length > 0 && newDataCommons === undefined);
         if (isValidRole && !isValidDataCommons) {
             throw new Error(ERROR.USER_DC_REQUIRED);
         }
