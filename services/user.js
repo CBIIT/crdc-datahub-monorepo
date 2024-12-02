@@ -6,7 +6,7 @@ const {includesAll} = require("../utility/string-utility")
 const {getCurrentTime, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
 const config = require("../../config")
 const jwt = require("jsonwebtoken");
-const {LOG_COLLECTION} = require("../database-constants");
+const {LOG_COLLECTION, APPROVED_STUDIES_COLLECTION} = require("../database-constants");
 const orgToUserOrg = require("../utility/org-to-userOrg-converter");
 
 
@@ -83,7 +83,17 @@ class User {
                 _id: userID
             }
         }, {"$limit": 1}]);
-        return (result?.length > 0) ? result[0] : null;
+
+        if (result?.length === 1) {
+            const user = result[0];
+            const studies = await this.#findApprovedStudies(user.studies);
+            return {
+                ...user,
+                studies
+            };
+        } else {
+            return null;
+        }   
     }
 
     /**
@@ -101,16 +111,28 @@ class User {
         return (result?.length > 0) ? result : [];
     }
 
-    async #findStudiesNames(studiesIDs) {
+    async #findStudiesNames(studies) {
+        if (!studies) return [];
+        const studiesIDs = (studies[0] instanceof Object) ? studies.map((study) => study?._id) : studies;
         const approvedStudies = await this.approvedStudiesCollection.aggregate([{
             "$match": {
-                "_id": { "$in": studiesIDs } // userIDs should be an array of IDs
+                "_id": { "$in": studiesIDs } 
             }
         }]);
         return approvedStudies
             .map((study) => study.studyName);
     }
 
+    async #findApprovedStudies(studies) {
+        if (!studies || studies.length === 0) return [];
+        const studiesIDs = (studies[0] instanceof Object) ? studies.map((study) => study?._id) : studies;
+        const approvedStudies = await this.approvedStudiesCollection.aggregate([{
+            "$match": {
+                "_id": { "$in": studiesIDs } 
+            }
+        }]);
+        return approvedStudies;
+    }
 
     async getUser(params, context) {
         isLoggedInOrThrow(context);
@@ -131,10 +153,17 @@ class User {
         const result = await this.userCollection.aggregate([{
             "$match": filters
         }, {"$limit": 1}]);
-
-        return (result?.length === 1) ? result[0] : null;
+        if (result?.length === 1) {
+            const user = result[0];
+            const studies = await this.#findApprovedStudies(user.studies);
+            return {
+                ...user,
+                studies
+            };
+        } else {
+            return null;
+        }   
     }
-
 
     async listUsers(params, context) {
         isLoggedInOrThrow(context);
@@ -152,8 +181,11 @@ class User {
 
         const result = await this.userCollection.aggregate([{
             "$match": filters
-        }]);
+        },]);
 
+        for (let user of result) {
+            user.studies = await this.#findApprovedStudies(user.studies);
+        }
         return result || [];
     }
 
@@ -300,11 +332,13 @@ class User {
             ...updateUser,
             updateAt: sessionCurrentTime
         }
+        const user_studies = await this.#findApprovedStudies( user[0].studies);
         const result = {
             ...user[0],
             firstName: params.userInfo.firstName,
             lastName: params.userInfo.lastName,
-            updateAt: sessionCurrentTime
+            updateAt: sessionCurrentTime,
+            studies: user_studies
         }
         return result;
     }
@@ -323,23 +357,9 @@ class User {
         if (!user || !Array.isArray(user) || user.length < 1 || user[0]?._id !== params.userID) {
             throw new Error(ERROR.USER_NOT_FOUND);
         }
-
         const updatedUser = { updateAt: sessionCurrentTime };
         const isCurator = updatedUser?.role === USER.ROLES.CURATOR || user[0]?.role === USER.ROLES.CURATOR || params?.role === USER.ROLES.CURATOR;
-        if (typeof(params.organization) !== "undefined" && params.organization && params.organization !== user[0]?.organization?.orgID) {
-            const result = await this.organizationCollection.aggregate([{
-                "$match": { _id: params.organization }
-            }, {"$limit": 1}]);
-            const newOrg = result?.[0];
-
-            if (!newOrg?._id || newOrg?._id !== params.organization) {
-                throw new Error(ERROR.INVALID_ORG_ID);
-            }
-
-            updatedUser.organization = orgToUserOrg(newOrg);
-        } else if ((typeof(params.organization) !== "undefined" && !params.organization && user[0]?.organization?.orgID)) { // Data Curator should not be assigned any Org
-            updatedUser.organization = null;
-        }
+        
         if (params.role && Object.values(USER.ROLES).includes(params.role)) {
             updatedUser.role = params.role;
         }
@@ -353,32 +373,12 @@ class User {
 
         updatedUser.dataCommons = DataCommon.get(user[0]?.role, user[0]?.dataCommons, params?.role, params?.dataCommons);
         // add studies to user.
-        let userOrg = updatedUser.organization;
-        if (params.studies &&  params.studies.length > 0) {
-            if (![USER.ROLES.FEDERAL_MONITOR].includes(updatedUser.role || user[0]?.role))
-            {
-                if (!userOrg || !userOrg.studies) {
-                    const result = await this.organizationCollection.aggregate([{
-                         "$match": { _id: params.organization }
-                         }, {"$limit": 1}]);
-                     if (!result?.[0]?._id) {
-                         throw new Error(ERROR.INVALID_ORG_ID);
-                     }
-                     userOrg = result[0];
-                 }
-                 const approvedStudies = userOrg?.studies;
-                 if (!approvedStudies || approvedStudies.length === 0) {
-                     throw new Error(ERROR.INVALID_NO_STUDIES);
-                 }
-                 const approvedStudyArr = approvedStudies.map((study) => study._id)
-                 if (!includesAll(approvedStudyArr, params.studies)) {
-                     throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
-                 }
-            }
-            updatedUser.studies = params?.studies;
+        const valid_studies = await this.#findApprovedStudies(params.studies);
+        if (valid_studies.length !== params.studies.length) {
+            throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
         }
-        else
-            updatedUser.studies = []
+        updatedUser.studies = params.studies;
+
         if (params?.status){
             if (! [USER.STATUSES.ACTIVE, USER.STATUSES.INACTIVE].includes(params.status))
                 throw new Error(ERROR.INVALID_USER_STATUS);
@@ -387,7 +387,7 @@ class User {
         }
 
         // Check if an organization is required and missing for the user's role
-        const userHasOrg = Boolean(user[0]?.organization?.orgID) || typeof(updatedUser.organization) !== "undefined";
+        const userHasOrg = Boolean(user[0]?.organization?.orgID);
         if (!userHasOrg && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER, USER.ROLES.FEDERAL_MONITOR].includes(updatedUser.role || user[0]?.role)) {
             throw new Error(ERROR.USER_ORG_REQUIRED);
         }
@@ -405,7 +405,8 @@ class User {
         } else {
             throw new Error(ERROR.UPDATE_FAILED);
         }
-        return { ...user[0], ...updatedUser };
+        updatedUser.studies = valid_studies;  // return approved studies dynamically with all properties of studies
+        return { ...user[0], ...updatedUser};
     }
 
     async #notifyUpdatedUser(prevUser, newUser, newRole) {
@@ -422,10 +423,10 @@ class User {
                 : [];
             const orgName = isSubmitterOrOrgOwner ? newUser.organization?.orgName : undefined;
             const userDataCommons = [USER.ROLES.DC_POC, USER.ROLES.CURATOR].includes(newUser.role) ? newUser.dataCommons : undefined;
-            const fedStudiesNames = USER.ROLES.FEDERAL_MONITOR === newUser?.role
-                ? await this.#findStudiesNames(newUser.studies)
-                : undefined;
-
+            // const fedStudiesNames = USER.ROLES.FEDERAL_MONITOR === newUser?.role
+            //     ? await this.#findStudiesNames(newUser.studies)
+            //     : undefined;
+            const studyNames = await this.#findStudiesNames(newUser.studies);
             await this.notificationsService.userRoleChangeNotification(newUser.email,
                 CCs, {
                     accountType: newUser.IDP,
@@ -433,7 +434,7 @@ class User {
                     role: newUser.role,
                     org: orgName,
                     dataCommons: userDataCommons,
-                    studies: fedStudiesNames
+                    studies: studyNames
                 },
                 {url: this.appUrl, helpDesk: this.officialEmail}
                 ,this.tier);
