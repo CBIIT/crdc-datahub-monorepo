@@ -423,9 +423,6 @@ class User {
                 : [];
             const orgName = isSubmitterOrOrgOwner ? newUser.organization?.orgName : undefined;
             const userDataCommons = [USER.ROLES.DC_POC, USER.ROLES.CURATOR].includes(newUser.role) ? newUser.dataCommons : undefined;
-            // const fedStudiesNames = USER.ROLES.FEDERAL_MONITOR === newUser?.role
-            //     ? await this.#findStudiesNames(newUser.studies)
-            //     : undefined;
             const studyNames = await this.#findStudiesNames(newUser.studies);
             await this.notificationsService.userRoleChangeNotification(newUser.email,
                 CCs, {
