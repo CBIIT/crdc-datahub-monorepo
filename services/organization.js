@@ -293,18 +293,18 @@ class Organization {
    * @returns {Promise<Object>} The newly created organization
    */
   async createOrganization(params) {
-      const newOrg = {
-        _id: v4(),
-        name: "",
-        status: ORGANIZATION.STATUSES.ACTIVE,
-        conciergeID: "",
-        conciergeName: "",
-        conciergeEmail: "",
-        studies: [],
-        abbreviation: params.abbreviation?.trim(),
-        ...(params?.description && { description: params.description }),
-        createdAt: getCurrentTime(),
-        updateAt: getCurrentTime(),
+    const newOrg = {
+      _id: v4(),
+      name: "",
+      status: ORGANIZATION.STATUSES.ACTIVE,
+      conciergeID: "",
+      conciergeName: "",
+      conciergeEmail: "",
+      studies: [],
+      abbreviation: params.abbreviation?.trim(),
+      ...(params?.description && { description: params.description }),
+      createdAt: getCurrentTime(),
+      updateAt: getCurrentTime(),
     };
 
     if (!!params?.name?.trim()) {
