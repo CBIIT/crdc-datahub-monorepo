@@ -373,8 +373,8 @@ class User {
 
         updatedUser.dataCommons = DataCommon.get(user[0]?.role, user[0]?.dataCommons, params?.role, params?.dataCommons);
         // add studies to user.
-        const valid_studies = await this.#findApprovedStudies(params.studies);
-        if (valid_studies.length !== params.studies.length) {
+        const validStudies = await this.#findApprovedStudies(params.studies);
+        if (validStudies.length !== params.studies.length) {
             throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
         }
         updatedUser.studies = params.studies;
@@ -405,7 +405,7 @@ class User {
         } else {
             throw new Error(ERROR.UPDATE_FAILED);
         }
-        updatedUser.studies = valid_studies;  // return approved studies dynamically with all properties of studies
+        updatedUser.studies = validStudies;  // return approved studies dynamically with all properties of studies
         return { ...user[0], ...updatedUser};
     }
 
