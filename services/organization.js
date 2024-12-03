@@ -154,6 +154,10 @@ class Organization {
           throw new Error(ERROR.ORG_NOT_FOUND);
       }
 
+      if (!currentOrg?.abbreviation && !params?.abbreviation?.trim()) {
+          throw new Error(ERROR.ORGANIZATION_INVALID_ABBREVIATION);
+      }
+
       if (params.name && params.name !== currentOrg.name) {
           const existingOrg = await this.getOrganizationByName(params.name);
           if (existingOrg) {
@@ -189,6 +193,14 @@ class Organization {
 
       if (params.status && Object.values(ORGANIZATION.STATUSES).includes(params.status)) {
           updatedOrg.status = params.status;
+      }
+
+      if (params?.abbreviation?.trim()) {
+          updatedOrg.abbreviation = params.abbreviation.trim();
+      }
+
+      if (params?.description?.trim()) {
+          updatedOrg.description = params.description.trim();
       }
 
       const updateResult = await this.organizationCollection.update({ _id: orgID, ...updatedOrg });
@@ -264,6 +276,10 @@ class Organization {
       throw new Error(ERROR.INVALID_ROLE);
     }
 
+    if (!params?.abbreviation?.trim()) {
+        throw new Error(ERROR.ORGANIZATION_INVALID_ABBREVIATION);
+    }
+
     return this.createOrganization(params);
   }
 
@@ -277,26 +293,19 @@ class Organization {
    * @returns {Promise<Object>} The newly created organization
    */
   async createOrganization(params) {
-    const newOrg = {
-      _id: v4(),
-      name: "",
-      status: ORGANIZATION.STATUSES.ACTIVE,
-      conciergeID: "",
-      conciergeName: "",
-      conciergeEmail: "",
-      studies: [],
-      bucketName: "",
-      rootPath: "",
-      createdAt: getCurrentTime(),
-      updateAt: getCurrentTime(),
+      const newOrg = {
+        _id: v4(),
+        name: "",
+        status: ORGANIZATION.STATUSES.ACTIVE,
+        conciergeID: "",
+        conciergeName: "",
+        conciergeEmail: "",
+        studies: [],
+        abbreviation: params.abbreviation?.trim(),
+        ...(params?.description && { description: params.description }),
+        createdAt: getCurrentTime(),
+        updateAt: getCurrentTime(),
     };
-
-    if (!!process.env.SUBMISSION_BUCKET && !!newOrg._id) {
-        newOrg.bucketName = process.env.SUBMISSION_BUCKET;
-        newOrg.rootPath = newOrg._id;
-    } else {
-        throw new Error(ERROR.NO_SUBMISSION_BUCKET);
-    }
 
     if (!!params?.name?.trim()) {
         const existingOrg = await this.getOrganizationByName(params.name);
