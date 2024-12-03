@@ -352,19 +352,24 @@ class User {
             throw new Error(ERROR.INVALID_USERID);
         }
 
-        const sessionCurrentTime = getCurrentTime();
         const user = await this.userCollection.aggregate([{ "$match": { _id: params.userID } }]);
         if (!user || !Array.isArray(user) || user.length < 1 || user[0]?._id !== params.userID) {
             throw new Error(ERROR.USER_NOT_FOUND);
         }
-        const updatedUser = { updateAt: sessionCurrentTime };
+        const updatedUser = {};
         const isCurator = updatedUser?.role === USER.ROLES.CURATOR || user[0]?.role === USER.ROLES.CURATOR || params?.role === USER.ROLES.CURATOR;
-        
+
         if (params.role && Object.values(USER.ROLES).includes(params.role)) {
             updatedUser.role = params.role;
         }
-        if (params.status && Object.values(USER.STATUSES).includes(params.status)) {
-            updatedUser.userStatus = params.status;
+
+        const isValidUserStatus = Object.values(USER.STATUSES).includes(params.status);
+        if (params.status) {
+            if (isValidUserStatus) {
+                updatedUser.userStatus = params.status;
+            } else {
+                throw new Error(ERROR.INVALID_USER_STATUS);
+            }
         }
 
         if (isCurator) {
@@ -379,34 +384,38 @@ class User {
         }
         updatedUser.studies = params.studies;
 
-        if (params?.status){
-            if (! [USER.STATUSES.ACTIVE, USER.STATUSES.INACTIVE].includes(params.status))
-                throw new Error(ERROR.INVALID_USER_STATUS);
-
-            updatedUser.status = params.status
-        }
-
         // Check if an organization is required and missing for the user's role
         const userHasOrg = Boolean(user[0]?.organization?.orgID);
         if (!userHasOrg && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER, USER.ROLES.FEDERAL_MONITOR].includes(updatedUser.role || user[0]?.role)) {
             throw new Error(ERROR.USER_ORG_REQUIRED);
         }
+        return await this.updateUserInfo(user[0], updatedUser, params.userID, params.status, params.role, params?.studies);
+    }
 
-        const res = await this.userCollection.findOneAndUpdate({ _id: params.userID }, updatedUser, {returnDocument: 'after'});
+    async updateUserInfo(prevUser, updatedUser, userID, status, role, approvedStudyIDs) {
+        // add studies to user.
+        const validStudies = await this.#findApprovedStudies(approvedStudyIDs);
+        if (validStudies?.length !== approvedStudyIDs?.length) {
+            throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
+        }
+
+        if (validStudies && approvedStudyIDs) {
+            updatedUser.studies = validStudies; // return approved studies dynamically with all properties of studies
+        }
+
+        const res = await this.userCollection.findOneAndUpdate({ _id: userID }, {...updatedUser, updateAt: getCurrentTime()}, {returnDocument: 'after'});
         const userAfterUpdate = res.value;
-        const prevUser = user[0];
         if (userAfterUpdate) {
             const promiseArray = [
-                await this.#notifyDeactivatedUser(prevUser, params.status),
-                await this.#notifyUpdatedUser(prevUser, userAfterUpdate, params.role),
+                await this.#notifyDeactivatedUser(prevUser, status),
+                await this.#notifyUpdatedUser(prevUser, userAfterUpdate, role),
                 await this.#logAfterUserEdit(prevUser, userAfterUpdate)
             ];
             await Promise.all(promiseArray);
         } else {
             throw new Error(ERROR.UPDATE_FAILED);
         }
-        updatedUser.studies = validStudies;  // return approved studies dynamically with all properties of studies
-        return { ...user[0], ...updatedUser};
+        return { ...prevUser, ...updatedUser};
     }
 
     async #notifyUpdatedUser(prevUser, newUser, newRole) {
