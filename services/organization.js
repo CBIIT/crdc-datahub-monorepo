@@ -293,7 +293,8 @@ class Organization {
    * @returns {Promise<Object>} The newly created organization
    */
   async createOrganization(params) {
-    const newOrg = {
+      // TODO should be removed; replace with ProgramData.create(...)
+      const newOrg = {
       _id: v4(),
       name: "",
       status: ORGANIZATION.STATUSES.ACTIVE,
@@ -401,6 +402,38 @@ class Organization {
 
       return approvedStudies?.map((study) => ({ _id: study?._id }));
   }
+
+  async upsertByProgramName(programName, abbreviation, description, studies) {
+      const newProgram = ProgramData.create(programName, "", "", "", abbreviation, description, studies)
+      const res = await this.organizationCollection.findOneAndUpdate({name: programName}, newProgram, {returnDocument: 'after', upsert: true});
+      if (!res?.value) {
+          console.error(`Failed to insert a new program: ${programName}`);
+      }
+      return res.value;
+  }
+
+    async findOneByProgramName(programName) {
+        return await this.organizationCollection.aggregate([{ "$match": {name: programName?.trim()} }, { "$limit": 1 }]);
+    }
+}
+
+class ProgramData {
+    constructor(name, conciergeID, conciergeName, conciergeEmail, abbreviation, description, studies) {
+        this.name = name;
+        this.status = ORGANIZATION.STATUSES.ACTIVE;
+        this.conciergeID =  conciergeID ? conciergeID : "";
+        this.conciergeName = conciergeName ? conciergeName : "";
+        this.conciergeEmail = conciergeEmail ? conciergeEmail : "";
+        this.abbreviation = abbreviation;
+        this.description = description;
+        this.studies = studies && Array.isArray(studies) ? studies : [];
+        this.createdAt = getCurrentTime();
+        this.updateAt = getCurrentTime();
+    }
+
+    static create(name, conciergeID, conciergeName, conciergeEmail, abbreviation, description, studies) {
+        return new ProgramData(name, conciergeID, conciergeName, conciergeEmail, abbreviation, description, studies);
+    }
 }
 
 module.exports = {
