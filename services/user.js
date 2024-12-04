@@ -392,6 +392,10 @@ class User {
             throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
         }
 
+        if (validStudies && approvedStudyIDs) {
+            updatedUser.studies = approvedStudyIDs;
+        }
+
         const res = await this.userCollection.findOneAndUpdate({ _id: userID }, {...updatedUser, updateAt: getCurrentTime()}, {returnDocument: 'after'});
         const userAfterUpdate = res.value;
         if (userAfterUpdate) {
@@ -405,10 +409,10 @@ class User {
             throw new Error(ERROR.UPDATE_FAILED);
         }
 
-        if (validStudies && approvedStudyIDs) {
-            updatedUser.studies = validStudies; // return approved studies dynamically with all properties of studies
+        if (userAfterUpdate.studies) {
+            userAfterUpdate.studies = validStudies; // return approved studies dynamically with all properties of studies
         }
-        return { ...prevUser, ...updatedUser};
+        return { ...prevUser, ...userAfterUpdate};
     }
 
     async #notifyUpdatedUser(prevUser, newUser, newRole) {
