@@ -2,9 +2,7 @@ module.exports = Object.freeze({
     EMAIL_NOTIFICATIONS: {
         SUBMISSION: {
             SUBMIT: "Submit",
-            APPROVE: "Approve",
             CANCEL: "Cancel",
-            REJECT: "Reject",
             RELEASE: "Release",
             COMPLETE: "Complete",
             DELETE: "Delete",
@@ -13,9 +11,8 @@ module.exports = Object.freeze({
         },
         APPLICATION: {
             REQUEST_SUBMIT: "Request Submit",
-            REQUEST_APPROVE: "Request Approve",
-            REQUEST_REJECT: "Request Reject",
-            REQUEST_ADDITIONAL_INFO: "Request Additional Info"
+            REQUEST_READY_REVIEW: "Request Ready Review",
+            REQUEST_REVIEW: "Request Review"
         }
     },
     // TODO By Mr. Peter
@@ -23,23 +20,22 @@ module.exports = Object.freeze({
         VIEW: "View",
         CREATE: "Create",
         SUBMIT: "Submit",
-        REVIEW: "Review"
+        REVIEW: "Review",
     },
     SUBMISSION_ACTION: {
         CREATE: "Create",
-        UPLOAD: "Upload",
-        SUBMIT: "Submit",
-        WITHDRAW: "Withdraw",
-        CANCEL: 'Cancel',
         VALIDATE: 'Validate',
-        CROSS_VALIDATE: 'CrossValidate',
-        RELEASE: 'Release',
-        REJECT: 'Reject',
+        REVIEW: 'Review',
         ADMIN_SUBMIT: 'AdminSubmit',
-        COMPLETE_RELEASE: 'CompleteRelease',
-        REJECT_RELEASE: 'RejectRelease'
+        CONFIRM: 'Confirm'
+    },
+    OTHER_ACTION: {
+        DASHBOARD: "Dashboard",
+        MANAGE_PROGRAMS: "Manage Programs",
+        MANAGE_STUDIES: "Manage Studies"
     },
     USER_ACTION: {
+        MANAGE_USER : "Manage User",
         REQUEST_ACCESS: "RequestAccess"
     }
 });

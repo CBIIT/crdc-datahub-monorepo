@@ -8,7 +8,8 @@ module.exports = Object.freeze({
             DC_POC: "Data Commons POC",
             ORG_OWNER: "Organization Owner",
             SUBMITTER: "Submitter",
-            FEDERAL_MONITOR: "Federal Monitor"
+            FEDERAL_MONITOR: "Federal Monitor",
+            DATA_COMMONS_PERSONNEL: "Data Commons Personnel"
         },
         STATUSES: {
             ACTIVE: "Active",
