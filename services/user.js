@@ -114,6 +114,8 @@ class User {
     async #findStudiesNames(studies) {
         if (!studies) return [];
         const studiesIDs = (studies[0] instanceof Object) ? studies.map((study) => study?._id) : studies;
+        if(studiesIDs.includes("All"))
+            return ["All"];
         const approvedStudies = await this.approvedStudiesCollection.aggregate([{
             "$match": {
                 "_id": { "$in": studiesIDs } 
@@ -126,6 +128,8 @@ class User {
     async #findApprovedStudies(studies) {
         if (!studies || studies.length === 0) return [];
         const studiesIDs = (studies[0] instanceof Object) ? studies.map((study) => study?._id) : studies;
+        if(studiesIDs.includes("All"))
+            return [{_id: "All", studyName: "All" }];
         const approvedStudies = await this.approvedStudiesCollection.aggregate([{
             "$match": {
                 "_id": { "$in": studiesIDs } 
@@ -155,7 +159,7 @@ class User {
         }, {"$limit": 1}]);
         if (result?.length === 1) {
             const user = result[0];
-            const studies = await this.#findApprovedStudies(user.studies);
+            const studies = await this.#findApprovedStudies(user?.studies);
             return {
                 ...user,
                 studies
@@ -184,7 +188,7 @@ class User {
         },]);
 
         for (let user of result) {
-            user.studies = await this.#findApprovedStudies(user.studies);
+            user.studies = await this.#findApprovedStudies(user?.studies);
         }
         return result || [];
     }
@@ -332,7 +336,7 @@ class User {
             ...updateUser,
             updateAt: sessionCurrentTime
         }
-        const user_studies = await this.#findApprovedStudies( user[0].studies);
+        const user_studies = await this.#findApprovedStudies( user[0]?.studies);
         const result = {
             ...user[0],
             firstName: params.userInfo.firstName,
@@ -373,11 +377,17 @@ class User {
 
         updatedUser.dataCommons = DataCommon.get(user[0]?.role, user[0]?.dataCommons, params?.role, params?.dataCommons);
         // add studies to user.
-        const validStudies = await this.#findApprovedStudies(params.studies);
-        if (validStudies.length !== params.studies.length) {
-            throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
+        const validStudies = await this.#findApprovedStudies(params?.studies);
+        if (params?.studies && params.studies.length > 0) {
+            if(validStudies.length !== params.studies.length) {
+                throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
+            }
+            else {
+                updatedUser.studies = (params.studies[0] instanceof Object)?params.studies:params.studies.map(str => ({ _id: str }));
+            }
         }
-        updatedUser.studies = params.studies;
+        else
+            updatedUser.studies = [];
 
         if (params?.status){
             if (! [USER.STATUSES.ACTIVE, USER.STATUSES.INACTIVE].includes(params.status))
