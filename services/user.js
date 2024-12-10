@@ -2,12 +2,10 @@ const {USER} = require("../constants/user-constants");
 const {ERROR} = require("../constants/error-constants");
 const {UpdateProfileEvent, ReactivateUserEvent} = require("../domain/log-events");
 
-const {includesAll} = require("../utility/string-utility")
 const {getCurrentTime, subtractDaysFromNowTimestamp} = require("../utility/time-utility");
 const config = require("../../config")
 const jwt = require("jsonwebtoken");
 const {LOG_COLLECTION} = require("../database-constants");
-const orgToUserOrg = require("../utility/org-to-userOrg-converter");
 
 
 
@@ -30,7 +28,7 @@ const createToken = (userInfo, token_secret, token_timeout)=> {
 
 
 class User {
-    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, appUrl, tier, approvedStudiesCollection) {
+    constructor(userCollection, logCollection, organizationCollection, notificationsService, submissionsCollection, applicationCollection, officialEmail, appUrl, tier, approvedStudiesCollection, inactiveUserDays) {
         this.userCollection = userCollection;
         this.logCollection = logCollection;
         this.organizationCollection = organizationCollection;
@@ -41,6 +39,7 @@ class User {
         this.appUrl = appUrl;
         this.tier = tier;
         this.approvedStudiesCollection = approvedStudiesCollection;
+        this.inactiveUserDays = inactiveUserDays;
     }
 
     async grantToken(params, context){
@@ -683,7 +682,7 @@ class User {
                     },
                     {
                         [LATEST_LOG+"."+LOGS_FIELDS.TIMESTAMP]: {
-                            $lt: subtractDaysFromNowTimestamp(config.inactive_user_days)
+                            $lt: subtractDaysFromNowTimestamp(this.inactiveUserDays)
                         }
                     },
                 ]
