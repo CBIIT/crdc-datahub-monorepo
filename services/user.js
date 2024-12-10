@@ -313,7 +313,6 @@ class User {
             console.error(error)
             throw new Error(error)
         }
-
         // Update all dependent objects only if the User's Name has changed
         // NOTE: We're not waiting for these async updates to complete before returning the updated User
         if (updateUser.firstName !== user[0].firstName || updateUser.lastName !== user[0].lastName) {
@@ -330,13 +329,12 @@ class User {
                 { "applicant.applicantName": `${updateUser.firstName} ${updateUser.lastName}` }
             );
         }
-
         context.userInfo = {
             ...context.userInfo,
             ...updateUser,
             updateAt: sessionCurrentTime
         }
-        const user_studies = await this.#findApprovedStudies( user[0]?.studies);
+        const user_studies = await this.#findApprovedStudies(user[0]?.studies);
         const result = {
             ...user[0],
             firstName: params.userInfo.firstName,
@@ -381,55 +379,21 @@ class User {
         }
 
         updatedUser.dataCommons = DataCommon.get(user[0]?.role, user[0]?.dataCommons, params?.role, params?.dataCommons);
-        // add studies to user.
-        const validStudies = await this.#findApprovedStudies(params?.studies);
-        if (params?.studies && params.studies.length > 0) {
-            if(validStudies.length !== params.studies.length) {
-                throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
-            }
-            else {
-                updatedUser.studies = (params.studies[0] instanceof Object)?params.studies:params.studies.map(str => ({ _id: str }));
-            }
-        }
-        else
-            updatedUser.studies = [];
-
-        if (params?.status){
-            if (! [USER.STATUSES.ACTIVE, USER.STATUSES.INACTIVE].includes(params.status))
-                throw new Error(ERROR.INVALID_USER_STATUS);
-
-            updatedUser.status = params.status
-        }
-
-        const res = await this.userCollection.findOneAndUpdate({ _id: params.userID }, {...updatedUser, updateAt: getCurrentTime()}, {returnDocument: 'after'});
-        const userAfterUpdate = res.value;
-        const prevUser = user[0];
-        if (userAfterUpdate) {
-            const promiseArray = [
-                await this.#notifyDeactivatedUser(prevUser, userAfterUpdate.status),
-                await this.#notifyUpdatedUser(prevUser, userAfterUpdate, userAfterUpdate.role),
-                await this.#logAfterUserEdit(prevUser, userAfterUpdate)
-            ];
-            await Promise.all(promiseArray);
-        } else {
-            throw new Error(ERROR.UPDATE_FAILED);
-        }
-
-        if (userAfterUpdate.studies) {
-            userAfterUpdate.studies = validStudies; // return approved studies dynamically with all properties of studies
-        }
-        return { ...prevUser, ...userAfterUpdate};
+        return await this.updateUserInfo(user[0], updatedUser, params.userID, params.status, params.role, params?.studies);
     }
     async updateUserInfo(prevUser, updatedUser, userID, status, role, approvedStudyIDs) {
         // add studies to user.
         const validStudies = await this.#findApprovedStudies(approvedStudyIDs);
-        if (validStudies?.length !== approvedStudyIDs?.length) {
-            throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
+        if (approvedStudyIDs && approvedStudyIDs.length > 0) {
+            if(validStudies.length !== approvedStudyIDs.length) {
+                throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
+            }
+            else {
+                updatedUser.studies = (approvedStudyIDs instanceof Object)?approvedStudyIDs:approvedStudyIDs.map(str => ({ _id: str }));
+            }
         }
-
-        if (validStudies && approvedStudyIDs) {
-            updatedUser.studies = approvedStudyIDs;
-        }
+        else
+            updatedUser.studies = [];
 
         const res = await this.userCollection.findOneAndUpdate({ _id: userID }, {...updatedUser, updateAt: getCurrentTime()}, {returnDocument: 'after'});
         const userAfterUpdate = res.value;
