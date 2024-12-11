@@ -113,6 +113,8 @@ class User {
     async #findStudiesNames(studies) {
         if (!studies) return [];
         const studiesIDs = (studies[0] instanceof Object) ? studies.map((study) => study?._id) : studies;
+        if(studiesIDs.includes("All"))
+            return ["All studies"];
         const approvedStudies = await this.approvedStudiesCollection.aggregate([{
             "$match": {
                 "_id": { "$in": studiesIDs } 
@@ -125,6 +127,8 @@ class User {
     async #findApprovedStudies(studies) {
         if (!studies || studies.length === 0) return [];
         const studiesIDs = (studies[0] instanceof Object) ? studies.map((study) => study?._id) : studies;
+        if(studiesIDs.includes("All"))
+            return [{_id: "All", studyName: "All" }];
         const approvedStudies = await this.approvedStudiesCollection.aggregate([{
             "$match": {
                 "_id": { "$in": studiesIDs } 
@@ -154,7 +158,7 @@ class User {
         }, {"$limit": 1}]);
         if (result?.length === 1) {
             const user = result[0];
-            const studies = await this.#findApprovedStudies(user.studies);
+            const studies = await this.#findApprovedStudies(user?.studies);
             return {
                 ...user,
                 studies
@@ -183,7 +187,7 @@ class User {
         },]);
 
         for (let user of result) {
-            user.studies = await this.#findApprovedStudies(user.studies);
+            user.studies = await this.#findApprovedStudies(user?.studies);
         }
         return result || [];
     }
@@ -308,7 +312,6 @@ class User {
             console.error(error)
             throw new Error(error)
         }
-
         // Update all dependent objects only if the User's Name has changed
         // NOTE: We're not waiting for these async updates to complete before returning the updated User
         if (updateUser.firstName !== user[0].firstName || updateUser.lastName !== user[0].lastName) {
@@ -325,19 +328,18 @@ class User {
                 { "applicant.applicantName": `${updateUser.firstName} ${updateUser.lastName}` }
             );
         }
-
         context.userInfo = {
             ...context.userInfo,
             ...updateUser,
             updateAt: sessionCurrentTime
         }
-        const user_studies = await this.#findApprovedStudies( user[0].studies);
+        const userStudies = await this.#findApprovedStudies(user[0]?.studies);
         const result = {
             ...user[0],
             firstName: params.userInfo.firstName,
             lastName: params.userInfo.lastName,
             updateAt: sessionCurrentTime,
-            studies: user_studies
+            studies: userStudies
         }
         return result;
     }
@@ -376,24 +378,21 @@ class User {
         }
 
         updatedUser.dataCommons = DataCommon.get(user[0]?.role, user[0]?.dataCommons, params?.role, params?.dataCommons);
-        // Check if an organization is required and missing for the user's role
-        const userHasOrg = Boolean(user[0]?.organization?.orgID);
-        if (!userHasOrg && [USER.ROLES.DC_POC, USER.ROLES.ORG_OWNER, USER.ROLES.SUBMITTER, USER.ROLES.FEDERAL_MONITOR].includes(updatedUser.role || user[0]?.role)) {
-            throw new Error(ERROR.USER_ORG_REQUIRED);
-        }
         return await this.updateUserInfo(user[0], updatedUser, params.userID, params.status, params.role, params?.studies);
     }
-
     async updateUserInfo(prevUser, updatedUser, userID, status, role, approvedStudyIDs) {
         // add studies to user.
         const validStudies = await this.#findApprovedStudies(approvedStudyIDs);
-        if (validStudies?.length !== approvedStudyIDs?.length) {
-            throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
+        if (approvedStudyIDs && approvedStudyIDs.length > 0) {
+            if(validStudies.length !== approvedStudyIDs.length) {
+                throw new Error(ERROR.INVALID_NOT_APPROVED_STUDIES);
+            }
+            else {
+                updatedUser.studies = (approvedStudyIDs instanceof Object)?approvedStudyIDs:approvedStudyIDs.map(str => ({ _id: str }));
+            }
         }
-
-        if (validStudies && approvedStudyIDs) {
-            updatedUser.studies = approvedStudyIDs;
-        }
+        else
+            updatedUser.studies = [];
 
         const res = await this.userCollection.findOneAndUpdate({ _id: userID }, {...updatedUser, updateAt: getCurrentTime()}, {returnDocument: 'after'});
         const userAfterUpdate = res.value;
