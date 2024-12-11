@@ -115,7 +115,7 @@ class User {
         if (!studies) return [];
         const studiesIDs = (studies[0] instanceof Object) ? studies.map((study) => study?._id) : studies;
         if(studiesIDs.includes("All"))
-            return ["All"];
+            return ["All studies"];
         const approvedStudies = await this.approvedStudiesCollection.aggregate([{
             "$match": {
                 "_id": { "$in": studiesIDs } 
@@ -334,13 +334,13 @@ class User {
             ...updateUser,
             updateAt: sessionCurrentTime
         }
-        const user_studies = await this.#findApprovedStudies(user[0]?.studies);
+        const userStudies = await this.#findApprovedStudies(user[0]?.studies);
         const result = {
             ...user[0],
             firstName: params.userInfo.firstName,
             lastName: params.userInfo.lastName,
             updateAt: sessionCurrentTime,
-            studies: user_studies
+            studies: userStudies
         }
         return result;
     }
