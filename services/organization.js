@@ -199,7 +199,7 @@ class Organization {
           updatedOrg.abbreviation = params.abbreviation.trim();
       }
 
-      if (params?.description?.trim()) {
+      if (params?.description?.trim() || params?.description?.trim() === "") {
           updatedOrg.description = params.description.trim();
       }
 
@@ -303,7 +303,7 @@ class Organization {
       conciergeEmail: "",
       studies: [],
       abbreviation: params.abbreviation?.trim(),
-      ...(params?.description && { description: params.description }),
+      ...((params?.description || params?.description?.trim() === "") && { description: params.description.trim() }),
       createdAt: getCurrentTime(),
       updateAt: getCurrentTime(),
     };
