@@ -14,7 +14,7 @@ class ApprovedStudies {
         if (ORCID) {
             this.ORCID = ORCID;
         }
-        if (!controlledAccess === undefined) {
+        if (controlledAccess === true) {
             this.controlledAccess = controlledAccess;
         }
         if (PI) {
