@@ -1,13 +1,13 @@
 module.exports = Object.freeze({
     EMAIL_NOTIFICATIONS: {
         DATA_SUBMISSION: {
-            SUBMIT: "data_submission:request_access",
+            SUBMIT: "data_submission:submitted",
             CANCEL: "data_submission:cancelled",
             RELEASE: "data_submission:released",
-            COMPLETE: "data_submission:complete",
+            COMPLETE: "data_submission:completed",
             DELETE: "data_submission:deleted",
             WITHDRAW: "data_submission:withdrawn",
-            REMIND_EXPIRE: "data_submission:expiring"
+            REMIND_EXPIRE: "data_submission:expiring",
         },
         SUBMISSION_REQUEST: {
             REQUEST_SUBMIT: "submission_request:submitted",
