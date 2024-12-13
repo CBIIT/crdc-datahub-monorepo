@@ -1,41 +1,45 @@
 module.exports = Object.freeze({
     EMAIL_NOTIFICATIONS: {
-        SUBMISSION: {
-            SUBMIT: "Submit",
-            CANCEL: "Cancel",
-            RELEASE: "Release",
-            COMPLETE: "Complete",
-            DELETE: "Delete",
-            WITHDRAW: "Withdraw",
-            REMIND_EXPIRE: "Remind Expire"
+        DATA_SUBMISSION: {
+            SUBMIT: "data_submission:submitted",
+            CANCEL: "data_submission:cancelled",
+            RELEASE: "data_submission:released",
+            COMPLETE: "data_submission:completed",
+            DELETE: "data_submission:deleted",
+            WITHDRAW: "data_submission:withdrawn",
+            REMIND_EXPIRE: "data_submission:expiring"
         },
-        APPLICATION: {
-            REQUEST_SUBMIT: "Request Submit",
-            REQUEST_READY_REVIEW: "Request Ready Review",
-            REQUEST_REVIEW: "Request Review"
+        SUBMISSION_REQUEST: {
+            REQUEST_SUBMIT: "submission_request:submitted",
+            REQUEST_READY_REVIEW: "submission_request:to_be_reviewed",
+            REQUEST_REVIEW: "submission_request:reviewed",
+            REQUEST_DELETE: "submission_request:deleted"
+        },
+        USER_ACCOUNT: {
+            USER_REQUEST_ACCESS: "access:requested",
+            USER_INACTIVATED: "account:inactivated",
+            USER_INACTIVATED_ADMIN: "account:users_inactivated",
+            USER_DISABLED_BY_ADMIN: "account:disabled"
         }
     },
-    // TODO By Mr. Peter
-    APPLICATION_ACTION: {
-        VIEW: "View",
-        CREATE: "Create",
-        SUBMIT: "Submit",
-        REVIEW: "Review",
+    SUBMISSION_REQUEST: {
+        VIEW: "submission_request:view",
+        CREATE: "submission_request:create",
+        SUBMIT: "submission_request:submit",
+        REVIEW: "submission_request:review",
     },
-    SUBMISSION_ACTION: {
-        CREATE: "Create",
-        VALIDATE: 'Validate',
-        REVIEW: 'Review',
-        ADMIN_SUBMIT: 'AdminSubmit',
-        CONFIRM: 'Confirm'
+    DATA_SUBMISSION: {
+        REQUEST_ACCESS: "access:request",
+        VIEW: "data_submission:view",
+        CREATE: "data_submission:create",
+        REVIEW: 'data_submission:review',
+        ADMIN_SUBMIT: 'data_submission:admin_submit',
+        CONFIRM: 'data_submission:confirm'
     },
-    OTHER_ACTION: {
-        DASHBOARD: "Dashboard",
-        MANAGE_PROGRAMS: "Manage Programs",
-        MANAGE_STUDIES: "Manage Studies"
-    },
-    USER_ACTION: {
-        MANAGE_USER : "Manage User",
-        REQUEST_ACCESS: "RequestAccess"
+    ADMIN: {
+        MANAGE_USER : "user:manage",
+        MANAGE_PROGRAMS: "program:manage",
+        MANAGE_STUDIES: "study:manage",
+        VIEW_DASHBOARD: "dashboard:view"
     }
 });
