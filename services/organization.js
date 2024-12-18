@@ -412,8 +412,24 @@ class Organization {
       return res.value;
   }
 
+    /**
+    * List Organization by a program name.
+    * @api
+    * @param {string} programName
+    * @returns {Promise<Organization[]>} An array of Organization
+    */
     async findOneByProgramName(programName) {
         return await this.organizationCollection.aggregate([{ "$match": {name: programName?.trim()} }, { "$limit": 1 }]);
+    }
+
+    /**
+    * List Organization by a studyID.
+    * @api
+    * @param {string} studyID
+    * @returns {Promise<Organization[]>} An array of Organization
+    */
+    async findOneByStudyID(studyID) {
+        return await this.organizationCollection.aggregate([{ "$match": {"studies._id": { "$in": [studyID?.trim()] }}}, { "$limit": 1 }]);
     }
 }
 
