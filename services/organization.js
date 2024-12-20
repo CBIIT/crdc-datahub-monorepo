@@ -440,8 +440,12 @@ class ProgramData {
         this.conciergeID =  conciergeID ? conciergeID : "";
         this.conciergeName = conciergeName ? conciergeName : "";
         this.conciergeEmail = conciergeEmail ? conciergeEmail : "";
-        this.abbreviation = abbreviation;
-        this.description = description;
+        if (abbreviation) {
+            this.abbreviation = abbreviation;
+        }
+        if (description) {
+            this.description = description;
+        }
         this.studies = studies && Array.isArray(studies) ? studies : [];
         this.createdAt = getCurrentTime();
         this.updateAt = getCurrentTime();
