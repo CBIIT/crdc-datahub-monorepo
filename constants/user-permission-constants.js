@@ -6,6 +6,7 @@ module.exports = Object.freeze({
             RELEASE: "data_submission:released",
             COMPLETE: "data_submission:completed",
             DELETE: "data_submission:deleted",
+            REJECT: "data_submission:rejected",
             WITHDRAW: "data_submission:withdrawn",
             REMIND_EXPIRE: "data_submission:expiring"
         },
@@ -18,8 +19,7 @@ module.exports = Object.freeze({
         USER_ACCOUNT: {
             USER_REQUEST_ACCESS: "access:requested",
             USER_INACTIVATED: "account:inactivated",
-            USER_INACTIVATED_ADMIN: "account:users_inactivated",
-            USER_DISABLED_BY_ADMIN: "account:disabled"
+            USER_INACTIVATED_ADMIN: "account:users_inactivated"
         }
     },
     SUBMISSION_REQUEST: {
