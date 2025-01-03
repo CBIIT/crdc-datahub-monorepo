@@ -3,7 +3,7 @@ const {USER} = require("../constants/user-constants");
 const {ORGANIZATION} = require("../constants/organization-constants");
 const {getCurrentTime} = require("../utility/time-utility");
 const { APPROVED_STUDIES_COLLECTION } = require("../database-constants");
-const {v4} = require("uuid");
+const {ADMIN} = require("../constants/user-permission-constants");
 
 class Organization {
   constructor(organizationCollection, userCollection, submissionCollection, applicationCollection, approvedStudiesCollection) {
@@ -16,9 +16,6 @@ class Organization {
 
   /**
    * Get Organization by ID API Interface.
-   *
-   * - `ADMIN` can call this API only
-   *
    * @api
    * @param {{ orgID: string }} params Endpoint parameters
    * @param {{ cookie: Object, userInfo: Object }} context API request context
@@ -28,7 +25,7 @@ class Organization {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) {
       throw new Error(ERROR.NOT_LOGGED_IN);
     }
-    if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+    if (!context?.userInfo?.permissions?.includes(ADMIN.MANAGE_PROGRAMS)) {
         throw new Error(ERROR.INVALID_ROLE);
     }
     if (!params?.orgID) {
@@ -115,9 +112,6 @@ class Organization {
 
   /**
    * Edit Organization API Interface.
-   *
-   * - `ADMIN` can call this API only
-   *
    * @api
    * @param {EditOrganizationInput} params Endpoint parameters
    * @param {{ cookie: Object, userInfo: Object }} context API request context
@@ -127,7 +121,7 @@ class Organization {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) {
       throw new Error(ERROR.NOT_LOGGED_IN);
     }
-    if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+    if (!context?.userInfo?.permissions?.includes(ADMIN.MANAGE_PROGRAMS)) {
         throw new Error(ERROR.INVALID_ROLE);
     }
     if (!params?.orgID) {
@@ -260,9 +254,6 @@ class Organization {
 
     /**
      * Create an Organization API Interface.
-     *
-     * - `ADMIN` can call this API only
-     *
      * @api
      * @param {CreateOrganizationInput} params Endpoint parameters
      * @param {{ cookie: Object, userInfo: Object }} context API request context
@@ -272,7 +263,7 @@ class Organization {
     if (!context?.userInfo?.email || !context?.userInfo?.IDP) {
       throw new Error(ERROR.NOT_LOGGED_IN);
     }
-    if (context?.userInfo?.role !== USER.ROLES.ADMIN) {
+    if (!context?.userInfo?.permissions?.includes(ADMIN.MANAGE_PROGRAMS)) {
       throw new Error(ERROR.INVALID_ROLE);
     }
 
@@ -293,20 +284,10 @@ class Organization {
    * @returns {Promise<Object>} The newly created organization
    */
   async createOrganization(params) {
-      // TODO should be removed; replace with ProgramData.create(...)
-      const newOrg = {
-      _id: v4(),
-      name: "",
-      status: ORGANIZATION.STATUSES.ACTIVE,
-      conciergeID: "",
-      conciergeName: "",
-      conciergeEmail: "",
-      studies: [],
-      abbreviation: params.abbreviation?.trim(),
-      ...((params?.description || params?.description?.trim() === "") && { description: params.description.trim() }),
-      createdAt: getCurrentTime(),
-      updateAt: getCurrentTime(),
-    };
+    const newOrg = {
+        abbreviation: params.abbreviation?.trim(),
+        ...((params?.description || params?.description?.trim() === "") && { description: params.description.trim() })
+    }
 
     if (!!params?.name?.trim()) {
         const existingOrg = await this.getOrganizationByName(params.name);
@@ -335,12 +316,13 @@ class Organization {
         newOrg.studies = await this.#getApprovedStudies(params.studies);
     }
 
-    const result = await this.organizationCollection.insert(newOrg);
-    if (!result?.acknowledged) {
+    const newProgram = ProgramData.create(newOrg.name, newOrg.conciergeID, newOrg.conciergeName, newOrg.conciergeEmail, newOrg.abbreviation, newOrg?.description, newOrg.studies)
+    const res = await this.organizationCollection.findOneAndUpdate({name: newOrg.name}, newProgram, {returnDocument: 'after', upsert: true});
+    if (!res?.value) {
         throw new Error(ERROR.CREATE_FAILED);
     }
 
-    return { ...newOrg };
+    return { ...newProgram };
   }
 
     /**
