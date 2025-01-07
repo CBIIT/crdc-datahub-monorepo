@@ -322,7 +322,7 @@ class Organization {
         throw new Error(ERROR.CREATE_FAILED);
     }
 
-    return { ...newProgram };
+    return res?.value;
   }
 
     /**
