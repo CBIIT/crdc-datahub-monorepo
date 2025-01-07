@@ -27,6 +27,7 @@ module.exports = Object.freeze({
         CREATE: "submission_request:create",
         SUBMIT: "submission_request:submit",
         REVIEW: "submission_request:review",
+        DELETE: "submission_request:delete",
     },
     DATA_SUBMISSION: {
         REQUEST_ACCESS: "access:request",
