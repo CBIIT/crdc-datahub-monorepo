@@ -15,7 +15,8 @@ module.exports = Object.freeze({
             REQUEST_READY_REVIEW: "submission_request:to_be_reviewed",
             REQUEST_REVIEW: "submission_request:reviewed",
             REQUEST_DELETE: "submission_request:deleted",
-            REQUEST_EXPIRING: "submission_request:expiring"
+            REQUEST_EXPIRING: "submission_request:expiring",
+            REQUEST_CANCEL : "submission_request:canceled"
         },
         USER_ACCOUNT: {
             USER_REQUEST_ACCESS: "access:requested",
@@ -28,7 +29,7 @@ module.exports = Object.freeze({
         CREATE: "submission_request:create",
         SUBMIT: "submission_request:submit",
         REVIEW: "submission_request:review",
-        DELETE: "submission_request:delete",
+        CANCEL: "submission_request:cancel",
     },
     DATA_SUBMISSION: {
         REQUEST_ACCESS: "access:request",
