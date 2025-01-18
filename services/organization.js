@@ -163,7 +163,7 @@ class Organization {
       const conciergeProvided = typeof params.conciergeID !== "undefined";
       // Only update the concierge if it is provided and different from the currently assigned concierge
       if (conciergeProvided && !!params.conciergeID && params.conciergeID !== currentOrg.conciergeID) {
-          const filters = { _id: params.conciergeID, role: USER.ROLES.CURATOR, userStatus: USER.STATUSES.ACTIVE };
+          const filters = { _id: params.conciergeID, role: USER.ROLES.DATA_COMMONS_PERSONNEL, userStatus: USER.STATUSES.ACTIVE };
           const result = await this.userCollection.aggregate([{ "$match": filters }, { "$limit": 1 }]);
           const conciergeUser = result?.[0];
           if (!conciergeUser) {
@@ -300,7 +300,7 @@ class Organization {
     }
 
     if (!!params?.conciergeID) {
-        const filters = { _id: params.conciergeID, role: USER.ROLES.CURATOR, userStatus: USER.STATUSES.ACTIVE };
+        const filters = { _id: params.conciergeID, role: USER.ROLES.DATA_COMMONS_PERSONNEL, userStatus: USER.STATUSES.ACTIVE };
         const result = await this.userCollection.aggregate([{ "$match": filters }, { "$limit": 1 }]);
         const conciergeUser = result?.[0];
         if (!conciergeUser) {
