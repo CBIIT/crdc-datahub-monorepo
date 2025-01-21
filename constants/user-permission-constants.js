@@ -37,7 +37,8 @@ module.exports = Object.freeze({
         CREATE: "data_submission:create",
         REVIEW: 'data_submission:review',
         ADMIN_SUBMIT: 'data_submission:admin_submit',
-        CONFIRM: 'data_submission:confirm'
+        CONFIRM: 'data_submission:confirm',
+        CANCEL: 'data_submission:cancel'
     },
     ADMIN: {
         MANAGE_USER : "user:manage",
