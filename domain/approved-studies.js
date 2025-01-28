@@ -21,12 +21,12 @@ class ApprovedStudies {
             this.PI = PI;
         }
 
-        if (!openAccess === undefined) {
-            this.openAccess = openAccess;
+        if (openAccess !== undefined) {
+            this.openAccess = Boolean(openAccess);
         }
 
-        if (!programName === undefined) {
-            this.programName = programName;
+        if (programName !== undefined) {
+            this.programName = programName?.trim();
         }
         this.createdAt = this.updatedAt = getCurrentTime();
     }
