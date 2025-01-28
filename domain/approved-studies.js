@@ -14,16 +14,14 @@ class ApprovedStudies {
         if (ORCID) {
             this.ORCID = ORCID;
         }
-        if (controlledAccess === true) {
-            this.controlledAccess = controlledAccess;
-        }
+
+        this.controlledAccess = Boolean(controlledAccess);
+
         if (PI) {
             this.PI = PI;
         }
 
-        if (openAccess !== undefined) {
-            this.openAccess = Boolean(openAccess);
-        }
+        this.openAccess = Boolean(openAccess);
 
         if (programName !== undefined) {
             this.programName = programName?.trim();
