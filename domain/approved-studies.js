@@ -1,4 +1,5 @@
 const {getCurrentTime} = require("../utility/time-utility");
+const {isTrue} = require("../../utility/string-util");
 
 class ApprovedStudies {
     constructor(studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess, ORCID, PI, openAccess, programName) {
@@ -15,13 +16,13 @@ class ApprovedStudies {
             this.ORCID = ORCID;
         }
 
-        this.controlledAccess = Boolean(controlledAccess);
+        this.controlledAccess = isTrue(controlledAccess);
 
         if (PI) {
             this.PI = PI;
         }
 
-        this.openAccess = Boolean(openAccess);
+        this.openAccess = isTrue(openAccess);
 
         if (programName !== undefined) {
             this.programName = programName?.trim();
