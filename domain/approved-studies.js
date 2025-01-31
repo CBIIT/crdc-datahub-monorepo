@@ -1,5 +1,6 @@
 const {getCurrentTime} = require("../utility/time-utility");
-const {isTrue} = require("../../utility/string-util");
+const {isTrue} = require("../utility/string-utility");
+
 
 class ApprovedStudies {
     constructor(studyName, studyAbbreviation, dbGaPID, organizationName, controlledAccess, ORCID, PI, openAccess, programName) {
