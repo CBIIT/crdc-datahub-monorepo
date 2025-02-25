@@ -202,23 +202,60 @@ class Organization {
           throw new Error(ERROR.UPDATE_FAILED);
       }
 
-      // Update all dependent objects only if the Organization Name has changed
-      // NOTE: We're not waiting for these updates to complete before returning the updatedOrg
-      if (updatedOrg.name) {
-          this.submissionCollection.updateMany(
-              { "organization._id": orgID },
-              { "organization.name": updatedOrg.name }
-          );
-          this.userCollection.updateMany(
-              { "organization.orgID": orgID },
-              { "organization.orgName": updatedOrg.name, "organization.updateAt": updatedOrg.updateAt }
-          );
-          this.applicationCollection.updateMany(
-            { "organization._id": orgID },
-            { "organization.name": updatedOrg.name }
-          );
+      // If the primary contact(concierge) is not available in approved studies, the provided primary contact should be updated in the data submissions.
+      if (updatedOrg.conciergeID) {
+          const submissions = await this.submissionCollection.aggregate([{"$match": { "organization._id": orgID}}]);
+          const studyIDs = submissions?.map((submission) => submission?.studyID).filter(Boolean);
+          const approvedStudies = await this.approvedStudiesCollection.aggregate([{
+              $match: {
+                  _id: {$in: studyIDs},
+                  primaryContactID: { $in: [null, undefined] }}}, {
+              $project: { _id: 1 }}
+          ]);
+
+          const noContactStudyIDSet = new Set(approvedStudies?.map((s) => s?._id));
+          const noPrimaryContactSubmissionIDs = submissions
+              ?.filter((s) => noContactStudyIDSet.has(s?.studyID) && (s.conciergeName !== updatedOrg.conciergeName || s.conciergeEmail !== updatedOrg.conciergeEmail))
+              ?.map((s) => s?._id);
+          if (noPrimaryContactSubmissionIDs.length > 0) {
+              const updateSubmission = this.submissionCollection.updateMany(
+                  {_id: {$in: noPrimaryContactSubmissionIDs}},
+                  { conciergeName: updatedOrg.conciergeName, conciergeEmail: updatedOrg.conciergeEmail, updatedAt: getCurrentTime()}
+              );
+
+              if (!updateSubmission.acknowledged) {
+                  console.error("Failed to update the primary contact in submissions");
+              }
+          }
       }
 
+      if (updatedOrg.name) {
+          const [updatedSubmission, updateUser, updatedApplication] = await Promise.all([
+              this.submissionCollection.updateMany(
+                  { "organization._id": orgID,  "organization.name": { "$ne": updatedOrg.name }},
+                  { "organization.name": updatedOrg.name, updatedAt: getCurrentTime() }
+              ),
+              this.userCollection.updateMany(
+                  { "organization.orgID": orgID, "organization.orgName": { "$ne": updatedOrg.name }},
+                  { "organization.orgName": updatedOrg.name, "organization.updateAt": updatedOrg.updateAt, updateAt: getCurrentTime() }
+              ),
+              this.applicationCollection.updateMany(
+                  { "organization._id": orgID, "organization.name": { "$ne": updatedOrg.name } },
+                  { "organization.name": updatedOrg.name, updatedAt: getCurrentTime() }
+              )
+          ]);
+          if (!updatedSubmission.acknowledged) {
+              console.error("Failed to update the organization name in submissions");
+          }
+
+          if (!updateUser.acknowledged) {
+              console.error("Failed to update the organization name in users");
+          }
+
+          if (!updatedApplication.acknowledged) {
+              console.error("Failed to update the organization name in submission requests");
+          }
+      }
       return { ...currentOrg, ...updatedOrg };
   }
 
