@@ -8,7 +8,8 @@ module.exports = Object.freeze({
             DELETE: "data_submission:deleted",
             REJECT: "data_submission:rejected",
             WITHDRAW: "data_submission:withdrawn",
-            REMIND_EXPIRE: "data_submission:expiring"
+            REMIND_EXPIRE: "data_submission:expiring",
+            MISSING_CONTACT: "data_submission:missing_contact"
         },
         SUBMISSION_REQUEST: {
             REQUEST_SUBMIT: "submission_request:submitted",
