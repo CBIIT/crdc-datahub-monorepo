@@ -165,6 +165,26 @@ class MongoDBCollection {
             logAndThrow("An exception occurred during a distinct operation", e);
         }
     }
+
+    /**
+     * Performs a bulk write operation.
+     * Allows multiple update operations in a single request, improving efficiency.
+     *
+     * @param {Array} operations - An array of bulk write operations, such as updateOne or updateMany.
+     * @returns {Promise<Object>} A promise that resolves to the result of the bulk write operation,
+     *
+     * @example
+     * const operations = [
+     *   { updateOne: { filter: { _id: 1 }, update: { $set: { name: "CRDC", status: "Active" } } } }
+     * ];
+     */
+    async bulkWrite(operations){
+        try {
+            return await this.collection.bulkWrite(operations);
+        } catch (e){
+            logAndThrow("An exception occurred during a distinct operation", e);
+        }
+    }
 }
 
 function logAndThrow(message, error){
