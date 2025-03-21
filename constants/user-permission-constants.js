@@ -22,7 +22,8 @@ module.exports = Object.freeze({
         USER_ACCOUNT: {
             USER_REQUEST_ACCESS: "access:requested",
             USER_INACTIVATED: "account:inactivated",
-            USER_INACTIVATED_ADMIN: "account:users_inactivated"
+            USER_INACTIVATED_ADMIN: "account:users_inactivated",
+            USER_ACCESS_CHANGED: "account:access_changed"
         }
     },
     SUBMISSION_REQUEST: {
