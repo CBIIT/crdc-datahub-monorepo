@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-#          submodules: true
+          submodules: true
 
       - name: Extract branch name
         id: extract_branch
