@@ -9,9 +9,9 @@ on:
       environment:
         description: env to build
         type: environment
-      code_branch:
-        description: branch to build
-        required: false
+#      code_branch:
+#        description: branch to build
+#        required: false
 #        default: main
       trivy_test_scan:
         description: "Run Trivy Test Scan"
@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-          submodules: true
+#          submodules: true
 
       - name: Extract branch name
         id: extract_branch
