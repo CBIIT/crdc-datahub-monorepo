@@ -1,4 +1,4 @@
-name: Build PVPuller service
+name: Build FE service
 permissions: 
   contents: write
   id-token: write
