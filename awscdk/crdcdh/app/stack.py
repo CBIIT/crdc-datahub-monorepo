@@ -138,9 +138,9 @@ class Stack(Stack):
 #            public_key_id = "K2JHABMC4EI0Q9"
 #            cf_domain = "https://d2krihsuecuuhu.cloudfront.net"
             
-        self.secret = secretsmanager.Secret(self, "Secret",
-            secret_name="{}/{}/{}".format(config['main']['secret_prefix'], config['main']['tier'], "ctdc"),
-            secret_object_value={
+ #       self.secret = secretsmanager.Secret(self, "Secret",
+ #           secret_name="{}/{}/{}".format(config['main']['secret_prefix'], config['main']['tier'], "crdc-dh"),
+ #           secret_object_value={
 #                "neo4j_user": SecretValue.unsafe_plain_text(config['db']['neo4j_user']),
 #                "neo4j_password": SecretValue.unsafe_plain_text(config['db']['neo4j_password']),
                 # "es_host": SecretValue.unsafe_plain_text(self.osDomain.domain_endpoint),
@@ -148,19 +148,19 @@ class Stack(Stack):
 #                "cf_key_pair_id": SecretValue.unsafe_plain_text(public_key_id),
 #                "cf_url": SecretValue.unsafe_plain_text("https://{}".format(cf_domain)),
                 
-                "cookie_secret": SecretValue.unsafe_plain_text(config['secrets']['cookie_secret']),
-                "token_secret": SecretValue.unsafe_plain_text(config['secrets']['token_secret']),
-                "email_user": SecretValue.unsafe_plain_text(config['secrets']['email_user']),
-                "email_password": SecretValue.unsafe_plain_text(config['secrets']['email_password']),
-                "google_client_id": SecretValue.unsafe_plain_text(config['secrets']['google_client_id']),
-                "google_client_secret": SecretValue.unsafe_plain_text(config['secrets']['google_client_secret']),
-                "nih_client_id": SecretValue.unsafe_plain_text(config['secrets']['nih_client_id']),
-                "nih_client_secret": SecretValue.unsafe_plain_text(config['secrets']['nih_client_secret']),
+ #               "cookie_secret": SecretValue.unsafe_plain_text(config['secrets']['cookie_secret']),
+ #               "token_secret": SecretValue.unsafe_plain_text(config['secrets']['token_secret']),
+ #               "email_user": SecretValue.unsafe_plain_text(config['secrets']['email_user']),
+ #               "email_password": SecretValue.unsafe_plain_text(config['secrets']['email_password']),
+ #               "google_client_id": SecretValue.unsafe_plain_text(config['secrets']['google_client_id']),
+ #               "google_client_secret": SecretValue.unsafe_plain_text(config['secrets']['google_client_secret']),
+ #               "nih_client_id": SecretValue.unsafe_plain_text(config['secrets']['nih_client_id']),
+ #               "nih_client_secret": SecretValue.unsafe_plain_text(config['secrets']['nih_client_secret']),
 
                 # MySQL secrets will be taken from the secret entry created by the cluster creation
 
-            }
-        )
+ #           }
+ #       )
 
         ### ALB
         # Extract subnet IDs

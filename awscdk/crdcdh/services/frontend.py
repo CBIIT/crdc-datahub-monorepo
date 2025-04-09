@@ -24,24 +24,24 @@ class frontendService:
             "NODE_LEVEL":"Study Arm(s)",
             "NODE_LEVEL_ACCESS":"true",
             "PUBLIC_ACCESS":"Metadata Only",
-            "REACT_APP_ABOUT_CONTENT_URL":config[service]['about_content_url'],
-            "REACT_APP_AUTH_API":self.app_url,
-            "REACT_APP_AUTH_SERVICE_API":"/api/auth/",
-            "REACT_APP_BACKEND_API":"/v1/graphql/",
-            "REACT_APP_BACKEND_PUBLIC_API":"/v1/public-graphql/",
-            "REACT_APP_BE_VERSION":config['backend']['image'],
-            "REACT_APP_FE_VERSION":config[service]['image'],
-            "REACT_APP_FILE_SERVICE_API":"/api/files/",
-            "REACT_APP_GA_TRACKING_ID":"",
-            "REACT_APP_USER_SERVICE_API":"/api/users/",
+#            "REACT_APP_ABOUT_CONTENT_URL":config[service]['about_content_url'],
+#            "REACT_APP_AUTH_API":self.app_url,
+#            "REACT_APP_AUTH_SERVICE_API":"/api/auth/",
+#            "REACT_APP_BACKEND_API":"/v1/graphql/",
+#            "REACT_APP_BACKEND_PUBLIC_API":"/v1/public-graphql/",
+#            "REACT_APP_BE_VERSION":config['backend']['image'],
+#            "REACT_APP_FE_VERSION":config[service]['image'],
+#            "REACT_APP_FILE_SERVICE_API":"/api/files/",
+#            "REACT_APP_GA_TRACKING_ID":"",
+#            "REACT_APP_USER_SERVICE_API":"/api/users/",
         }
 
-    secrets={
+#    secrets={
             # "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
-            "REACT_APP_NIH_CLIENT_ID":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_provider_id", secret_name='auth/provider/nih'), 'nih_client_id'),
-            "REACT_APP_NIH_AUTH_URL":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_provider_url", secret_name='auth/provider/nih'), 'nih_client_url'),
-            "REACT_APP_GOOGLE_CLIENT_ID":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_google", secret_name='auth/provider/google'), 'idp_client_id'),
-        }
+#            "REACT_APP_NIH_CLIENT_ID":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_provider_id", secret_name='auth/provider/nih'), 'nih_client_id'),
+#            "REACT_APP_NIH_AUTH_URL":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_provider_url", secret_name='auth/provider/nih'), 'nih_client_url'),
+#            "REACT_APP_GOOGLE_CLIENT_ID":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_google", secret_name='auth/provider/google'), 'idp_client_id'),
+#        }
     
     taskDefinition = ecs.FargateTaskDefinition(self,
         "{}-{}-taskDef".format(self.namingPrefix, service),
