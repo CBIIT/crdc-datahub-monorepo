@@ -84,7 +84,7 @@ jobs:
           REGISTRY_URL: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           FILE_VALID_IMAGE_NAME: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_FILE_VALIDATION }}:${{ env.CODE_BRANCH }}.${{ github.run_number }}
         run: |
-          docker build --no-cache -t $FILE_VALID_IMAGE_NAME -f filevalidation.dockerfile .
+          docker build --no-cache -t $FILE_VALID_IMAGE_NAME -f apps/validation/filevalidation.dockerfile .
 
       - name: Run Trivy test scan for File Validation Docker Image
         id: trivy-scan-file-valid
@@ -155,7 +155,7 @@ jobs:
           ESSENTIAL_VALID_IMAGE_NAME: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_ESSENTIAL_VALIDATION }}:${{ env.CODE_BRANCH }}.${{ github.run_number }}
         run: |
           echo "Building: $ESSENTIAL_VALID_IMAGE_NAME"
-          docker build --no-cache -t $ESSENTIAL_VALID_IMAGE_NAME -f essentialvalidation.dockerfile .
+          docker build --no-cache -t $ESSENTIAL_VALID_IMAGE_NAME -f apps/validation/essentialvalidation.dockerfile .
 
       - name: Run Trivy test scan for Essential Validation Docker Image
         id: trivy-scan-essential-valid
@@ -225,7 +225,7 @@ jobs:
           METADATA_VALID_IMAGE_NAME: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_METADATA_VALIDATION }}:${{ env.CODE_BRANCH }}.${{ github.run_number }}
           #METADATA_VALID_IMAGE_NAME: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_METADATA_VALIDATION }}:${{ env.branch }}.${{ github.run_number }}
         run: |
-          docker build --no-cache -t $METADATA_VALID_IMAGE_NAME -f metadatavalidation.dockerfile .
+          docker build --no-cache -t $METADATA_VALID_IMAGE_NAME -f apps/validation/metadatavalidation.dockerfile .
 
       - name: Run Trivy test scan for Metadata Validation Docker Image
         id: trivy-scan-metadata-valid
@@ -295,7 +295,7 @@ jobs:
           EXPORT_VALID_IMAGE_NAME: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_EXPORT_VALIDATION }}:${{ env.CODE_BRANCH }}.${{ github.run_number }}
           #EXPORT_VALID_IMAGE_NAME: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_EXPORT_VALIDATION }}:${{ env.branch }}.${{ github.run_number }}
         run: |
-          docker build --no-cache -t $EXPORT_VALID_IMAGE_NAME -f export.dockerfile .
+          docker build --no-cache -t $EXPORT_VALID_IMAGE_NAME -f apps/validation/export.dockerfile .
 
       - name: Run Trivy test scan for Export Validation Docker Image
         id: trivy-scan-export-valid

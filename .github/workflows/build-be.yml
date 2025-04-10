@@ -55,7 +55,7 @@ jobs:
 #          BE_IMAGE_NAME: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.ECR_REPO_BE }}:${{ env.branch }}.${{ github.run_number }}
         run: |
           echo "Building: $BE_IMAGE_NAME"
-          docker build --no-cache -t $BE_IMAGE_NAME .
+          docker build --no-cache -t $BE_IMAGE_NAME apps/backend/Dockerfile .
 
       - name: Run Trivy test scan for BE Docker Image
         id: trivy-scan-be

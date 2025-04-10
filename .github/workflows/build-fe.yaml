@@ -54,7 +54,7 @@ jobs:
           FE_IMAGE_NAME: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_FE }}:${{ env.branch }}.${{ github.run_number }}
         run: |
           echo "Building: $FE_IMAGE_NAME"
-          docker build --no-cache -t $FE_IMAGE_NAME .
+          docker build --no-cache -t $FE_IMAGE_NAME apps/frontend/Dockerfile .
 
       - name: Run Trivy test scan for FE image
         id: trivy-scan-pvpuller
