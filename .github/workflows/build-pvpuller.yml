@@ -54,7 +54,7 @@ jobs:
           PV_PULLER_IMAGE_NAME: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_PVPULLER }}:${{ env.branch }}.${{ github.run_number }}
         run: |
           echo "Building: $PV_PULLER_IMAGE_NAME"
-          docker build --no-cache -t $PV_PULLER_IMAGE_NAME -f pv_puller.dockerfile .
+          docker build --no-cache -t $PV_PULLER_IMAGE_NAME -f apps/validation/pv_puller.dockerfile .
 
       - name: Run Trivy test scan for PV Puller Docker Image
         id: trivy-scan-pvpuller
