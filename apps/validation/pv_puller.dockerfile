@@ -3,6 +3,7 @@ FROM python:3.12.9-alpine3.21 AS fnl_base_image
  
 WORKDIR /usr/validator
 COPY . .
-RUN pip3 install -r requirements.txt
+#RUN pip3 install -r requirements.txt
+RUN pip3 install -r apps/validation/requirements.txt
  
 CMD ["/usr/local/bin/python3", "src/validator.py", "configs/pv-puller-config-deploy.yml"]
