@@ -91,7 +91,7 @@ class frontendService:
         cpu=config.getint(service, 'cpu'),
         memory_limit_mib=config.getint(service, 'memory'),
         port_mappings=[ecs.PortMapping(container_port=config.getint(service, 'port'), name=service)],
-        command=command,
+        entry_point=entry_point,
         environment=environment,
         secrets=secrets,
         logging=ecs.LogDrivers.aws_logs(
