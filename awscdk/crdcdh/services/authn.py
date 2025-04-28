@@ -94,7 +94,7 @@ class authnService:
             rollback=True
         ),
     )
-    ecsService.connections.allow_to_default_port(self.auroraCluster)
+    #ecsService.connections.allow_to_default_port(self.auroraCluster)
 
     ecsTarget = self.listener.add_targets("ECS-{}-Target".format(service),
         port=int(config[service]['port']),
