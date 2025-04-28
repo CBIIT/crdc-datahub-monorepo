@@ -41,7 +41,7 @@ class frontendService:
             #"REACT_APP_BACKEND_API":"{}/api/graphql".format(self.app_url),
             "REACT_APP_BACKEND_API":f"{self.app_url}/api/graphql",
             "REACT_APP_BE_VERSION":config['backend']['image'],
-            "REACT_APP_FE_VERSION"::config[service]['image'],
+            "REACT_APP_FE_VERSION":config[service]['image'],
             "REACT_APP_UPLOADER_CLI":"https://github.com/CBIIT/crdc-datahub-cli-uploader/releases/download/{}/crdc-datahub-cli-uploader-src.zip".format(config['main']['upload_cli_version']),
             "REACT_APP_UPLOADER_CLI_WINDOWS":"https://github.com/CBIIT/crdc-datahub-cli-uploader/releases/download/{}/crdc-datahub-cli-uploader-windows.zip".format(config['main']['upload_cli_version']),
             "REACT_APP_UPLOADER_CLI_MAC_X64":"https://github.com/CBIIT/crdc-datahub-cli-uploader/releases/download/{}/crdc-datahub-cli-uploader-mac-x64.zip".format(config['main']['upload_cli_version']),
