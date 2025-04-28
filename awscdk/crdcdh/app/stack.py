@@ -178,8 +178,8 @@ class Stack(Stack):
                 "nih_userinfo_url": SecretValue.unsafe_plain_text(config['secrets']['nih_userinfo_url']),
                 "nih_authorize_url": SecretValue.unsafe_plain_text(config['secrets']['nih_authorize_url']),
                 "nih_token_url": SecretValue.unsafe_plain_text(config['secrets']['nih_token_url']),
-                "nih_logout_url": SecretValue.unsafe_plain_text(config['secrets']['nih_logout_url']),
-                "newrelic_license_key": SecretValue.unsafe_plain_text(config['secrets']['newrelic_license_key'])
+                "nih_logout_url": SecretValue.unsafe_plain_text(config['secrets']['nih_logout_url'])
+#                "newrelic_license_key": SecretValue.unsafe_plain_text(config['secrets']['newrelic_license_key'])
 
             }
         )
