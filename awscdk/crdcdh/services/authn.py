@@ -18,52 +18,48 @@ class authnService:
         entry_point = None
 
     environment={
-            # "NEW_RELIC_APP_NAME":"bento-perf-authN",
-            "AUTHORIZATION_ENABLED":"true",
-            "AUTHORIZATION_URL":"/api/users/graphql",
-            "DATE":"2024-05-21",
-#            "PROJECT":"bento",
-            "EMAIL_SMTP_HOST":"email-smtp.us-east-1.amazonaws.com",
-            "EMAIL_SMTP_PORT":"465",
-            "EMAILS_ENABLED":"true",
-            "GOOGLE_REDIRECT_URL":self.app_url,
-            "IDP":"google",
-#            "MYSQL_PORT":"3306",
-#            "MYSQL_SESSION_ENABLED":"true",
-#            "NEO4J_URI":"bolt://{}:7687".format(config['db']['neo4j_ip']),
-            "NIH_AUTHORIZE_URL":"https://stsstg.nih.gov/auth/oauth/v2/authorize",
-            "NIH_BASE_URL":"https://stsstg.nih.gov",
-            "NIH_LOGOUT_URL":"https://stsstg.nih.gov/connect/session/logout",
-            "NIH_PROMPT":"login",
-            "NIH_REDIRECT_URL":self.app_url,
-            "NIH_SCOPE":"openid email profile",
-            "NIH_TOKEN_URL":"https://stsstg.nih.gov/auth/oauth/v2/token",
-            "NIH_USERINFO_URL":"https://stsstg.nih.gov/openid/connect/v1/userinfo",
-            "SESSION_TIMEOUT":"1800",
+            "FARGATE":"true",
+            "NRIA_IS_FORWARD_ONLY":"true",
+            "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED":"true",
+            "NRIA_PASSTHROUGH_ENVIRONMENT":"ECS_CONTAINER_METADATA_URI,ECS_CONTAINER_METADATA_URI_V4,FARGATE",
+            "NEW_RELIC_HOST":"gov-collector.newrelic.com",
+            "NEW_RELIC_LABELS":"Project:{};Environment:{}".format('crdc-hub', config['main']['tier']),
+            "NEW_RELIC_LOG_FILE_NAME":"STDOUT",
+            "NRIA_CUSTOM_ATTRIBUTES":"{\"nrDeployMethod\":\"downloadPage\"}",
+            "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, config['main']['tier'], service),
+            "NRIA_OVERRIDE_HOST_ROOT":"",
+            "PROJECT":"crdc-hub",
+            "DATE":date.today(),
             "VERSION":config[service]['image'],
+            "SESSION_SECRET":"abcd256asghaaamnkloofghj",
+            "NIH_SCOPE":"openid email profile",
+            "NIH_PROMPT":"login",
+            "JAVA_OPTS": "-javaagent:/usr/local/tomcat/newrelic/newrelic.jar"
+            #"NIH_REDIRECT_URL":self.app_url,
+            #"SESSION_TIMEOUT":"1800",
         }
 
-#    secrets={
-            # "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "be_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
-#            "NEO4J_PASSWORD":ecs.Secret.from_secrets_manager(self.secret, 'neo4j_password'),
-#            "NEO4J_USER":ecs.Secret.from_secrets_manager(self.secret, 'neo4j_user'),
-#            "TOKEN_SECRET":ecs.Secret.from_secrets_manager(self.secret, 'token_secret'),
-#            "COOKIE_SECRET":ecs.Secret.from_secrets_manager(self.secret, 'cookie_secret'),
-#            "EMAIL_USER":ecs.Secret.from_secrets_manager(self.secret, 'email_user'),
-#            "EMAIL_PASSWORD":ecs.Secret.from_secrets_manager(self.secret, 'email_password'),
-#            "GOOGLE_CLIENT_ID":ecs.Secret.from_secrets_manager(self.secret, 'google_client_id'),
-#            "GOOGLE_CLIENT_SECRET":ecs.Secret.from_secrets_manager(self.secret, 'google_client_secret'),
-#            "NIH_CLIENT_ID":ecs.Secret.from_secrets_manager(self.secret, 'nih_client_id'),
-#            "NIH_CLIENT_SECRET":ecs.Secret.from_secrets_manager(self.secret, 'nih_client_secret'),\
-            
-#            "MYSQL_DATABASE":ecs.Secret.from_secrets_manager(self.auroraCluster.secret, 'dbname'),
-#            "MYSQL_HOST":ecs.Secret.from_secrets_manager(self.auroraCluster.secret, 'host'),
-#            "MYSQL_PASSWORD":ecs.Secret.from_secrets_manager(self.auroraCluster.secret, 'password'),
-#            "MYSQL_USER":ecs.Secret.from_secrets_manager(self.auroraCluster.secret, 'username'),
-#        }
+    secrets={
+            "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "authn_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
+            "DATABASE_NAME":ecs.Secret.from_secrets_manager(self.secret, 'database_name'),
+            "MONGO_DB_HOST":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_host'),
+            "MONGO_DB_PORT":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_port'),
+            "MONGO_DB_PASSWORD":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_password'),
+            "MONGO_DB_USER":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_user'),
+            "NIH_CLIENT_ID":ecs.Secret.from_secrets_manager(self.secret, 'nih_client_id'),
+            "NIH_CLIENT_SECRET":ecs.Secret.from_secrets_manager(self.secret, 'nih_client_secret'),
+            "NIH_BASE_URL":ecs.Secret.from_secrets_manager(self.secret, 'nih_base_url'),
+            "NIH_REDIRECT_URL":ecs.Secret.from_secrets_manager(self.secret, 'nih_redirect_url'),
+            "NIH_USERINFO_URL":ecs.Secret.from_secrets_manager(self.secret, 'nih_userinfo_url'),
+            "NIH_AUTHORIZE_URL":ecs.Secret.from_secrets_manager(self.secret, 'nih_authorize_url'),
+            "NIH_TOKEN_URL":ecs.Secret.from_secrets_manager(self.secret, 'nih_token_url'),
+            "NIH_LOGOUT_URL":ecs.Secret.from_secrets_manager(self.secret, 'nih_logout_url'),
+      
+        }
     
     taskDefinition = ecs.FargateTaskDefinition(self,
         "{}-{}-taskDef".format(self.namingPrefix, service),
+        family=f"{config['main']['resource_prefix']}-{config['main']['tier']}-authn",
         cpu=config.getint(service, 'cpu'),
         memory_limit_mib=config.getint(service, 'memory')
     )

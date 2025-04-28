@@ -138,29 +138,51 @@ class Stack(Stack):
 #            public_key_id = "K2JHABMC4EI0Q9"
 #            cf_domain = "https://d2krihsuecuuhu.cloudfront.net"
             
- #       self.secret = secretsmanager.Secret(self, "Secret",
- #           secret_name="{}/{}/{}".format(config['main']['secret_prefix'], config['main']['tier'], "crdc-dh"),
- #           secret_object_value={
-#                "neo4j_user": SecretValue.unsafe_plain_text(config['db']['neo4j_user']),
-#                "neo4j_password": SecretValue.unsafe_plain_text(config['db']['neo4j_password']),
+        self.secret = secretsmanager.Secret(self, "Secret",
+#            secret_name="{}/{}/{}".format(config['main']['secret_prefix'], config['main']['tier'], "crdc-dh"),
+            secret_name="{}/{}".format(config['main']['resource_prefix'], config['main']['tier']),
+            secret_object_value={
+                "mongo_db_user": SecretValue.unsafe_plain_text(config['db']['mongo_db_user']),
+                "mongo_db_password": SecretValue.unsafe_plain_text(config['db']['mongo_db_password']),
+                "mongo_db_host": SecretValue.unsafe_plain_text(config['db']['mongo_db_host']),
+                "mongo_db_port": SecretValue.unsafe_plain_text(config['db']['mongo_db_port']),
+                "database_name": SecretValue.unsafe_plain_text(config['db']['database_name']),
+                "neo4j_uri": SecretValue.unsafe_plain_text(config['db']['neo4j_uri']),
+                "neo4j_password": SecretValue.unsafe_plain_text(config['db']['neo4j_password']),
                 # "es_host": SecretValue.unsafe_plain_text(self.osDomain.domain_endpoint),
  
-#                "cf_key_pair_id": SecretValue.unsafe_plain_text(public_key_id),
-#                "cf_url": SecretValue.unsafe_plain_text("https://{}".format(cf_domain)),
+                #"cf_key_pair_id": SecretValue.unsafe_plain_text(public_key_id),
+                #"cf_url": SecretValue.unsafe_plain_text("https://{}".format(cf_domain)),
                 
- #               "cookie_secret": SecretValue.unsafe_plain_text(config['secrets']['cookie_secret']),
- #               "token_secret": SecretValue.unsafe_plain_text(config['secrets']['token_secret']),
- #               "email_user": SecretValue.unsafe_plain_text(config['secrets']['email_user']),
- #               "email_password": SecretValue.unsafe_plain_text(config['secrets']['email_password']),
- #               "google_client_id": SecretValue.unsafe_plain_text(config['secrets']['google_client_id']),
- #               "google_client_secret": SecretValue.unsafe_plain_text(config['secrets']['google_client_secret']),
- #               "nih_client_id": SecretValue.unsafe_plain_text(config['secrets']['nih_client_id']),
- #               "nih_client_secret": SecretValue.unsafe_plain_text(config['secrets']['nih_client_secret']),
+                "sumo_collector_endpoint": SecretValue.unsafe_plain_text(config['secrets']['sumo_collector_endpoint']),
+                "sumo_collector_token_frontend": SecretValue.unsafe_plain_text(config['secrets']['sumo_collector_token_frontend']),
+                "sumo_collector_token_backend": SecretValue.unsafe_plain_text(config['secrets']['sumo_collector_token_backend']),
+                "sumo_collector_token_authn": SecretValue.unsafe_plain_text(config['secrets']['sumo_collector_token_authn']),
+                "sumo_collector_token_file_validator": SecretValue.unsafe_plain_text(config['secrets']['sumo_collector_token_file_validator']),
+                "sumo_collector_token_essential_validation": SecretValue.unsafe_plain_text(config['secrets']['sumo_collector_token_essential_validation']),
+                "sumo_collector_token_metadata_validation": SecretValue.unsafe_plain_text(config['secrets']['sumo_collector_token_metadata_validation']),
+                "sumo_collector_token_export_validation": SecretValue.unsafe_plain_text(config['secrets']['sumo_collector_token_export_validation']),
+                "sumo_collector_token_pv_puller": SecretValue.unsafe_plain_text(config['secrets']['sumo_collector_token_pv_puller']),
+                #"cookie_secret": SecretValue.unsafe_plain_text(config['secrets']['cookie_secret']),
+                #"token_secret": SecretValue.unsafe_plain_text(config['secrets']['token_secret']),
+                "email_user": SecretValue.unsafe_plain_text(config['secrets']['email_user']),
+                "email_password": SecretValue.unsafe_plain_text(config['secrets']['email_password']),
+                "email_url": SecretValue.unsafe_plain_text(config['secrets']['email_url']),
+                "submission_bucket": SecretValue.unsafe_plain_text(config['secrets']['submission_bucket']),
+                "google_client_id": SecretValue.unsafe_plain_text(config['secrets']['google_client_id']),
+                "google_client_secret": SecretValue.unsafe_plain_text(config['secrets']['google_client_secret']),
+                "nih_client_id": SecretValue.unsafe_plain_text(config['secrets']['nih_client_id']),
+                "nih_client_secret": SecretValue.unsafe_plain_text(config['secrets']['nih_client_secret']),
+                "nih_base_url": SecretValue.unsafe_plain_text(config['secrets']['nih_base_url']),
+                "nih_redirect_url": SecretValue.unsafe_plain_text(config['secrets']['nih_redirect_url']),
+                "nih_userinfo_url": SecretValue.unsafe_plain_text(config['secrets']['nih_userinfo_url']),
+                "nih_authorize_url": SecretValue.unsafe_plain_text(config['secrets']['nih_authorize_url']),
+                "nih_token_url": SecretValue.unsafe_plain_text(config['secrets']['nih_token_url']),
+                "nih_logout_url": SecretValue.unsafe_plain_text(config['secrets']['nih_logout_url']),
+                "newrelic_license_key": SecretValue.unsafe_plain_text(config['secrets']['newrelic_license_key'])
 
-                # MySQL secrets will be taken from the secret entry created by the cluster creation
-
- #           }
- #       )
+            }
+        )
 
         ### ALB
         # Extract subnet IDs
@@ -243,13 +265,10 @@ class Stack(Stack):
         backend.backendService.createService(self, config)
 
         # AuthN Service
-        # authn.authnService.createService(self, config)
+        authn.authnService.createService(self, config)
 
         # AuthZ Service
         #authz.authzService.createService(self, config)
 
         # Files Service
         # files.filesService.createService(self, config)
-
-        # Interoperation Service
-        interoperation.interoperationService.createService(self, config)

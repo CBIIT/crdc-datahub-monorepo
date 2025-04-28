@@ -12,19 +12,31 @@ class backendService:
     service = "backend"
 
     # Set container configs
-    if config.has_option(service, 'command'):
-        command = [config[service]['command']]
+    if config.has_option(service, 'entrypoint'):
+        entrypoint = ["/bin/sh", "-c", config[service]['entrypoint']]
     else:
-        command = None
+        entrypoint = None
 
     environment={
-            # "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, config['main']['tier'], service),
-            # "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED":"true",
-            # "NEW_RELIC_HOST":"gov-collector.newrelic.com",
-            # "NEW_RELIC_LABELS":"Project:{};Environment:{}".format('bento', config['main']['tier']),
-            # "NEW_RELIC_LOG_FILE_NAME":"STDOUT",
-            # "JAVA_OPTS": "-javaagent:/usr/local/tomcat/newrelic/newrelic.jar",
-#            "AUTH_ENABLED":"false",
+            "DATE":date.today(),
+            "PROJECT":"crdc-hub",
+            "VERSION":config[service]['image'],
+            "FARGATE":"true",
+            "SESSION_SECRET":"abcd256asghaaamnkloofghj",
+            "EMAILS_ENABLED":"true",
+            "EMAIL_SMTP_HOST":"email-smtp.us-east-1.amazonaws.com",
+            "EMAIL_SMTP_PORT":"587",
+            "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, config['main']['tier'], service),
+            "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED":"true",
+            "NEW_RELIC_HOST":"gov-collector.newrelic.com",
+            "NEW_RELIC_LABELS":"Project:{};Environment:{}".format('crdc-hub', config['main']['tier']),
+            "NEW_RELIC_LOG_FILE_NAME":"STDOUT",
+            "NRIA_IS_FORWARD_ONLY":"true",
+            "NRIA_PASSTHROUGH_ENVIRONMENT":"ECS_CONTAINER_METADATA_URI,ECS_CONTAINER_METADATA_URI_V4,FARGATE",
+            "NRIA_CUSTOM_ATTRIBUTES":"{\"nrDeployMethod\":\"downloadPage\"}",
+            "NRIA_OVERRIDE_HOST_ROOT":"",
+            "JAVA_OPTS": "-javaagent:/usr/local/tomcat/newrelic/newrelic.jar",
+            "AUTH_ENABLED":"true",
 #            "AUTH_ENDPOINT":"/api/auth/",
 #            "BENTO_API_VERSION":config[service]['image'],
 #            "MYSQL_SESSION_ENABLED":"true",
@@ -36,13 +48,18 @@ class backendService:
 #            "REDIS_USE_CLUSTER":"true",
         }
 
-#    secrets={
-            # "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "be_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
-#            "NEO4J_PASSWORD":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "neo4j_password", secret_name='bento/cds/dev'), 'neo4j_password'),
-#            "NEO4J_USER":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "neo4j_user", secret_name='bento/cds/dev'), 'neo4j_user'),
-#            "NEO4J_IP":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "neo4j_ip", secret_name='bento/cds/dev'), 'neo4j_ip'),
-#            "ES_HOST":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "es_host", secret_name='bento/cds/dev'), 'es_host'),
-#        }   
+    secrets={
+            "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "be_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
+            "MONGO_DB_HOST":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_host'),
+            "MONGO_DB_PORT":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_port'),
+            "MONGO_DB_PASSWORD":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_password'),
+            "MONGO_DB_USER":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_user'),
+            "DATABASE_NAME":ecs.Secret.from_secrets_manager(self.secret, 'database_name'),
+            "EMAIL_USER":ecs.Secret.from_secrets_manager(self.secret, 'email_user'),
+            "EMAIL_PASSWORD":ecs.Secret.from_secrets_manager(self.secret, 'email_password'),
+            "EMAIL_URL":ecs.Secret.from_secrets_manager(self.secret, 'email_url'),
+            "SUBMISSION_BUCKET":ecs.Secret.from_secrets_manager(self.secret, 'submission_bucket'),
+        }   
     
     taskDefinition = ecs.FargateTaskDefinition(self,
         "{}-{}-taskDef".format(self.namingPrefix, service),

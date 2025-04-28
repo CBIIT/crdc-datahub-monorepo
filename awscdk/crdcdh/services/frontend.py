@@ -10,20 +10,47 @@ class frontendService:
     service = "frontend"
 
     # Set container configs
-    if config.has_option(service, 'command'):
-        command = [config[service]['command']]
+    if config.has_option(service, 'entrypoint'):
+        entrypoint = ["/bin/sh", "-c", config[service]['entrypoint']]
     else:
-        command = None
+        entrypoint = None
+
+    if config.has_option('main', 'subdomain'):
+            self.app_url = "https://{}.{}".format(config['main']['subdomain'], config['main']['domain'])
+        else:
+            self.app_url = "https://{}".format(config['main']['domain'])
     
     environment={
-            # "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, config['main']['tier'], service),
-            # "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED":"true",
-            # "NEW_RELIC_HOST":"gov-collector.newrelic.com",
-            # "NEW_RELIC_LABELS":"Project:{};Environment:{}".format('bento', config['main']['tier']),
-            # "NEW_RELIC_NO_CONFIG_FILE":"true",
-            "NODE_LEVEL":"Study Arm(s)",
-            "NODE_LEVEL_ACCESS":"true",
-            "PUBLIC_ACCESS":"Metadata Only",
+            "FARGATE":"true",
+            "NRIA_IS_FORWARD_ONLY":"true",
+            "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED":"true",
+            "NRIA_PASSTHROUGH_ENVIRONMENT":"ECS_CONTAINER_METADATA_URI,ECS_CONTAINER_METADATA_URI_V4,FARGATE",
+            "NEW_RELIC_HOST":"gov-collector.newrelic.com",
+            "NEW_RELIC_LABELS":"Project:{};Environment:{}".format('crdc-hub', config['main']['tier']),
+            "NEW_RELIC_LOG_FILE_NAME":"STDOUT",
+            "NEW_RELIC_NO_CONFIG_FILE":"true",
+            "NRIA_CUSTOM_ATTRIBUTES":"{\"nrDeployMethod\":\"downloadPage\"}",
+            "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, config['main']['tier'], service),
+            "NRIA_OVERRIDE_HOST_ROOT":"",
+            "PROJECT":"crdc-hub",
+            "DATE":date.today(),
+            "VERSION":config[service]['image'],
+            "SESSION_SECRET":"abcd256asghaaamnkloofghj",
+            "TIER":config['main']['tier'],
+            "JAVA_OPTS": "-javaagent:/usr/local/tomcat/newrelic/newrelic.jar",
+            #"REACT_APP_BACKEND_API":"{}/api/graphql".format(self.app_url),
+            "REACT_APP_BACKEND_API":f"{self.app_url}/api/graphql",
+            "REACT_APP_BE_VERSION":config['backend']['image'],
+            "REACT_APP_FE_VERSION"::config[service]['image'],
+            "REACT_APP_UPLOADER_CLI":"https://github.com/CBIIT/crdc-datahub-cli-uploader/releases/download/{}/crdc-datahub-cli-uploader-src.zip".format(config['main']['upload_cli_version']),
+            "REACT_APP_UPLOADER_CLI_WINDOWS":"https://github.com/CBIIT/crdc-datahub-cli-uploader/releases/download/{}/crdc-datahub-cli-uploader-windows.zip".format(config['main']['upload_cli_version']),
+            "REACT_APP_UPLOADER_CLI_MAC_X64":"https://github.com/CBIIT/crdc-datahub-cli-uploader/releases/download/{}/crdc-datahub-cli-uploader-mac-x64.zip".format(config['main']['upload_cli_version']),
+            "REACT_APP_UPLOADER_CLI_MAC_ARM":"https://github.com/CBIIT/crdc-datahub-cli-uploader/releases/download/{}/crdc-datahub-cli-uploader-mac-arm.zip".format(config['main']['upload_cli_version']),
+            "REACT_APP_UPLOADER_CLI_VERSION":config['main']['upload_cli_version'],
+            "HIDDEN_MODELS":config['main']['hidden_models'],
+            "DEV_TIER":config['main']['tier'],
+            "REACT_APP_GA_TRACKING_ID":config['main']['react_app_ga_tracking_id']
+
 #            "REACT_APP_ABOUT_CONTENT_URL":config[service]['about_content_url'],
 #            "REACT_APP_AUTH_API":self.app_url,
 #            "REACT_APP_AUTH_SERVICE_API":"/api/auth/",
@@ -36,12 +63,16 @@ class frontendService:
 #            "REACT_APP_USER_SERVICE_API":"/api/users/",
         }
 
-#    secrets={
-            # "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
-#            "REACT_APP_NIH_CLIENT_ID":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_provider_id", secret_name='auth/provider/nih'), 'nih_client_id'),
-#            "REACT_APP_NIH_AUTH_URL":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_provider_url", secret_name='auth/provider/nih'), 'nih_client_url'),
-#            "REACT_APP_GOOGLE_CLIENT_ID":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_google", secret_name='auth/provider/google'), 'idp_client_id'),
-#        }
+    secrets={
+            "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "fe_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
+            "NIH_CLIENT_ID":ecs.Secret.from_secrets_manager(self.secret, 'nih_client_id'),
+            "NIH_REDIRECT_URL":ecs.Secret.from_secrets_manager(self.secret, 'nih_redirect_url'),
+            "NIH_AUTHORIZE_URL":ecs.Secret.from_secrets_manager(self.secret, 'nih_authorize_url'),
+            "REACT_APP_NIH_CLIENT_ID":ecs.Secret.from_secrets_manager(self.secret, 'nih_client_id'),
+            "REACT_APP_NIH_AUTHENTICATION_URL":ecs.Secret.from_secrets_manager(self.secret, 'nih_authorize_url'),
+            "REACT_APP_NIH_REDIRECT_URL":ecs.Secret.from_secrets_manager(self.secret, 'nih_redirect_url')
+        }
+
     
     taskDefinition = ecs.FargateTaskDefinition(self,
         "{}-{}-taskDef".format(self.namingPrefix, service),
