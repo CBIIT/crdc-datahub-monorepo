@@ -16,9 +16,9 @@ class frontendService:
         entrypoint = None
 
     if config.has_option('main', 'subdomain'):
-            self.app_url = "https://{}.{}".format(config['main']['subdomain'], config['main']['domain'])
-        else:
-            self.app_url = "https://{}".format(config['main']['domain'])
+        self.app_url = "https://{}.{}".format(config['main']['subdomain'], config['main']['domain'])
+    else:
+        self.app_url = "https://{}".format(config['main']['domain'])
     
     environment={
             "FARGATE":"true",
