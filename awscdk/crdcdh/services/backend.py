@@ -14,9 +14,9 @@ class backendService:
 
     # Set container configs
     if config.has_option(service, 'entrypoint'):
-        entrypoint = ["/bin/sh", "-c", config[service]['entrypoint']]
+        entry_point = ["/bin/sh", "-c", config[service]['entrypoint']]
     else:
-        entrypoint = None
+        entry_point = None
 
     environment={
             "DATE":date.today(),

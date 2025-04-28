@@ -12,9 +12,9 @@ class frontendService:
 
     # Set container configs
     if config.has_option(service, 'entrypoint'):
-        entrypoint = ["/bin/sh", "-c", config[service]['entrypoint']]
+        entry_point = ["/bin/sh", "-c", config[service]['entrypoint']]
     else:
-        entrypoint = None
+        entry_point = None
 
     if config.has_option('main', 'subdomain'):
         self.app_url = "https://{}.{}".format(config['main']['subdomain'], config['main']['domain'])
