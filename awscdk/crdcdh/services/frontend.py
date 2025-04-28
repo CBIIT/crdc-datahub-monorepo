@@ -34,7 +34,7 @@ class frontendService:
             "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, config['main']['tier'], service),
             "NRIA_OVERRIDE_HOST_ROOT":"",
             "PROJECT":"crdc-hub",
-            "DATE":date.today(),
+            "DATE":date.today().isoformat(),
             "VERSION":config[service]['image'],
             "SESSION_SECRET":"abcd256asghaaamnkloofghj",
             "TIER":config['main']['tier'],

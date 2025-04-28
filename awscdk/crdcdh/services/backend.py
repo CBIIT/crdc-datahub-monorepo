@@ -19,7 +19,7 @@ class backendService:
         entry_point = None
 
     environment={
-            "DATE":date.today(),
+            "DATE":date.today().isoformat(),
             "PROJECT":"crdc-hub",
             "VERSION":config[service]['image'],
             "FARGATE":"true",
