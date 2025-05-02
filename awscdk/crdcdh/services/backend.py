@@ -109,6 +109,7 @@ class backendService:
 
     scalable_target.scale_on_cpu_utilization(
         "CpuScalingPolicy",
+        policy_name = "cpu-autoscaling",
         target_utilization_percent=80,  # target average CPU utilization
         scale_in_cooldown=Duration.seconds(60),   # wait 60s before scaling in
         scale_out_cooldown=Duration.seconds(60)   # wait 60s before scaling out

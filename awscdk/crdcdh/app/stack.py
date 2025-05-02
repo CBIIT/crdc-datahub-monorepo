@@ -234,12 +234,12 @@ class Stack(Stack):
             action=elbv2.ListenerAction.fixed_response(200,
                 message_body="The requested resource is not available"))
 
-        self.listener.add_action("DefaultFixedResponse",
-            action=elbv2.ListenerAction.fixed_response(
-                status_code=200,  # or 200 if you prefer
-                message_body="The requested resource is not available",
-                content_type="text/plain")
-        )
+        #self.listener.add_action("DefaultFixedResponse",
+            #action=elbv2.ListenerAction.fixed_response(
+                #status_code=200,  # or 200 if you prefer
+                #message_body="The requested resource is not available",
+                #content_type="text/plain")
+        #)
         ### ALB Access log
         log_bucket = s3.Bucket.from_bucket_name(self, "AlbAccessLogsBucket", config['main']['alb_log_bucket_name'])
         log_prefix = f"{config['main']['program']}/{config['main']['tier']}/{config['main']['resource_prefix']}/alb-access-logs"
