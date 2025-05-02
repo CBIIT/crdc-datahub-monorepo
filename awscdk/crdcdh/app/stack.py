@@ -236,7 +236,7 @@ class Stack(Stack):
 
         self.listener.add_action("DefaultFixedResponse",
             action=elbv2.ListenerAction.fixed_response(
-                status_code="200",  # or 200 if you prefer
+                status_code=200,  # or 200 if you prefer
                 message_body="The requested resource is not available",
                 content_type="text/plain")
         )
