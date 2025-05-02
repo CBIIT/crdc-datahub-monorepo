@@ -84,6 +84,7 @@ class authnService:
 
     ecsService = ecs.FargateService(self,
         "{}-{}-service".format(self.namingPrefix, service),
+        service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-authn",
         cluster=self.ECSCluster,
         task_definition=taskDefinition,
         enable_execute_command=True,
@@ -99,6 +100,7 @@ class authnService:
     ecsTarget = self.listener.add_targets("ECS-{}-Target".format(service),
         port=int(config[service]['port']),
         protocol=elbv2.ApplicationProtocol.HTTP,
+        target_group_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-authn",
         health_check = elbv2.HealthCheck(
             path=config[service]['health_check_path'],
             timeout=Duration.seconds(config.getint(service, 'health_check_timeout')),
@@ -107,6 +109,7 @@ class authnService:
 
     elbv2.ApplicationListenerRule(self, id="alb-{}-rule".format(service),
         conditions=[
+            elbv2.ListenerCondition.host_headers(config[service]['host'].split(',')),
             elbv2.ListenerCondition.path_patterns(config[service]['path'].split(','))
         ],
         priority=int(config[service]['priority_rule_number']),

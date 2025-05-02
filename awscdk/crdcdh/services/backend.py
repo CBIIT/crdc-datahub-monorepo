@@ -5,6 +5,8 @@ from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_secretsmanager as secretsmanager
 from datetime import date
+from aws_cdk import Duration
+from aws_cdk import aws_applicationautoscaling as appscaling
 
 class backendService:
   def createService(self, config):
@@ -98,6 +100,16 @@ class backendService:
             enable=True,
             rollback=True
         ),
+        scalable_target = ecsService.auto_scale_task_count(
+            min_capacity=1,  # adjust as needed
+            max_capacity=2  # adjust as needed
+        ),
+        scalable_target.scale_on_cpu_utilization(
+            "CpuScalingPolicy",
+            target_utilization_percent=80,  # target average CPU utilization
+            scale_in_cooldown=Duration.seconds(60),   # wait 60s before scaling in
+            scale_out_cooldown=Duration.seconds(60)   # wait 60s before scaling out
+        ),
     )
 
     ecsTarget = self.listener.add_targets("ECS-{}-Target".format(service),
@@ -112,6 +124,7 @@ class backendService:
 
     elbv2.ApplicationListenerRule(self, id="alb-{}-rule".format(service),
         conditions=[
+            elbv2.ListenerCondition.host_headers(config[service]['host'].split(',')),
             elbv2.ListenerCondition.path_patterns(config[service]['path'].split(','))
         ],
         priority=int(config[service]['priority_rule_number']),

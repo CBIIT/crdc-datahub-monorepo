@@ -123,6 +123,7 @@ class frontendService:
 
     elbv2.ApplicationListenerRule(self, id="alb-{}-rule".format(service),
         conditions=[
+            elbv2.ListenerCondition.host_headers(config[service]['host'].split(',')),
             elbv2.ListenerCondition.path_patterns(config[service]['path'].split(','))
         ],
         priority=int(config[service]['priority_rule_number']),
