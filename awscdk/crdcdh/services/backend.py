@@ -100,18 +100,19 @@ class backendService:
             enable=True,
             rollback=True
         ),
-        scalable_target = ecsService.auto_scale_task_count(
-            min_capacity=1,  # adjust as needed
-            max_capacity=2  # adjust as needed
-        ),
-        scalable_target.scale_on_cpu_utilization(
-            "CpuScalingPolicy",
-            target_utilization_percent=80,  # target average CPU utilization
-            scale_in_cooldown=Duration.seconds(60),   # wait 60s before scaling in
-            scale_out_cooldown=Duration.seconds(60)   # wait 60s before scaling out
-        ),
     )
 
+    scalable_target = ecsService.auto_scale_task_count(
+        min_capacity=1,  # adjust as needed
+        max_capacity=2  # adjust as needed
+    )
+
+    scalable_target.scale_on_cpu_utilization(
+        "CpuScalingPolicy",
+        target_utilization_percent=80,  # target average CPU utilization
+        scale_in_cooldown=Duration.seconds(60),   # wait 60s before scaling in
+        scale_out_cooldown=Duration.seconds(60)   # wait 60s before scaling out
+    )
     ecsTarget = self.listener.add_targets("ECS-{}-Target".format(service),
         port=int(config[service]['port']),
         protocol=elbv2.ApplicationProtocol.HTTP,
