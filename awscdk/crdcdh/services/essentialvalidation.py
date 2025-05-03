@@ -122,7 +122,7 @@ class essentialvalidationService:
     )
 
     # Define step-out policy
-    scale_out_policy = scalable_target.scale_on_metric(
+    scale_out_action = scalable_target.scale_on_metric(
         f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-out",
         metric=sqs_metric,
         scaling_steps=[
@@ -135,5 +135,5 @@ class essentialvalidationService:
 
     # Connect alarm to scale out policy
     scale_out_alarm.add_alarm_action(
-        cw_actions.ApplicationScalingAction(scale_out_policy)
+        cw_actions.ApplicationScalingAction(scale_out_action)
     )
