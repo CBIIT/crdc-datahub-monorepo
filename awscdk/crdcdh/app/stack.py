@@ -18,7 +18,7 @@ from aws_cdk import aws_cloudfront_origins as origins
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_ssm as ssm
 from aws_cdk import aws_iam as iam
-from services import frontend, backend, authn
+from services import frontend, backend, authn, essentialvalidation
 
 class Stack(Stack):
     def __init__(self, scope: Construct, **kwargs) -> None:
