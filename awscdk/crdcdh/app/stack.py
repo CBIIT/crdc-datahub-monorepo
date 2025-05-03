@@ -272,6 +272,9 @@ class Stack(Stack):
 
         # AuthN Service
         authn.authnService.createService(self, config)
+        
+        # Essential service
+        essentialvalidation.essentialvalidationService..createService(self, config)
 
         # AuthZ Service
         #authz.authzService.createService(self, config)
