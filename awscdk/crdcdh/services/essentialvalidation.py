@@ -102,7 +102,8 @@ class essentialvalidationService:
     )
 
     # Define CloudWatch metric for SQS ApproximateNumberOfMessagesVisible
-    queue_name = f"{config['main']['resource_prefix']}-{config['main']['tier']}-loader-queue.fifo"
+    #queue_name = f"{config['main']['resource_prefix']}-{config['main']['tier']}-loader-queue.fifo"
+    queue_name = "crdc-hub-dev-loader-queue.fifo"
     sqs_metric = cloudwatch.Metric(
         namespace="AWS/SQS",
         metric_name="ApproximateNumberOfMessagesVisible",
