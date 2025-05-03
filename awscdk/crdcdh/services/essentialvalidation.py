@@ -134,6 +134,6 @@ class essentialvalidationService:
     )
 
     # Connect alarm to scale out policy
-    scale_out_alarm.add_alarm_action(
-        cw_actions.ApplicationScalingAction(scale_out_action)
-    )
+    #scale_out_alarm.add_alarm_action(
+    #    cw_actions.ApplicationScalingAction(scale_out_action)
+    #)
