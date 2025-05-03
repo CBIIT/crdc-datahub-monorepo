@@ -113,7 +113,7 @@ class essentialvalidationService:
 
     # Cloudwatch Alarm
     scale_out_alarm = cloudwatch.Alarm(self,
-        "{}-{}-scalableTarget".format(self.namingPrefix, service),
+        "{}-{}-scaloutAlarm".format(self.namingPrefix, service),
         alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-out-alarm",
         metric=sqs_metric,
         threshold=1,
