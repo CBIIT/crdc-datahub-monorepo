@@ -115,7 +115,7 @@ class essentialvalidationService:
     sqs_metric = cloudwatch.Metric(
         namespace="AWS/SQS",
         metric_name="ApproximateNumberOfMessagesVisible",
-        dimensions_map={"QueueName": queue_name},
+        dimensions_map={"QueueName": queue.queue_name},
         statistic="Minimum",
         period=Duration.seconds(10)
     )
