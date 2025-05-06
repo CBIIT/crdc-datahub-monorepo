@@ -169,7 +169,7 @@ class essentialvalidationService:
         metric=sqs_metric,
         scaling_steps=[
             appscaling.ScalingInterval(upper=0, change=-1),   # remove 1 task if < or = 0
-            appscaling.ScalingInterval(lower=1, change=0),
+            appscaling.ScalingInterval(lower=0, change=0),
         ],
         adjustment_type=appscaling.AdjustmentType.CHANGE_IN_CAPACITY,
         cooldown=Duration.seconds(10)    
