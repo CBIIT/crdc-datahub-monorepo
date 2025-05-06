@@ -107,7 +107,7 @@ class essentialvalidationService:
     #queue_name = "crdc-hub-dev-loader-queue.fifo"
     
     # create sqs
-    queue = sqs.Queue(self, f"{self.namingPrefix}-{svc}-queue",
+    queue = sqs.Queue(self, f"{self.namingPrefix}-{service}-queue",
         queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{config[service]['queue_name']}-queue.fifo",
         fifo=True
     )
