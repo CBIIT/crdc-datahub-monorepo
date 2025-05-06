@@ -50,6 +50,12 @@ class essentialvalidationService:
             "DATABASE_NAME":ecs.Secret.from_secrets_manager(self.secret, 'database_name'),
         }   
     
+    # create sqs
+    queue = sqs.Queue(self, f"{self.namingPrefix}-{service}-queue",
+        queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{config[service]['queue_name']}-queue.fifo",
+        fifo=True
+    )
+ 
     taskDefinition = ecs.FargateTaskDefinition(self,
         "{}-{}-taskDef".format(self.namingPrefix, service),
         family=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essentialvalidation",
@@ -73,6 +79,10 @@ class essentialvalidationService:
             stream_prefix="{}-{}".format(self.namingPrefix, service)
         )
     )
+
+    # Grant SQS permissions to the task role
+    queue.grant_send_messages(taskDefinition.task_role)
+    queue.grant_consume_messages(taskDefinition.task_role)
 
     ecsService = ecs.FargateService(self,
         "{}-{}-service".format(self.namingPrefix, service),
@@ -106,11 +116,6 @@ class essentialvalidationService:
     #queue_name = f"{config['main']['resource_prefix']}-{config['main']['tier']}-loader-queue.fifo"
     #queue_name = "crdc-hub-dev-loader-queue.fifo"
     
-    # create sqs
-    queue = sqs.Queue(self, f"{self.namingPrefix}-{service}-queue",
-        queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{config[service]['queue_name']}-queue.fifo",
-        fifo=True
-    )
 
     sqs_metric = cloudwatch.Metric(
         namespace="AWS/SQS",
