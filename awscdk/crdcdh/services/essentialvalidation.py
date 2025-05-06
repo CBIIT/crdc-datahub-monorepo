@@ -120,9 +120,6 @@ class essentialvalidationService:
     )
 
     # Define CloudWatch metric for SQS ApproximateNumberOfMessagesVisible
-    #queue_name = f"{config['main']['resource_prefix']}-{config['main']['tier']}-loader-queue.fifo"
-    #queue_name = "crdc-hub-dev-loader-queue.fifo"
-    
 
     sqs_metric = cloudwatch.Metric(
         namespace="AWS/SQS",
@@ -132,13 +129,14 @@ class essentialvalidationService:
         period=Duration.seconds(10)
     )
 
-    # Cloudwatch Alarm
+    # Cloudwatch Sacel-out Alarm
     scale_out_alarm = cloudwatch.Alarm(self,
-        "{}-{}-scaloutAlarm".format(self.namingPrefix, service),
+        "{}-{}-scaleoutAlarm".format(self.namingPrefix, service),
         alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-out-alarm",
         metric=sqs_metric,
         threshold=1,
         evaluation_periods=2,
+        datapoints_to_alarm=2,
         comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD
     )
 
@@ -152,6 +150,28 @@ class essentialvalidationService:
         ],
         adjustment_type=appscaling.AdjustmentType.CHANGE_IN_CAPACITY,
         cooldown=Duration.seconds(300)
+    )
+
+    # Cloudwatch Scale-in alarm
+    scale_in_alarm = cloudwatch.Alarm(self,
+        "{}-{}-scaleinAlarm".format(self.namingPrefix, service),
+        alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-in-alarm",
+        metric=sqs_metric,
+        threshold=0,
+        evaluation_periods=3,
+        datapoints_to_alarm=3,
+        comparison_operator=cloudwatch.ComparisonOperator.LESS_THAN_OR_EQUAL_TO_THRESHOLD
+    )
+
+    # Define step-in policy
+    scale_in_action = scalable_target.scale_on_metric(
+        f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-in",
+        metric=sqs_metric,
+        scaling_steps=[
+            appscaling.ScalingInterval(upper=0, change=-1),   # remove 1 task if < or = 0
+        ],
+        adjustment_type=appscaling.AdjustmentType.CHANGE_IN_CAPACITY,
+        cooldown=Duration.seconds(10)    
     )
 
     # Connect alarm to scale out policy
