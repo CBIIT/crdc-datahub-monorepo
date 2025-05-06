@@ -9,6 +9,7 @@ from aws_cdk import Duration
 from aws_cdk import aws_applicationautoscaling as appscaling
 from aws_cdk import aws_cloudwatch as cloudwatch
 from aws_cdk import aws_cloudwatch_actions as cw_actions
+from aws_cdk import aws_sqs as sqs
 
 class essentialvalidationService:
   def createService(self, config):
@@ -103,7 +104,14 @@ class essentialvalidationService:
 
     # Define CloudWatch metric for SQS ApproximateNumberOfMessagesVisible
     #queue_name = f"{config['main']['resource_prefix']}-{config['main']['tier']}-loader-queue.fifo"
-    queue_name = "crdc-hub-dev-loader-queue.fifo"
+    #queue_name = "crdc-hub-dev-loader-queue.fifo"
+    
+    # create sqs
+    queue = sqs.Queue(self, f"{self.namingPrefix}-{svc}-queue",
+        queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{config[service]['queue_name']}-queue.fifo",
+        fifo=True
+    )
+
     sqs_metric = cloudwatch.Metric(
         namespace="AWS/SQS",
         metric_name="ApproximateNumberOfMessagesVisible",

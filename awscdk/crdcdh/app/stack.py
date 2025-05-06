@@ -18,6 +18,7 @@ from aws_cdk import aws_cloudfront_origins as origins
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_ssm as ssm
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_sqs as sqs
 from services import frontend, backend, authn, essentialvalidation
 
 class Stack(Stack):
@@ -262,6 +263,12 @@ class Stack(Stack):
                 kms_key=self.kmsKey
             ),
         )
+
+        # SQS queue
+       # queue = sqs.Queue(self, f"{self.namingPrefix}-{service}-queue",
+       #     queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{service}.fifo",
+       #     fifo=True
+       # )
 
         ### Fargate
         # Frontend Service
