@@ -142,8 +142,9 @@ class essentialvalidationService:
 
     # Define step-out policy
     #scale_out_action = scalable_target.scale_on_metric(
-    scalable_target.scale_on_alarm(
+    scale_out_action = appscaling.StepScalingAction(self,
         f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-out",
+        scaling_target=scalable_target,
         metric=sqs_metric,
         scaling_steps=[
             appscaling.ScalingInterval(lower=1, upper=21, change=5),   # when 1 ≤ messages < 21 → add 5 tasks
@@ -166,8 +167,9 @@ class essentialvalidationService:
 
     # Define step-in policy
     #scale_in_action = scalable_target.scale_on_metric(
-    scalable_target.scale_on_alarm(
+    scale_in_action = appscaling.StepScalingAction(self,
         f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-in",
+        scaling_target=scalable_target,
         metric=sqs_metric,
         scaling_steps=[
             appscaling.ScalingInterval(upper=0, change=-1),   # remove 1 task if < or = 0
