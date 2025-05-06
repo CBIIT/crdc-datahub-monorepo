@@ -141,8 +141,8 @@ class essentialvalidationService:
     )
 
     # Define step-out policy
-    #scale_out_action = scalable_target.scale_on_metric(
-    scale_out_action = appscaling.StepScalingAction(self,
+    scale_out_action = scalable_target.scale_on_metric(
+    #scale_out_action = appscaling.StepScalingAction(self,
         f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-out",
         scaling_target=scalable_target,
         metric=sqs_metric,
@@ -166,8 +166,8 @@ class essentialvalidationService:
     )
 
     # Define step-in policy
-    #scale_in_action = scalable_target.scale_on_metric(
-    scale_in_action = appscaling.StepScalingAction(self,
+    scale_in_action = scalable_target.scale_on_metric(
+    #scale_in_action = appscaling.StepScalingAction(self,
         f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-in",
         scaling_target=scalable_target,
         metric=sqs_metric,
