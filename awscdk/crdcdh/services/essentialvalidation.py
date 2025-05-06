@@ -10,6 +10,7 @@ from aws_cdk import aws_applicationautoscaling as appscaling
 from aws_cdk import aws_cloudwatch as cloudwatch
 from aws_cdk import aws_cloudwatch_actions as cw_actions
 from aws_cdk import aws_sqs as sqs
+from aws_cdk import aws_iam as iam
 
 class essentialvalidationService:
   def createService(self, config):
@@ -78,6 +79,12 @@ class essentialvalidationService:
         logging=ecs.LogDrivers.aws_logs(
             stream_prefix="{}-{}".format(self.namingPrefix, service)
         )
+    )
+
+
+    # attach amazon full access to the task role
+    taskDefinition.task_role.add_managed_policy(
+        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSQSFullAccess")
     )
 
     # Grant SQS permissions to the task role
