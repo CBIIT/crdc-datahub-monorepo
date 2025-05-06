@@ -132,7 +132,7 @@ class essentialvalidationService:
     # Cloudwatch Scale-out Alarm
     scale_out_alarm = cloudwatch.Alarm(self,
         "{}-{}-scaleoutAlarm".format(self.namingPrefix, service),
-        alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-out-alarm",
+        alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scaleout-alarm",
         metric=sqs_metric,
         threshold=1,
         evaluation_periods=2,
@@ -155,7 +155,7 @@ class essentialvalidationService:
     # Cloudwatch Scale-in alarm
     scale_in_alarm = cloudwatch.Alarm(self,
         "{}-{}-scaleinAlarm".format(self.namingPrefix, service),
-        alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-in-alarm",
+        alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scalein-alarm",
         metric=sqs_metric,
         threshold=0,
         evaluation_periods=3,
