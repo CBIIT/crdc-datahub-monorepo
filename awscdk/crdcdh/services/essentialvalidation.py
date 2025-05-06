@@ -149,34 +149,35 @@ class essentialvalidationService:
         scaling_steps=[
             appscaling.ScalingInterval(lower=1, upper=21, change=5),   # when 1 ≤ messages < 21 → add 5 tasks
             appscaling.ScalingInterval(lower=21, change=20),           # when ≥ 21 → add 20 tasks
+            appscaling.ScalingInterval(upper=0, change=-1),   # remove 1 task if < or = 0 
         ],
         adjustment_type=appscaling.AdjustmentType.CHANGE_IN_CAPACITY,
         cooldown=Duration.seconds(300)
     )
 
     # Not workingCloudwatch Scale-in alarm
-    scale_in_alarm = cloudwatch.Alarm(self,
-        "{}-{}-scaleinAlarm".format(self.namingPrefix, service),
-        alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-in-alarm",
-        metric=sqs_metric,
-        threshold=0,
-        evaluation_periods=3,
-        datapoints_to_alarm=3,
-        comparison_operator=cloudwatch.ComparisonOperator.LESS_THAN_OR_EQUAL_TO_THRESHOLD
-    )
+    #scale_in_alarm = cloudwatch.Alarm(self,
+    #    "{}-{}-scaleinAlarm".format(self.namingPrefix, service),
+    #    alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-in-alarm",
+    #    metric=sqs_metric,
+    #    threshold=0,
+    #    evaluation_periods=3,
+    #    datapoints_to_alarm=3,
+    #    comparison_operator=cloudwatch.ComparisonOperator.LESS_THAN_OR_EQUAL_TO_THRESHOLD
+    #)
 
     # Define step-in policy
-    scale_in_action = scalable_target.scale_on_metric(
+    #scale_in_action = scalable_target.scale_on_metric(
     #scale_in_action = appscaling.StepScalingAction(self,
-        f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-in",
-        scaling_target=scalable_target,
-        metric=sqs_metric,
-        scaling_steps=[
-            appscaling.ScalingInterval(upper=0, change=-1),   # remove 1 task if < or = 0
-        ],
-        adjustment_type=appscaling.AdjustmentType.CHANGE_IN_CAPACITY,
-        cooldown=Duration.seconds(10)    
-    )
+    #    f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-in",
+    #    scaling_target=scalable_target,
+    #    metric=sqs_metric,
+    #    scaling_steps=[
+    #        appscaling.ScalingInterval(upper=0, change=-1),   # remove 1 task if < or = 0
+    #    ],
+    #    adjustment_type=appscaling.AdjustmentType.CHANGE_IN_CAPACITY,
+    #    cooldown=Duration.seconds(10)    
+    #)
 
     # Connect alarm to scale out policy
     #scale_out_alarm.add_alarm_action(
