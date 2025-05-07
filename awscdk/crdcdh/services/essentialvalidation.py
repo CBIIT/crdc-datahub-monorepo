@@ -137,7 +137,8 @@ class essentialvalidationService:
         threshold=1,
         evaluation_periods=2,
         datapoints_to_alarm=2,
-        comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD
+        comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        period=Duration.seconds(10)
     )
 
     # Define step-out policy
@@ -161,6 +162,7 @@ class essentialvalidationService:
         evaluation_periods=3,
         datapoints_to_alarm=3,
         comparison_operator=cloudwatch.ComparisonOperator.LESS_THAN_OR_EQUAL_TO_THRESHOLD
+        period=Duration.seconds(10)
     )
 
     # Define step-in policy
