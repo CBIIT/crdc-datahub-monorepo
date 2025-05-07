@@ -126,19 +126,26 @@ class essentialvalidationService:
         metric_name="ApproximateNumberOfMessagesVisible",
         dimensions_map={"QueueName": queue.queue_name},
         statistic="Minimum",
-        period=Duration.seconds(10)
+        #period=Duration.seconds(10)
+    )
+
+    sqs_metric_scaleout = sqs_metric.with_(
+        period=Duration.seconds(20)
+    )
+
+    sqs_metric_scalein = sqs_metric.with_(
+        period=Duration.seconds(30)
     )
 
     # Cloudwatch Scale-out Alarm
     scale_out_alarm = cloudwatch.Alarm(self,
         "{}-{}-scaleoutAlarm".format(self.namingPrefix, service),
         alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scaleout-alarm",
-        metric=sqs_metric,
+        metric=sqs_metric_scaleout,
         threshold=1,
         evaluation_periods=2,
         datapoints_to_alarm=2,
         comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-        period=Duration.seconds(10)
     )
 
     # Define step-out policy
@@ -157,12 +164,11 @@ class essentialvalidationService:
     scale_in_alarm = cloudwatch.Alarm(self,
         "{}-{}-scaleinAlarm".format(self.namingPrefix, service),
         alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scalein-alarm",
-        metric=sqs_metric,
+        metric=sqs_metric_scalein,
         threshold=0,
         evaluation_periods=3,
         datapoints_to_alarm=3,
         comparison_operator=cloudwatch.ComparisonOperator.LESS_THAN_OR_EQUAL_TO_THRESHOLD
-        period=Duration.seconds(10)
     )
 
     # Define step-in policy
