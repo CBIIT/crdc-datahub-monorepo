@@ -45,7 +45,7 @@ class pvpullerService:
         }
 
     secrets={
-            "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "essential_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
+            "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "pvpuller_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
             "MONGO_DB_HOST":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_host'),
             "MONGO_DB_PORT":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_port'),
             "MONGO_DB_PASSWORD":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_password'),
@@ -90,8 +90,8 @@ class pvpullerService:
     )
 
     # Grant SQS permissions to the task role
-    queue.grant_send_messages(taskDefinition.task_role)
-    queue.grant_consume_messages(taskDefinition.task_role)
+    dead_letter_queue.grant_send_messages(taskDefinition.task_role)
+    dead_letter_queue.grant_consume_messages(taskDefinition.task_role)
 
     # Create EventBridge Rule for Scheduling
     scheduled_rule = events.Rule(self,
@@ -100,6 +100,22 @@ class pvpullerService:
         description=f"Run {service} task on schedule",
         schedule=events.Schedule.expression(config[service]['cron_schedule'])
     )
+
+    # Extract subnet IDs
+        subnet1 = config.get('Subnets', 'subnet1')
+        subnet2 = config.get('Subnets', 'subnet2')
+        selected_subnets = ec2.SubnetSelection(
+            subnets=[
+                ec2.Subnet.from_subnet_id(self, "Subnet1", subnet1),
+                ec2.Subnet.from_subnet_id(self, "Subnet2", subnet2)
+            ]
+        )
+        # Extract security group ID
+        security_group_id = config.get('SecurityGroup', 'security_group_id')
+        security_group = ec2.SecurityGroup.from_security_group_id(self,
+            f"{config['main']['resource_prefix']}-{config['main']['tier']}-SG",
+            security_group_id
+        )
 
     # Add ECS task as target
     scheduled_rule.add_target(
