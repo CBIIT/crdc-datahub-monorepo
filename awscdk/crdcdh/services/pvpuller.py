@@ -103,12 +103,12 @@ class pvpullerService:
     )
 
     # Extract subnet IDs
-    subnet1 = config.get('ECS', 'subnet1')
-    subnet2 = config.get('ECS', 'subnet2')
+    subneta = config.get('ECS', 'subneta')
+    subnetb = config.get('ECS', 'subnetb')
     selected_subnets = ec2.SubnetSelection(
         subnets=[
-            ec2.Subnet.from_subnet_id(self, "Subnet1", subnet1),
-            ec2.Subnet.from_subnet_id(self, "Subnet2", subnet2)
+            ec2.Subnet.from_subnet_id(self, "Subneta", subneta),
+            ec2.Subnet.from_subnet_id(self, "Subnetb", subnetb)
         ]
     )
     # Extract security group ID
