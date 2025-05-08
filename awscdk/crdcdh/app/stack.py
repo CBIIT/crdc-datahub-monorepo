@@ -19,7 +19,7 @@ from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_ssm as ssm
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_sqs as sqs
-from services import frontend, backend, authn, essentialvalidation
+from services import frontend, backend, authn, essentialvalidation, metadatavalidation, filevalidation, exportvalidation
 
 class Stack(Stack):
     def __init__(self, scope: Construct, **kwargs) -> None:
@@ -282,6 +282,15 @@ class Stack(Stack):
         
         # Essential service
         essentialvalidation.essentialvalidationService.createService(self, config)
+
+        # Metadata service
+        metadatavalidation.metadatavalidationService.createService(self, config)
+
+        # File service
+        filevalidation.filevalidationService.createService(self, config)
+
+        # Export service
+        exportvalidation.exportvalidationService.createService(self, config)
 
         # AuthZ Service
         #authz.authzService.createService(self, config)

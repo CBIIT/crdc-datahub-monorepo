@@ -12,11 +12,11 @@ from aws_cdk import aws_cloudwatch_actions as cw_actions
 from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_iam as iam
 
-class essentialvalidationService:
+class filevalidationService:
   def createService(self, config):
 
-    ### EssentialValidation Service ############################################################################################################
-    service = "essentialvalidation"
+    ### FileValidation Service ############################################################################################################
+    service = "filevalidation"
 
     # Set container configs
     if config.has_option(service, 'entrypoint'):
@@ -43,7 +43,7 @@ class essentialvalidationService:
         }
 
     secrets={
-            "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "essential_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
+            "NEW_RELIC_LICENSE_KEY":ecs.Secret.from_secrets_manager(secretsmanager.Secret.from_secret_name_v2(self, "file_newrelic", secret_name='monitoring/newrelic'), 'api_key'),
             "MONGO_DB_HOST":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_host'),
             "MONGO_DB_PORT":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_port'),
             "MONGO_DB_PASSWORD":ecs.Secret.from_secrets_manager(self.secret, 'mongo_db_password'),
@@ -59,7 +59,7 @@ class essentialvalidationService:
  
     taskDefinition = ecs.FargateTaskDefinition(self,
         "{}-{}-taskDef".format(self.namingPrefix, service),
-        family=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essentialvalidation",
+        family=f"{config['main']['resource_prefix']}-{config['main']['tier']}-filevalidation",
         cpu=config.getint(service, 'cpu'),
         memory_limit_mib=config.getint(service, 'memory')
     )
@@ -93,7 +93,7 @@ class essentialvalidationService:
 
     ecsService = ecs.FargateService(self,
         "{}-{}-service".format(self.namingPrefix, service),
-        service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essentialvalidation",
+        service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-filevalidation",
         cluster=self.ECSCluster,
         task_definition=taskDefinition,
         enable_execute_command=True,
@@ -109,7 +109,7 @@ class essentialvalidationService:
     #Attach scalable target
     scalable_target = appscaling.ScalableTarget(self,
         "{}-{}-scalableTarget".format(self.namingPrefix, service),
-        #service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essentialvalidation",
+        #service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-filevalidation",
         service_namespace=appscaling.ServiceNamespace.ECS,
         #min_capacity=1,  # adjust as needed
         #max_capacity=20  # adjust as needed
@@ -132,7 +132,7 @@ class essentialvalidationService:
     # Cloudwatch Scale-out Alarm
     scale_out_alarm = cloudwatch.Alarm(self,
         "{}-{}-scaleoutAlarm".format(self.namingPrefix, service),
-        alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scaleout-alarm",
+        alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-file-scaleout-alarm",
         metric=sqs_metric,
         threshold=1,
         evaluation_periods=2,
@@ -142,7 +142,7 @@ class essentialvalidationService:
 
     # Define step-out policy
     scale_out_action = scalable_target.scale_on_metric(
-        f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-out",
+        f"{config['main']['resource_prefix']}-{config['main']['tier']}-file-scale-out",
         metric=sqs_metric,
         scaling_steps=[
             appscaling.ScalingInterval(lower=1, upper=21, change=5),   # when 1 ≤ messages < 21 → add 5 tasks
@@ -155,7 +155,7 @@ class essentialvalidationService:
     # Cloudwatch Scale-in alarm
     scale_in_alarm = cloudwatch.Alarm(self,
         "{}-{}-scaleinAlarm".format(self.namingPrefix, service),
-        alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scalein-alarm",
+        alarm_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-file-scalein-alarm",
         metric=sqs_metric,
         threshold=0,
         evaluation_periods=3,
@@ -165,7 +165,7 @@ class essentialvalidationService:
 
     # Define step-in policy
     scale_in_action = scalable_target.scale_on_metric(
-        f"{config['main']['resource_prefix']}-{config['main']['tier']}-essential-scale-in",
+        f"{config['main']['resource_prefix']}-{config['main']['tier']}-file-scale-in",
         metric=sqs_metric,
         scaling_steps=[
             appscaling.ScalingInterval(upper=0, change=-1),   # remove 1 task if < or = 0
