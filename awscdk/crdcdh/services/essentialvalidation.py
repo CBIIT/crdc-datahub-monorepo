@@ -130,11 +130,11 @@ class essentialvalidationService:
     )
 
     #sqs_metric_scaleout = sqs_metric.with_(
-    #    period=Duration.seconds(20)
+    #    period=Duration.seconds(10)
     #)
 
     #sqs_metric_scalein = sqs_metric.with_(
-    #    period=Duration.seconds(30)
+    #    period=Duration.seconds(10)
     #)
 
     # Cloudwatch Scale-out Alarm

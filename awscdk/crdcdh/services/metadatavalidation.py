@@ -12,11 +12,11 @@ from aws_cdk import aws_cloudwatch_actions as cw_actions
 from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_iam as iam
 
-class essentialvalidationService:
+class metadatavalidationService:
   def createService(self, config):
 
-    ### EssentialValidation Service ############################################################################################################
-    service = "essentialvalidation"
+    ### MetadataValidation Service ############################################################################################################
+    service = "metadatavalidation"
 
     # Set container configs
     if config.has_option(service, 'entrypoint'):
