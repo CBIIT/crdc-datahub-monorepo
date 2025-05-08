@@ -196,11 +196,11 @@ class Stack(Stack):
             ]
         )
         # Extract security group ID
-        security_group_id = config.get('SecurityGroup', 'security_group_id')
-        security_group = ec2.SecurityGroup.from_security_group_id(self,
-            f"{config['main']['resource_prefix']}-{config['main']['tier']}-SG",
-            security_group_id
-        )
+        #security_group_id = config.get('SecurityGroup', 'security_group_id')
+        #security_group = ec2.SecurityGroup.from_security_group_id(self,
+        #    f"{config['main']['resource_prefix']}-{config['main']['tier']}-SG",
+        #    security_group_id
+        #)
 
         self.ALB = elbv2.ApplicationLoadBalancer(self,
             "alb",

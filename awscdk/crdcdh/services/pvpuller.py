@@ -13,6 +13,7 @@ from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as targets
+from aws_cdk import aws_ec2 as ec2
 
 class pvpullerService:
   def createService(self, config):
@@ -102,20 +103,20 @@ class pvpullerService:
     )
 
     # Extract subnet IDs
-        subnet1 = config.get('Subnets', 'subnet1')
-        subnet2 = config.get('Subnets', 'subnet2')
-        selected_subnets = ec2.SubnetSelection(
-            subnets=[
-                ec2.Subnet.from_subnet_id(self, "Subnet1", subnet1),
-                ec2.Subnet.from_subnet_id(self, "Subnet2", subnet2)
-            ]
-        )
-        # Extract security group ID
-        security_group_id = config.get('SecurityGroup', 'security_group_id')
-        security_group = ec2.SecurityGroup.from_security_group_id(self,
-            f"{config['main']['resource_prefix']}-{config['main']['tier']}-SG",
-            security_group_id
-        )
+    subnet1 = config.get('ECS', 'subnet1')
+    subnet2 = config.get('ECS', 'subnet2')
+    selected_subnets = ec2.SubnetSelection(
+        subnets=[
+            ec2.Subnet.from_subnet_id(self, "Subnet1", subnet1),
+            ec2.Subnet.from_subnet_id(self, "Subnet2", subnet2)
+        ]
+    )
+    # Extract security group ID
+    security_group_id = config.get('SecurityGroup', 'security_group_id')
+    security_group = ec2.SecurityGroup.from_security_group_id(self,
+        f"{config['main']['resource_prefix']}-{config['main']['tier']}-SG",
+        security_group_id
+    )
 
     # Add ECS task as target
     scheduled_rule.add_target(
