@@ -19,7 +19,7 @@ from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_ssm as ssm
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_sqs as sqs
-from services import frontend, backend, authn, essentialvalidation, metadatavalidation, filevalidation, exportvalidation
+from services import frontend, backend, authn, essentialvalidation, metadatavalidation, filevalidation, exportvalidation, pvpuller
 
 class Stack(Stack):
     def __init__(self, scope: Construct, **kwargs) -> None:
@@ -195,6 +195,13 @@ class Stack(Stack):
                 ec2.Subnet.from_subnet_id(self, "Subnet2", subnet2)
             ]
         )
+        # Extract security group ID
+        security_group_id = config.get('SecurityGroup', 'security_group_id')
+        security_group = ec2.SecurityGroup.from_security_group_id(self,
+            f"{config['main']['resource_prefix']}-{config['main']['tier']}-SG",
+            security_group_id
+        )
+
         self.ALB = elbv2.ApplicationLoadBalancer(self,
             "alb",
             load_balancer_name = f"{config['main']['resource_prefix']}-{config['main']['tier']}-alb",
@@ -291,6 +298,9 @@ class Stack(Stack):
 
         # Export service
         exportvalidation.exportvalidationService.createService(self, config)
+
+        # Pvpuller Service
+        pvpuller.pvpullerService.createService(self, config)
 
         # AuthZ Service
         #authz.authzService.createService(self, config)
