@@ -125,7 +125,7 @@ class pvpullerService:
         task_definition=taskDefinition,
         task_count=config.getint(service, 'task_count'),
         subnet_selection=selected_subnets,
-        security_groups=security_group,
+        security_groups=[security_group],
         assign_public_ip=False,
         #role=iam.Role.from_role_arn(
         #            self,
