@@ -33,7 +33,7 @@ class pvpullerService:
             "VERSION":config[service]['image'],
             "FARGATE":"true",
             "SESSION_SECRET":"abcd256asghaaamnkloofghj",
-            "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, config['main']['tier'], service),
+            "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, service),
             "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED":"true",
             "NEW_RELIC_HOST":"gov-collector.newrelic.com",
             "NEW_RELIC_LABELS":"Project:{};Environment:{}".format('crdc-hub', config['main']['tier']),
@@ -56,8 +56,8 @@ class pvpullerService:
     
     # create sqs
     dead_letter_queue = sqs.Queue(self, f"{self.namingPrefix}-{service}-dlqueue",
-        queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{service}-dlqueue.fifo",
-        fifo=True
+        queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{service}-dlq",
+        fifo=False
     )
  
     taskDefinition = ecs.FargateTaskDefinition(self,
@@ -85,7 +85,7 @@ class pvpullerService:
     )
 
 
-    # attach amazon full access to the task role
+    # attach amazon full SQS access to the task role
     taskDefinition.task_role.add_managed_policy(
         iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSQSFullAccess")
     )

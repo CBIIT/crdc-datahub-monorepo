@@ -31,7 +31,7 @@ class frontendService:
             "NEW_RELIC_LOG_FILE_NAME":"STDOUT",
             "NEW_RELIC_NO_CONFIG_FILE":"true",
             "NRIA_CUSTOM_ATTRIBUTES":"{\"nrDeployMethod\":\"downloadPage\"}",
-            "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, config['main']['tier'], service),
+            "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, service),
             "NRIA_OVERRIDE_HOST_ROOT":"",
             "PROJECT":"crdc-hub",
             "DATE":date.today().isoformat(),
