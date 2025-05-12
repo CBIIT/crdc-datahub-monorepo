@@ -55,10 +55,10 @@ class pvpullerService:
         }   
     
     # create sqs
-    dead_letter_queue = sqs.Queue(self, f"{self.namingPrefix}-{service}-dlqueue",
-        queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{service}-dlq",
-        fifo=False
-    )
+#    dead_letter_queue = sqs.Queue(self, f"{self.namingPrefix}-{service}-dlqueue",
+#        queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{service}-dlq",
+#        fifo=False
+#    )
  
     taskDefinition = ecs.FargateTaskDefinition(self,
         "{}-{}-taskDef".format(self.namingPrefix, service),
@@ -91,8 +91,8 @@ class pvpullerService:
     )
 
     # Grant SQS permissions to the task role
-    dead_letter_queue.grant_send_messages(taskDefinition.task_role)
-    dead_letter_queue.grant_consume_messages(taskDefinition.task_role)
+#    dead_letter_queue.grant_send_messages(taskDefinition.task_role)
+#    dead_letter_queue.grant_consume_messages(taskDefinition.task_role)
 
     # Create EventBridge Rule for Scheduling
     scheduled_rule = events.Rule(self,
@@ -133,7 +133,7 @@ class pvpullerService:
         #            config[service]['eventsbridge_role_arn']
         #        ),
         platform_version=ecs.FargatePlatformVersion.LATEST,
-        dead_letter_queue=dead_letter_queue,
+#        dead_letter_queue=dead_letter_queue,
         )
     )
 
