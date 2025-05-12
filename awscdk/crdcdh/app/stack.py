@@ -238,9 +238,9 @@ class Stack(Stack):
             port=443)
 
         # Add a fixed error message when browsing an invalid URL
-        self.listener.add_action("ECS-Content-Not-Found",
-            action=elbv2.ListenerAction.fixed_response(200,
-                message_body="The requested resource is not available"))
+        #self.listener.add_action("ECS-Content-Not-Found",
+        #    action=elbv2.ListenerAction.fixed_response(200,
+        #        message_body="The requested resource is not available"))
 
         #self.listener.add_action("DefaultFixedResponse",
             #action=elbv2.ListenerAction.fixed_response(
@@ -307,3 +307,9 @@ class Stack(Stack):
 
         # Files Service
         # files.filesService.createService(self, config)
+
+
+        # Add a fixed error message when browsing an invalid URL
+        self.listener.add_action("ECS-Content-Not-Found",
+            action=elbv2.ListenerAction.fixed_response(200,
+                message_body="The requested resource is not available"))
