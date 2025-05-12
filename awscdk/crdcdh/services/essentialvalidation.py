@@ -30,7 +30,7 @@ class essentialvalidationService:
             "VERSION":config[service]['image'],
             "FARGATE":"true",
             "SESSION_SECRET":"abcd256asghaaamnkloofghj",
-            "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, service),
+            "NEW_RELIC_APP_NAME":"{}-{}".format(self.namingPrefix, service),
             "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED":"true",
             "NEW_RELIC_HOST":"gov-collector.newrelic.com",
             "NEW_RELIC_LABELS":"Project:{};Environment:{}".format('crdc-hub', config['main']['tier']),

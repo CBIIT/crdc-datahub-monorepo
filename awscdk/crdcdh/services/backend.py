@@ -29,7 +29,7 @@ class backendService:
             "EMAILS_ENABLED":"true",
             "EMAIL_SMTP_HOST":"email-smtp.us-east-1.amazonaws.com",
             "EMAIL_SMTP_PORT":"587",
-            "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, service),
+            "NEW_RELIC_APP_NAME":"{}-{}".format(self.namingPrefix, service),
             "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED":"true",
             "NEW_RELIC_HOST":"gov-collector.newrelic.com",
             "NEW_RELIC_LABELS":"Project:{};Environment:{}".format('crdc-hub', config['main']['tier']),

@@ -27,7 +27,7 @@ class authnService:
             "NEW_RELIC_LABELS":"Project:{};Environment:{}".format('crdc-hub', config['main']['tier']),
             "NEW_RELIC_LOG_FILE_NAME":"STDOUT",
             "NRIA_CUSTOM_ATTRIBUTES":"{\"nrDeployMethod\":\"downloadPage\"}",
-            "NEW_RELIC_APP_NAME":"{}-{}-{}".format(self.namingPrefix, service),
+            "NEW_RELIC_APP_NAME":"{}-{}".format(self.namingPrefix, service),
             "NRIA_OVERRIDE_HOST_ROOT":"",
             "PROJECT":"crdc-hub",
             "DATE":date.today().isoformat(),
