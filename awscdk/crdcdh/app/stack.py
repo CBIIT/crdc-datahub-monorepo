@@ -136,9 +136,9 @@ class Stack(Stack):
             auto_delete_objects=True
         )
 
-        secret_value = json.dumps({
-            "submission_bucket": bucket.bucket_name
-        })
+#        secret_value = json.dumps({
+#            "submission_bucket": bucket.bucket_name
+#        })
         ### Secrets
         self.secret = secretsmanager.Secret(self, "bucket",
         
@@ -153,7 +153,7 @@ class Stack(Stack):
         self.secret = secretsmanager.Secret(self, "Secret",
 #            secret_name="{}/{}/{}".format(config['main']['secret_prefix'], config['main']['tier'], "crdc-dh"),
             secret_name="{}/{}".format(config['main']['resource_prefix'], config['main']['tier']),
-            secret_string_value=secretsmanager.SecretValue.unsafe_plain_text(secret_value),
+#            secret_string_value=secretsmanager.SecretValue.unsafe_plain_text(secret_value),
             secret_object_value={
                 "mongo_db_user": SecretValue.unsafe_plain_text(config['db']['mongo_db_user']),
                 "mongo_db_password": SecretValue.unsafe_plain_text(config['db']['mongo_db_password']),
@@ -181,7 +181,7 @@ class Stack(Stack):
                 "email_user": SecretValue.unsafe_plain_text(config['secrets']['email_user']),
                 "email_password": SecretValue.unsafe_plain_text(config['secrets']['email_password']),
                 "email_url": SecretValue.unsafe_plain_text(config['secrets']['email_url']),
-#                "submission_bucket": SecretValue.unsafe_plain_text(config['secrets']['submission_bucket']),
+                "submission_bucket": SecretValue.unsafe_plain_text(config['secrets']['submission_bucket']),
 #                "google_client_id": SecretValue.unsafe_plain_text(config['secrets']['google_client_id']),
 #                "google_client_secret": SecretValue.unsafe_plain_text(config['secrets']['google_client_secret']),
                 "nih_client_id": SecretValue.unsafe_plain_text(config['secrets']['nih_client_id']),
@@ -288,13 +288,6 @@ class Stack(Stack):
        #     queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{service}.fifo",
        #     fifo=True
        # )
-
-        # create s3 bucket
-        #bucket = s3.Bucket(self, f"{self.namingPrefix}-submission",
-        #    bucket_name=f"{self.namingPrefix}-submission",
-            #removal_policy=s3.RemovalPolicy.DESTROY,
-            #auto_delete_objects=True
-        #)
 
         ### Fargate
         # Frontend Service
