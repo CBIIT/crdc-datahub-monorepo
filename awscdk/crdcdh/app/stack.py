@@ -135,6 +135,10 @@ class Stack(Stack):
             #removal_policy=s3.RemovalPolicy.DESTROY,
             #auto_delete_objects=True
         )
+
+        secret_value = json.dumps({
+            "submission_bucket": bucket.bucket_name
+        })
         ### Secrets
         
         
@@ -148,6 +152,7 @@ class Stack(Stack):
         self.secret = secretsmanager.Secret(self, "Secret",
 #            secret_name="{}/{}/{}".format(config['main']['secret_prefix'], config['main']['tier'], "crdc-dh"),
             secret_name="{}/{}".format(config['main']['resource_prefix'], config['main']['tier']),
+            secret_string_value=secretsmanager.SecretValue.unsafe_plain_text(secret_value),
             secret_object_value={
                 "mongo_db_user": SecretValue.unsafe_plain_text(config['db']['mongo_db_user']),
                 "mongo_db_password": SecretValue.unsafe_plain_text(config['db']['mongo_db_password']),
@@ -189,12 +194,6 @@ class Stack(Stack):
 #                "newrelic_license_key": SecretValue.unsafe_plain_text(config['secrets']['newrelic_license_key'])
 
             }
-            generate_secret_string=secretsmanager.SecretStringGenerator(
-                secret_string_template=json.dumps({
-                    "bucketName": bucket.bucket_name
-                })
-                
-            )
         )
 
         ### ALB
