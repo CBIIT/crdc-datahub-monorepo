@@ -277,6 +277,13 @@ class Stack(Stack):
        #     fifo=True
        # )
 
+        # create s3 bucket
+        bucket = s3.Bucket(self, f"{self.namingPrefix}-submission",
+            bucket_name=f"{self.namingPrefix}-submission",
+            removal_policy=s3.RemovalPolicy.DESTROY,
+            auto_delete_objects=True
+        )
+
         ### Fargate
         # Frontend Service
         frontend.frontendService.createService(self, config)

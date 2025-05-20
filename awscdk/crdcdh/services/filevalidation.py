@@ -82,11 +82,45 @@ class filevalidationService:
     )
 
 
+    # add s3 bucket policy to allow task def role to access submission bucket
+    #bucket_access_policy = iam.Policy(self, f"{config['main']['resource_prefix']}-{config['main']['tier']}-bucket-policy",
+        #statements=[
+            #iam.PolicyStatement(
+                #effect=iam.Effect.ALLOW,
+                #actions=[
+                    #"s3:GetObject",
+                    #"s3:PutObject",
+                    #"s3:ListBucket",
+                    #"s3:DeleteObject"
+                #],
+                #resources=[
+                    #bucket.bucket_arn,
+                    #f"{bucket.bucket_arn}/*"
+                #]
+            #)
+        #]
+    #)
+    
+    # attach the s3 bucket policy to the task def role
+    taskDefinition.add_to_task_role_policy(iam.PolicyStatement(
+        effect=iam.Effect.ALLOW,
+        actions=[
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:ListBucket",
+            "s3:DeleteObject"
+        ],
+        resources=[
+            bucket.bucket_arn,
+            f"{bucket.bucket_arn}/*"
+        ]
+    )) 
     # attach amazon full access to the task role
     taskDefinition.task_role.add_managed_policy(
         iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSQSFullAccess")
     )
 
+    
     # Grant SQS permissions to the task role
     queue.grant_send_messages(taskDefinition.task_role)
     queue.grant_consume_messages(taskDefinition.task_role)
