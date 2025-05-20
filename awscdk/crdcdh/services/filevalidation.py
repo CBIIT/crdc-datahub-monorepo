@@ -83,29 +83,9 @@ class filevalidationService:
     )
 
 
-    # add s3 bucket policy to allow task def role to access submission bucket
-    #bucket_access_policy = iam.Policy(self, f"{config['main']['resource_prefix']}-{config['main']['tier']}-bucket-policy",
-        #statements=[
-            #iam.PolicyStatement(
-                #effect=iam.Effect.ALLOW,
-                #actions=[
-                    #"s3:GetObject",
-                    #"s3:PutObject",
-                    #"s3:ListBucket",
-                    #"s3:DeleteObject"
-                #],
-                #resources=[
-                    #bucket.bucket_arn,
-                    #f"{bucket.bucket_arn}/*"
-                #]
-            #)
-        #]
-    #)
-
     bucket = s3.Bucket.from_bucket_name(self, f"{self.namingPrefix}-submission-ref", f"{self.namingPrefix}-submission")
-    
-    # attach the s3 bucket policy to the task def role
-    taskDefinition.add_to_task_role_policy(iam.PolicyStatement(
+    # add s3 bucket policy to allow task def role to access submission bucket
+    bucket_submission_policy = iam.PolicyStatement(
         effect=iam.Effect.ALLOW,
         actions=[
             "s3:GetObject",
@@ -117,21 +97,90 @@ class filevalidationService:
             bucket.bucket_arn,
             f"{bucket.bucket_arn}/*"
         ]
-    )) 
+    )
 
-    taskDefinition.execution_role.add_to_policy(iam.PolicyStatement(
+    
+    data_sync_policy = iam.PolicyStatement(
         effect=iam.Effect.ALLOW,
         actions=[
-            "s3:GetObject",
-            "s3:PutObject",
+            "s3:PutObjectTagging",
+            "s3:ListObjectsV2",
             "s3:ListBucket",
-            "s3:DeleteObject"
+            "s3:ListAllMyBuckets",
+            "s3:GetObjectVersionTagging",
+            "s3:GetObjectVersion",
+            "s3:GetObjectTagging",
+            "s3:GetObject",
+            "s3:GetBucketLocation",
+            "iam:ListRoles",
+            "iam:CreateRole",
+            "iam:CreatePolicy",
+            "iam:AttachRolePolicy",
+            "datasync:TagResource",
+            "datasync:StartTaskExecution",
+            "datasync:ListTasks",
+            "datasync:ListTaskExecutions",
+            "datasync:ListLocations",
+            "datasync:DescribeTaskExecution",
+            "datasync:DescribeTask",
+            "datasync:DescribeLocation*",
+            "datasync:DeleteTask",
+            "datasync:DeleteLocation",
+            "datasync:CreateTask",
+            "datasync:CreateLocationS3",
+            "datasync:CancelTaskExecution"
         ],
-        resources=[
-            bucket.bucket_arn,
-            f"{bucket.bucket_arn}/*"
-        ]
-    ))
+        resources=["*"]
+    )
+
+    # pass role in datasync
+    data_sync_pass_role = = iam.PolicyStatement(
+        effect=iam.Effect.ALLOW,
+        actions=["iam:PassRole"],
+        resources=["*"],
+        conditions={
+            "StringEquals": {
+                "iam:PassedToService": "datasync.amazonaws.com"
+            }
+        }
+    )
+    # attach the s3 bucket policy to the task def role
+    #taskDefinition.add_to_task_role_policy(iam.PolicyStatement(
+    #    effect=iam.Effect.ALLOW,
+    #    actions=[
+    #        "s3:GetObject",
+    #        "s3:PutObject",
+    #        "s3:ListBucket",
+    #        "s3:DeleteObject"
+    #    ],
+    #    resources=[
+    #        bucket.bucket_arn,
+    #        f"{bucket.bucket_arn}/*"
+    #    ]
+    #)) 
+
+    #taskDefinition.execution_role.add_to_policy(iam.PolicyStatement(
+    #    effect=iam.Effect.ALLOW,
+    #    actions=[
+    #        "s3:GetObject",
+    #        "s3:PutObject",
+    #        "s3:ListBucket",
+    #        "s3:DeleteObject"
+    #    ],
+    #    resources=[
+    #        bucket.bucket_arn,
+    #        f"{bucket.bucket_arn}/*"
+    #    ]
+    #))
+
+    # attach policy to the task role
+    taskDefinition.task_role.add_to_policy(bucket_submission_policy)
+    taskDefinition.task_role.add_to_policy(data_sync_policy)
+    taskDefinition.task_role.add_to_policy(data_sync_pass_role)
+
+    taskDefinition.execution_role.add_to_policy(bucket_submission_policy)
+    taskDefinition.execution_role.add_to_policy(data_sync_policy)
+    taskDefinition.execution_role.add_to_policy(data_sync_pass_role)
          
     # attach amazon full access to the task role
     taskDefinition.task_role.add_managed_policy(
