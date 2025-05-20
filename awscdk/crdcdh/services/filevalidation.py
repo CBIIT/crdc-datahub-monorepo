@@ -102,7 +102,7 @@ class filevalidationService:
         #]
     #)
 
-    bucket = s3.Bucket.from_bucket_name(self, f"{self.namingPrefix}-submission", f"{self.namingPrefix}-submission")
+    bucket = s3.Bucket.from_bucket_name(self, f"{self.namingPrefix}-submission-ref", f"{self.namingPrefix}-submission")
     
     # attach the s3 bucket policy to the task def role
     taskDefinition.add_to_task_role_policy(iam.PolicyStatement(
@@ -118,12 +118,29 @@ class filevalidationService:
             f"{bucket.bucket_arn}/*"
         ]
     )) 
+
+    taskDefinition.execution_role.add_to_policy(iam.PolicyStatement(
+        effect=iam.Effect.ALLOW,
+        actions=[
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:ListBucket",
+            "s3:DeleteObject"
+        ],
+        resources=[
+            bucket.bucket_arn,
+            f"{bucket.bucket_arn}/*"
+        ]
+    ))
+         
     # attach amazon full access to the task role
     taskDefinition.task_role.add_managed_policy(
         iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSQSFullAccess")
     )
 
-    
+    taskDefinition.execution_role.add_managed_policy(
+        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSQSFullAccess")
+    ) 
     # Grant SQS permissions to the task role
     queue.grant_send_messages(taskDefinition.task_role)
     queue.grant_consume_messages(taskDefinition.task_role)

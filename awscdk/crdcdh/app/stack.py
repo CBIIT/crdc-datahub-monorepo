@@ -131,15 +131,16 @@ class Stack(Stack):
         
         # create s3 bucket
         bucket = s3.Bucket(self, f"{self.namingPrefix}-submission",
-            bucket_name=f"{self.namingPrefix}-submission",
-            #removal_policy=s3.RemovalPolicy.DESTROY,
-            #auto_delete_objects=True
+            bucket_name=f"{self.namingPrefix}-submission"
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True
         )
 
         secret_value = json.dumps({
             "submission_bucket": bucket.bucket_name
         })
         ### Secrets
+        self.secret = secretsmanager.Secret(self, "bucket",
         
         
 #        if(config['cloudfront']['deploy'] == "true"):
