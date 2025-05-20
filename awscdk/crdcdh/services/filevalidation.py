@@ -11,6 +11,7 @@ from aws_cdk import aws_cloudwatch as cloudwatch
 from aws_cdk import aws_cloudwatch_actions as cw_actions
 from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_s3 as s3
 
 class filevalidationService:
   def createService(self, config):
@@ -100,6 +101,8 @@ class filevalidationService:
             #)
         #]
     #)
+
+    bucket = s3.Bucket.from_bucket_name(self, f"{self.namingPrefix}-submission", f"{self.namingPrefix}-submission")
     
     # attach the s3 bucket policy to the task def role
     taskDefinition.add_to_task_role_policy(iam.PolicyStatement(

@@ -129,6 +129,12 @@ class Stack(Stack):
         #     default_database_name=config['db']['mysql_database']
         # )
         
+        # create s3 bucket
+        bucket = s3.Bucket(self, f"{self.namingPrefix}-submission",
+            bucket_name=f"{self.namingPrefix}-submission",
+            #removal_policy=s3.RemovalPolicy.DESTROY,
+            #auto_delete_objects=True
+        )
         ### Secrets
         
         
@@ -169,7 +175,7 @@ class Stack(Stack):
                 "email_user": SecretValue.unsafe_plain_text(config['secrets']['email_user']),
                 "email_password": SecretValue.unsafe_plain_text(config['secrets']['email_password']),
                 "email_url": SecretValue.unsafe_plain_text(config['secrets']['email_url']),
-                "submission_bucket": SecretValue.unsafe_plain_text(config['secrets']['submission_bucket']),
+#                "submission_bucket": SecretValue.unsafe_plain_text(config['secrets']['submission_bucket']),
 #                "google_client_id": SecretValue.unsafe_plain_text(config['secrets']['google_client_id']),
 #                "google_client_secret": SecretValue.unsafe_plain_text(config['secrets']['google_client_secret']),
                 "nih_client_id": SecretValue.unsafe_plain_text(config['secrets']['nih_client_id']),
@@ -183,6 +189,12 @@ class Stack(Stack):
 #                "newrelic_license_key": SecretValue.unsafe_plain_text(config['secrets']['newrelic_license_key'])
 
             }
+            generate_secret_string=secretsmanager.SecretStringGenerator(
+                secret_string_template=json.dumps({
+                    "bucketName": bucket.bucket_name
+                })
+                
+            )
         )
 
         ### ALB
@@ -278,11 +290,11 @@ class Stack(Stack):
        # )
 
         # create s3 bucket
-        bucket = s3.Bucket(self, f"{self.namingPrefix}-submission",
-            bucket_name=f"{self.namingPrefix}-submission",
-            removal_policy=s3.RemovalPolicy.DESTROY,
-            auto_delete_objects=True
-        )
+        #bucket = s3.Bucket(self, f"{self.namingPrefix}-submission",
+        #    bucket_name=f"{self.namingPrefix}-submission",
+            #removal_policy=s3.RemovalPolicy.DESTROY,
+            #auto_delete_objects=True
+        #)
 
         ### Fargate
         # Frontend Service
