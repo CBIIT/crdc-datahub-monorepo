@@ -134,7 +134,7 @@ class filevalidationService:
     )
 
     # pass role in datasync
-    data_sync_pass_role = = iam.PolicyStatement(
+    data_sync_pass_role = iam.PolicyStatement(
         effect=iam.Effect.ALLOW,
         actions=["iam:PassRole"],
         resources=["*"],

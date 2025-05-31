@@ -104,7 +104,7 @@ class backendService:
 
     scalable_target = ecsService.auto_scale_task_count(
         min_capacity=1,  # adjust as needed
-        max_capacity=2  # adjust as needed
+        max_capacity=1  # adjust as needed
     )
 
     scalable_target.scale_on_cpu_utilization(
@@ -113,6 +113,33 @@ class backendService:
         scale_in_cooldown=Duration.seconds(60),   # wait 60s before scaling in
         scale_out_cooldown=Duration.seconds(60)   # wait 60s before scaling out
     )
+
+    # scale on schedule
+    tier = config['main']['tier']
+    if tier.lower() != 'prod':
+        scalable_target.scale_on_schedule(
+            f"{config['main']['resource_prefix']}-{config['main']['tier']}-backend-start
+            schedule=appscaling.Schedule.cron(
+                minute="7",
+                hour="7",
+                week_day="MON-FRI" 
+            ),
+            min_capacity=1,
+            max_capacity=1,
+            schedule_time_zone="America/New_York"
+        )
+
+        scalable_target.scale_on_schedule(
+            f"{config['main']['resource_prefix']}-{config['main']['tier']}-backend-stop
+            schedule=appscaling.Schedule.cron(
+                minute="0",
+                hour="19",
+                week_day="MON-FRI"
+            ),
+            min_capacity=0,
+            max_capacity=0,
+            schedule_time_zone="America/New_York"
+        )
     ecsTarget = self.listener.add_targets("ECS-{}-Target".format(service),
         port=int(config[service]['port']),
         protocol=elbv2.ApplicationProtocol.HTTP,
