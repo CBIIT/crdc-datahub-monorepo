@@ -118,7 +118,7 @@ class backendService:
     tier = config['main']['tier']
     if tier.lower() != 'prod':
         scalable_target.scale_on_schedule(
-            f"{config['main']['resource_prefix']}-{config['main']['tier']}-backend-start
+            f"{config['main']['resource_prefix']}-{config['main']['tier']}-backend-start",
             schedule=appscaling.Schedule.cron(
                 minute="7",
                 hour="7",
@@ -130,7 +130,7 @@ class backendService:
         )
 
         scalable_target.scale_on_schedule(
-            f"{config['main']['resource_prefix']}-{config['main']['tier']}-backend-stop
+            f"{config['main']['resource_prefix']}-{config['main']['tier']}-backend-stop",
             schedule=appscaling.Schedule.cron(
                 minute="0",
                 hour="19",
