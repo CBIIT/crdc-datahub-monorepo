@@ -282,6 +282,94 @@ class Stack(Stack):
             ),
         )
 
+
+        # create datasync role & policy
+        self.datasync_policy_role = iam.Role(self,
+            f"{self.namingPrefix}-{datasync}-role",
+            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+            role_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{datasync}-role",
+            inline_policies={
+                "DataSyncPolicy": iam.PolicyDocument(statements=[
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            "s3:PutObjectTagging",
+                            "s3:ListObjectsV2",
+                            "s3:ListBucket",
+                            "s3:ListAllMyBuckets",
+                            "s3:GetObjectVersionTagging",
+                            "s3:GetObjectVersion",
+                            "s3:GetObjectTagging",
+                            "s3:GetObject",
+                            "s3:GetBucketLocation",
+                            "iam:ListRoles",
+                            "iam:CreateRole",
+                            "iam:CreatePolicy",
+                            "iam:AttachRolePolicy",
+                            "datasync:TagResource",
+                            "datasync:StartTaskExecution",
+                            "datasync:ListTasks",
+                            "datasync:ListTaskExecutions",
+                            "datasync:ListLocations",
+                            "datasync:DescribeTaskExecution",
+                            "datasync:DescribeTask",
+                            "datasync:DescribeLocation*",
+                            "datasync:DeleteTask",
+                            "datasync:DeleteLocation",
+                            "datasync:CreateTask",
+                            "datasync:CreateLocationS3",
+                            "datasync:CancelTaskExecution"
+                        ],
+                        resources=["*"]
+                    ),
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=["iam:PassRole"],
+                        resources=["*"],
+                        conditions={
+                            "StringEquals": {
+                                "iam:PassedToService": "datasync.amazonaws.com"
+                            }
+                        }
+                    ),
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            "s3:ListObjectsV2",
+                            "s3:ListBucketMultipartUploads",
+                            "s3:ListBucket",
+                            "s3:GetBucketLocation"
+                        ],
+                        resources=[
+                            "arn:aws:s3:::nci-crdc-data-bucket-dev",
+                            "arn:aws:s3:::icdc-cbiit-test-metadata",
+                            "arn:aws:s3:::ctdc-cbiit-test-metadata",
+                            "arn:aws:s3:::cds-cbiit-test-metadata"
+                        ]
+                    ),
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            "s3:PutObjectTagging",
+                            "s3:PutObject",
+                            "s3:ListObjectsV2",
+                            "s3:ListMultipartUploadParts",
+                            "s3:ListBucket",
+                            "s3:GetObjectTagging",
+                            "s3:GetObject",
+                            "s3:DeleteObject",
+                            "s3:AbortMultipartUpload"
+                        ],
+                        resources=[
+                            "arn:aws:s3:::nci-crdc-data-bucket-dev/*",
+                            "arn:aws:s3:::icdc-cbiit-test-metadata/*",
+                            "arn:aws:s3:::ctdc-cbiit-test-metadata/*",
+                            "arn:aws:s3:::cds-cbiit-test-metadata/*"
+                        ]
+                    )
+                ]
+            }
+        )
         # SQS queue
        # queue = sqs.Queue(self, f"{self.namingPrefix}-{service}-queue",
        #     queue_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{service}.fifo",

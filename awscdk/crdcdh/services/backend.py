@@ -121,24 +121,24 @@ class backendService:
             f"{config['main']['resource_prefix']}-{config['main']['tier']}-backend-start",
             schedule=appscaling.Schedule.cron(
                 minute="7",
-                hour="7",
+                hour="11",
                 week_day="MON-FRI" 
             ),
             min_capacity=1,
             max_capacity=1,
-            schedule_time_zone="America/New_York"
+            #schedule_time_zone="America/New_York"
         )
 
         scalable_target.scale_on_schedule(
             f"{config['main']['resource_prefix']}-{config['main']['tier']}-backend-stop",
             schedule=appscaling.Schedule.cron(
                 minute="0",
-                hour="19",
+                hour="23",
                 week_day="MON-FRI"
             ),
             min_capacity=0,
-            max_capacity=0,
-            schedule_time_zone="America/New_York"
+            max_capacity=0
+        #    schedule_time_zone="America/New_York"
         )
     ecsTarget = self.listener.add_targets("ECS-{}-Target".format(service),
         port=int(config[service]['port']),

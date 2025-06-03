@@ -99,7 +99,7 @@ class filevalidationService:
         ]
     )
 
-    #move datasync role & policy to the main stack 
+    #move data sync role & policy to the main stack 
     #data_sync_policy = iam.PolicyStatement(
         #effect=iam.Effect.ALLOW,
         #actions=[
@@ -177,10 +177,6 @@ class filevalidationService:
     taskDefinition.task_role.add_to_policy(bucket_submission_policy)
     #taskDefinition.task_role.add_to_policy(data_sync_policy)
     #taskDefinition.task_role.add_to_policy(data_sync_pass_role)
-
-    for stmt in stack.datasync_policy_role.policy.document.statements:
-        taskDefinition.task_role.add_to_policy(stmt)
-        taskDefinition.execution_role.add_to_policy(stmt)
 
     taskDefinition.execution_role.add_to_policy(bucket_submission_policy)
     #taskDefinition.execution_role.add_to_policy(data_sync_policy)
