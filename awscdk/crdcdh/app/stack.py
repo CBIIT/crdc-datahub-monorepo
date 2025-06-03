@@ -284,10 +284,15 @@ class Stack(Stack):
 
 
         # create datasync role & policy
+        permission_boundary_arn = config.get('iam', 'permission_boundary')
         self.datasync_policy_role = iam.Role(self,
-            f"{self.namingPrefix}-{datasync}-role",
+            f"{self.namingPrefix}-datasync-role",
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
-            role_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-{datasync}-role",
+            role_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-datasync-role",
+            permissions_boundary=iam.ManagedPolicy.from_managed_policy_arn(self,
+                f"{self.namingPrefix}-datasync-boundary",
+                permission_boundary_arn
+            ),
             inline_policies={
                 "DataSyncPolicy": iam.PolicyDocument(statements=[
                     iam.PolicyStatement(
@@ -367,7 +372,7 @@ class Stack(Stack):
                             "arn:aws:s3:::cds-cbiit-test-metadata/*"
                         ]
                     )
-                ]
+                ])
             }
         )
         # SQS queue

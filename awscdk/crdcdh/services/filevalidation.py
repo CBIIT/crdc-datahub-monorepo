@@ -99,51 +99,78 @@ class filevalidationService:
         ]
     )
 
-    #move datasync role & policy to the main stack 
-    #data_sync_policy = iam.PolicyStatement(
-        #effect=iam.Effect.ALLOW,
-        #actions=[
-            #"s3:PutObjectTagging",
-            #"s3:ListObjectsV2",
-            #"s3:ListBucket",
-            #"s3:ListAllMyBuckets",
-            #"s3:GetObjectVersionTagging",
-            #"s3:GetObjectVersion",
-            #"s3:GetObjectTagging",
-            #"s3:GetObject",
-            #"s3:GetBucketLocation",
-            #"iam:ListRoles",
-            #"iam:CreateRole",
-            #"iam:CreatePolicy",
-            #"iam:AttachRolePolicy",
-            #"datasync:TagResource",
-            #"datasync:StartTaskExecution",
-            #"datasync:ListTasks",
-            #"datasync:ListTaskExecutions",
-            #"datasync:ListLocations",
-            #"datasync:DescribeTaskExecution",
-            #"datasync:DescribeTask",
-            #"datasync:DescribeLocation*",
-            #"datasync:DeleteTask",
-            #"datasync:DeleteLocation",
-            #"datasync:CreateTask",
-            #"datasync:CreateLocationS3",
-            #"datasync:CancelTaskExecution"
-        #],
-        #resources=["*"]
-    #)
+    data_sync_policy = iam.PolicyStatement(
+        effect=iam.Effect.ALLOW,
+        actions=[
+            "s3:PutObjectTagging",
+            "s3:ListObjectsV2",
+            "s3:ListBucket",
+            "s3:ListAllMyBuckets",
+            "s3:GetObjectVersionTagging",
+            "s3:GetObjectVersion",
+            "s3:GetObjectTagging",
+            "s3:GetObject",
+            "s3:GetBucketLocation",
+            "iam:ListRoles",
+            "iam:CreateRole",
+            "iam:CreatePolicy",
+            "iam:AttachRolePolicy",
+            "datasync:TagResource",
+            "datasync:StartTaskExecution",
+            "datasync:ListTasks",
+            "datasync:ListTaskExecutions",
+            "datasync:ListLocations",
+            "datasync:DescribeTaskExecution",
+            "datasync:DescribeTask",
+            "datasync:DescribeLocation*",
+            "datasync:DeleteTask",
+            "datasync:DeleteLocation",
+            "datasync:CreateTask",
+            "datasync:CreateLocationS3",
+            "datasync:CancelTaskExecution"
+        ],
+        resources=["*"]
+    )
 
     # pass role in datasync
-    #data_sync_pass_role = iam.PolicyStatement(
-        #effect=iam.Effect.ALLOW,
-        #actions=["iam:PassRole"],
-        #resources=["*"],
-        #conditions={
-            #"StringEquals": {
-                #"iam:PassedToService": "datasync.amazonaws.com"
-            #}
-        #}
-    #)
+    data_sync_pass_role = iam.PolicyStatement(
+        effect=iam.Effect.ALLOW,
+        actions=["iam:PassRole"],
+        resources=["*"],
+        conditions={
+            "StringEquals": {
+                "iam:PassedToService": "datasync.amazonaws.com"
+            }
+        }
+    )
+
+    # allowed access the other buckets 
+    data_sync_other_buckets = iam.PolicyStatement(
+        effect=iam.Effect.ALLOW,
+        actions=[
+            "s3:ListObjectsV2",
+            "s3:ListBucketMultipartUploads",
+            "s3:ListBucket",
+            "s3:GetBucketLocation",
+            "s3:PutObjectTagging",
+            "s3:PutObject",
+            "s3:GetObjectTagging",
+            "s3:GetObject",
+            "s3:DeleteObject",
+            "s3:AbortMultipartUpload"
+        ],
+        resources=[
+            "arn:aws:s3:::nci-crdc-data-bucket-dev",
+            "arn:aws:s3:::icdc-cbiit-test-metadata",
+            "arn:aws:s3:::ctdc-cbiit-test-metadata",
+            "arn:aws:s3:::cds-cbiit-test-metadata",
+            "arn:aws:s3:::nci-crdc-data-bucket-dev/*",
+            "arn:aws:s3:::icdc-cbiit-test-metadata/*",
+            "arn:aws:s3:::ctdc-cbiit-test-metadata/*",
+            "arn:aws:s3:::cds-cbiit-test-metadata/*"
+        ]
+    )
+
     # attach the s3 bucket policy to the task def role
     #taskDefinition.add_to_task_role_policy(iam.PolicyStatement(
     #    effect=iam.Effect.ALLOW,
@@ -175,16 +202,18 @@ class filevalidationService:
 
     # attach policy to the task role
     taskDefinition.task_role.add_to_policy(bucket_submission_policy)
-    #taskDefinition.task_role.add_to_policy(data_sync_policy)
-    #taskDefinition.task_role.add_to_policy(data_sync_pass_role)
+    taskDefinition.task_role.add_to_policy(data_sync_policy)
+    taskDefinition.task_role.add_to_policy(data_sync_pass_role)
+    taskDefinition.task_role.add_to_policy(data_sync_other_buckets)
 
-    for stmt in stack.datasync_policy_role.policy.document.statements:
-        taskDefinition.task_role.add_to_policy(stmt)
-        taskDefinition.execution_role.add_to_policy(stmt)
+    #for stmt in stack.datasync_policy_role.policy.document.statements:
+        #taskDefinition.task_role.add_to_policy(stmt)
+        #taskDefinition.execution_role.add_to_policy(stmt)
 
     taskDefinition.execution_role.add_to_policy(bucket_submission_policy)
-    #taskDefinition.execution_role.add_to_policy(data_sync_policy)
-    #taskDefinition.execution_role.add_to_policy(data_sync_pass_role)
+    taskDefinition.execution_role.add_to_policy(data_sync_policy)
+    taskDefinition.execution_role.add_to_policy(data_sync_pass_role)
+    taskDefinition.execution_role.add_to_policy(data_sync_other_buckets)
          
     # attach amazon full access to the task role
     taskDefinition.task_role.add_managed_policy(
@@ -281,6 +310,33 @@ class filevalidationService:
         adjustment_type=appscaling.AdjustmentType.CHANGE_IN_CAPACITY,
         cooldown=Duration.seconds(10)    
     )
+
+    # set service run by schedule
+    tier = config['main']['tier']
+    if tier.lower() != 'prod':
+        scalable_target.scale_on_schedule(
+            f"{config['main']['resource_prefix']}-{config['main']['tier']}-file-start",
+            schedule=appscaling.Schedule.cron(
+                minute="5",
+                hour="11",
+                week_day="MON-FRI"
+            ),
+            min_capacity=1,
+            max_capacity=1,
+            #schedule_time_zone="America/New_York"
+        )
+        scalable_target.scale_on_schedule(
+            f"{config['main']['resource_prefix']}-{config['main']['tier']}-file-stop",
+            schedule=appscaling.Schedule.cron(
+                minute="0",
+                hour="23",
+                week_day="MON-FRI"
+            ),
+            min_capacity=0,
+            max_capacity=0
+        #    schedule_time_zone="America/New_York"
+        )
+
 
     # Connect alarm to scale out policy
     #scale_out_alarm.add_alarm_action(
