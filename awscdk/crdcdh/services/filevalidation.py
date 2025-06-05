@@ -248,7 +248,7 @@ class filevalidationService:
     )
 
     taskDefinition.task_role.add_managed_policy(
-        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonEC2ContainerServiceEventsRole")
+        iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonEC2ContainerServiceEventsRole")
     )
 
     taskDefinition.task_role.add_managed_policy(
@@ -259,7 +259,7 @@ class filevalidationService:
         iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSQSFullAccess")
     ) 
     taskDefinition.execution_role.add_managed_policy(
-        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonEC2ContainerServiceEventsRole")
+        iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonEC2ContainerServiceEventsRole")
     )
     taskDefinition.execution_role.add_managed_policy(
         iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchLogsFullAccess")
