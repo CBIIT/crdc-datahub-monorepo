@@ -171,6 +171,29 @@ class filevalidationService:
         ]
     )
 
+    # attach sqs iam access
+    sqs_iam_access = iam.PolicyStatement(
+        effect=iam.Effect.ALLOW,
+        actions=["sqs:*"],
+        resources=[
+            f"arn:aws:sqs:{config['main']['region']}:{config['main']['account_id']}:*"
+        ]
+    )    
+
+    # attach quicksight embedded policy
+    quicksight_embed_policy = iam.PolicyStatement(
+        effect=iam.Effect.ALLOW,
+        actions=[
+            "quicksight:GetDashboardEmbedUrl",
+            "quicksight:GetAnonymousUserEmbedUrl",
+            "quicksight:GenerateEmbedUrlForRegisteredUser",
+            "quicksight:GenerateEmbedUrlForAnonymousUser"
+        ],
+        resources=[
+            f"arn:aws:quicksight:{config['main']['region']}:{config['main']['account_id']}:dashboard/*"
+        ]
+    )
+
     # attach the s3 bucket policy to the task def role
     #taskDefinition.add_to_task_role_policy(iam.PolicyStatement(
     #    effect=iam.Effect.ALLOW,
@@ -205,6 +228,8 @@ class filevalidationService:
     taskDefinition.task_role.add_to_policy(data_sync_policy)
     taskDefinition.task_role.add_to_policy(data_sync_pass_role)
     taskDefinition.task_role.add_to_policy(data_sync_other_buckets)
+    taskDefinition.task_role.add_to_policy(sqs_iam_access)
+    taskDefinition.task_role.add_to_policy(quicksight_embed_policy)
 
     #for stmt in stack.datasync_policy_role.policy.document.statements:
         #taskDefinition.task_role.add_to_policy(stmt)
@@ -214,15 +239,32 @@ class filevalidationService:
     taskDefinition.execution_role.add_to_policy(data_sync_policy)
     taskDefinition.execution_role.add_to_policy(data_sync_pass_role)
     taskDefinition.execution_role.add_to_policy(data_sync_other_buckets)
+    taskDefinition.execution_role.add_to_policy(sqs_iam_access)
+    taskDefinition.execution_role.add_to_policy(quicksight_embed_policy)
          
-    # attach amazon full access to the task role
+    # attach amazon managed policy to the task role
     taskDefinition.task_role.add_managed_policy(
         iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSQSFullAccess")
+    )
+
+    taskDefinition.task_role.add_managed_policy(
+        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonEC2ContainerServiceEventsRole")
+    )
+
+    taskDefinition.task_role.add_managed_policy(
+        iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchLogsFullAccess")
     )
 
     taskDefinition.execution_role.add_managed_policy(
         iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSQSFullAccess")
     ) 
+    taskDefinition.execution_role.add_managed_policy(
+        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonEC2ContainerServiceEventsRole")
+    )
+    taskDefinition.execution_role.add_managed_policy(
+        iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchLogsFullAccess")
+    )
+
     # Grant SQS permissions to the task role
     queue.grant_send_messages(taskDefinition.task_role)
     queue.grant_consume_messages(taskDefinition.task_role)
