@@ -83,7 +83,7 @@ class essentialvalidationService:
     )
 
 
-    bucket = s3.Bucket.from_bucket_name(self, f"{self.namingPrefix}-submission-ref", f"{self.namingPrefix}-submission")
+    bucket = s3.Bucket.from_bucket_name(self, f"{self.namingPrefix}-submission-essential-ref", f"{self.namingPrefix}-submission")
     # add s3 bucket policy to allow task def role to access submission bucket
     bucket_submission_policy = iam.PolicyStatement(
         effect=iam.Effect.ALLOW,
