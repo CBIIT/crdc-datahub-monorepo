@@ -19,6 +19,8 @@ from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_ssm as ssm
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_sqs as sqs
+from aws_cdk import aws_sns as sns
+from aws_cdk import aws_sns_subscriptions as subs
 from services import frontend, backend, authn, essentialvalidation, metadatavalidation, filevalidation, exportvalidation, pvpuller
 
 class Stack(Stack):
@@ -283,6 +285,29 @@ class Stack(Stack):
         )
 
 
+        # create SNS topic
+        topic = sns.Topic(self, f"{self.namingPrefix}-sns-topic",
+            topic_name=f"datasync-status-topic-{config['main']['tier']}",
+            display_name=topic_name
+        )
+
+        # add email subscription
+        emails = [e.strip() for e in config['main']['sns_topic_emails'].split(',')]
+
+        for email in emails:
+            topic.add_subscription(
+                subs.EmailSubscription(email)
+            )
+
+        # Add policy to allow EventBridge to publish
+        topic.add_to_resource_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                principals=[iam.ServicePrincipal("events.amazonaws.com")],
+                actions=["sns:Publish"],
+                resources=[topic.topic_arn],
+            )
+        )  
         # create datasync role & policy
         permission_boundary_arn = config.get('iam', 'permission_boundary')
         self.datasync_policy_role = iam.Role(self,
