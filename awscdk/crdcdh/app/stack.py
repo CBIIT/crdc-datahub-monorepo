@@ -288,7 +288,7 @@ class Stack(Stack):
         # create SNS topic
         topic = sns.Topic(self, f"{self.namingPrefix}-sns-topic",
             topic_name=f"datasync-status-topic-{config['main']['tier']}",
-            display_name=topic_name
+            display_name=f"datasync-status-topic-{config['main']['tier']}"
         )
 
         # add email subscription
