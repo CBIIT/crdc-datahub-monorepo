@@ -1,5 +1,5 @@
 Notes: Service Versions
-project: mdb
+project: crdc dh
 services:
   frontend:
     version: 3.3.0.608
@@ -17,5 +17,5 @@ services:
     version: 3.3.0.334
   pvpuller:
     version: 3.3.0.26
-  uploadcliversion
+  uploadcliversion:
     version: 4.0.0-alpha-1
