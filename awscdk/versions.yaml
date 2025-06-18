@@ -1,0 +1,21 @@
+Notes: Service Versions
+project: mdb
+services:
+  frontend:
+    version: 3.3.0.608
+  backend:
+    version: 3.3.0.1081
+  authn:
+    version: 3.3.0.141
+  essentialvalidation:
+    version: 3.3.0.334
+  metadatavalidation:
+    version: 3.3.0.334
+  filevalidation:
+    version: 3.3.0.334
+  exportvalidation:
+    version: 3.3.0.334
+  pvpuller:
+    version: 3.3.0.26
+  uploadcliversion
+    version: 4.0.0-alpha-1
