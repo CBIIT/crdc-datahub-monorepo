@@ -48,7 +48,8 @@ jobs:
           echo "branch=$BRANCH_NAME" >> "$GITHUB_ENV"
           echo "Current branch is: $BRANCH_NAME"
           git fetch --tags --force --quiet
-          tag=$(git tag -l $BRANCH_NAME* | tail -1)
+          #tag=$(git tag -l $BRANCH_NAME* | tail -1)
+          tag=$(git tag -l $BRANCH_NAME* | sort -V | tail -1)
           if  [ ! -z "$tag" ];
           then
             # Increment the build number if a tag is found
@@ -69,7 +70,7 @@ jobs:
           FE_IMAGE_NAME: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_FE }}:${{ env.IMAGE_TAG }}
         run: |
           echo "Building: $FE_IMAGE_NAME"
-          docker build --no-cache -t $FE_IMAGE_NAME -f apps/frontend/Dockerfile . 
+          docker build --no-cache -t $FE_IMAGE_NAME -f apps/frontend/Dockerfile .
 
       - name: Run Trivy test scan for FE Docker Image
         id: trivy-scan-fe
