@@ -14,9 +14,9 @@ RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 FROM nginx:1.27.4-alpine3.21-slim as fnl_base_image
 
 COPY --from=build /usr/src/app/build /usr/share/nginx/html
-COPY --from=build /usr/src/app/apps/frontend/conf/inject.template.js /usr/share/nginx/html/inject.template.js
-COPY --from=build /usr/src/app/apps/frontend/conf/nginx.conf /etc/nginx/conf.d/configfile.template
-COPY --from=build /usr/src/app/apps/frontend/conf/entrypoint.sh /
+COPY --from=build /usr/src/app/conf/inject.template.js /usr/share/nginx/html/inject.template.js
+COPY --from=build /usr/src/app/conf/nginx.conf /etc/nginx/conf.d/configfile.template
+COPY --from=build /usr/src/app/conf/entrypoint.sh /
 
 ENV PORT 80
 
