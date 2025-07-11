@@ -21,6 +21,8 @@ from aws_cdk import aws_iam as iam
 from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_sns as sns
 from aws_cdk import aws_sns_subscriptions as subs
+from aws_cdk import Duration
+from aws_cdk import RemovalPolicy
 from services import frontend, backend, authn, essentialvalidation, metadatavalidation, filevalidation, exportvalidation, pvpuller
 
 class Stack(Stack):
