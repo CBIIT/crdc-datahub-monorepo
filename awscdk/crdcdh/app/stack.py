@@ -135,7 +135,26 @@ class Stack(Stack):
         bucket = s3.Bucket(self, f"{self.namingPrefix}-submission",
             bucket_name=f"{self.namingPrefix}-submission",
             removal_policy=RemovalPolicy.DESTROY,
-            auto_delete_objects=True
+            auto_delete_objects=True,
+            cors=[
+                s3.CorsRule(
+                    allowed_methods=[
+                        s3.HttpMethods.POST,
+                        s3.HttpMethods.GET,
+                        s3.HttpMethods.HEAD,
+                        s3.HttpMethods.PUT,
+                    ],
+                    allowed_origins=[
+                        "*.datacommons.cancer.gov",
+                        "*.cancer.gov",
+                        "*.cloudfront.net",
+                        "http://localhost:4010"
+                    ],    
+                    allowed_headers=["*"],
+                    exposed_headers=["Content-Range", "ETag", "Content-Length"],
+                    max_age=Duration.seconds(3000)
+                )
+            ]
         )
 
 #        secret_value = json.dumps({
