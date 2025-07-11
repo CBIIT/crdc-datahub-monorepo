@@ -154,7 +154,7 @@ class Stack(Stack):
                     ],    
                     allowed_headers=["*"],
                     exposed_headers=["Content-Range", "ETag", "Content-Length"],
-                    max_age=Duration.seconds(3000)
+                    max_age=3000
                 )
             ]
         )
