@@ -3,7 +3,8 @@ FROM node:22.17.0-alpine3.21 AS build
 
 WORKDIR /usr/src/app
 
-COPY . .
+#COPY . .
+COPY apps/frontend/ .
 COPY apps/frontend/package*.json ./
 
 RUN NODE_OPTIONS="--max-old-space-size=4096" npm ci
