@@ -2,6 +2,7 @@ from aws_cdk import Duration
 from aws_cdk import aws_elasticloadbalancingv2 as elbv2
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_secretsmanager as secretsmanager
 from datetime import date
 from aws_cdk import Duration
@@ -257,6 +258,15 @@ class frontendService:
         iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchLogsFullAccess")
     )
 
+    # get subnet for the ecs service
+      subnet_fe1 = config.get(service, 'subnet_fe1')
+      subnet_fe2 = config.get(service, 'subnet_fe2')
+      subnets_fe = ec2.SubnetSelection(
+          subnets=[
+            ec2.Subnet.from_subnet_id(self, "Subnet_fe1", subnet_fe1),
+            ec2.Subnet.from_subnet_id(self, "Subnet_fe2", subnet_fe2)
+          ]
+      )
     ecsService = ecs.FargateService(self,
         "{}-{}-service".format(self.namingPrefix, service),
         service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-frontend",
@@ -269,6 +279,7 @@ class frontendService:
             enable=True,
             rollback=True
         ),
+        vpc_subnets=subnets_fe
     )
 
     # added ecs run by schedule

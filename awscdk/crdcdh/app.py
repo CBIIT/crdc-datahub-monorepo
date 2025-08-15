@@ -82,7 +82,10 @@ if __name__=="__main__":
     boundary = iam.ManagedPolicy.from_managed_policy_arn(stack, "Boundary", config['iam']['permission_boundary'])
     iam.PermissionsBoundary.of(stack).apply(boundary)
 
-  tags = dict(s.split(':') for s in config['main']['tags'].split(","))
+  #tags = dict(s.split(':') for s in config['main']['tags'].split(","))
+  config_tags = dict(s.split(':') for s in config['main']['tags'].split(","))
+  env_tags = {'Environment': config['main']['tier']}
+  tags = config_tags | env_tags
 
   for tag,value in tags.items():
     cdk.Tags.of(stack).add(tag, value)
