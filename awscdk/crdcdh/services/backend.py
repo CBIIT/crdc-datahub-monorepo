@@ -3,6 +3,7 @@ from aws_cdk import Duration
 from aws_cdk import aws_elasticloadbalancingv2 as elbv2
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_secretsmanager as secretsmanager
 from datetime import date
 from aws_cdk import Duration
@@ -248,6 +249,15 @@ class backendService:
     )
 
     
+    # get subnet for the ecs service
+    subnet_be1 = config.get(service, 'subnet_be1')
+    subnet_be2 = config.get(service, 'subnet_be2')
+    subnets_be = ec2.SubnetSelection(
+        subnets=[
+          ec2.Subnet.from_subnet_id(self, "Subnet_be1", subnet_be1),
+          ec2.Subnet.from_subnet_id(self, "Subnet_be2", subnet_be2)
+        ]
+    )
     ecsService = ecs.FargateService(self,
         "{}-{}-service".format(self.namingPrefix, service),
         service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-backend",
@@ -260,6 +270,7 @@ class backendService:
             enable=True,
             rollback=True
         ),
+        vpc_subnets=subnets_be
     )
 
     scalable_target = ecsService.auto_scale_task_count(

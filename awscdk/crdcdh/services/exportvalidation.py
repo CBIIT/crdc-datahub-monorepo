@@ -3,6 +3,7 @@ from aws_cdk import Duration
 from aws_cdk import aws_elasticloadbalancingv2 as elbv2
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_secretsmanager as secretsmanager
 from datetime import date
 from aws_cdk import Duration
@@ -237,6 +238,15 @@ class exportvalidationService:
     queue.grant_send_messages(taskDefinition.task_role)
     queue.grant_consume_messages(taskDefinition.task_role)
 
+    # get subnet for the ecs service
+    subnet_exp1 = config.get(service, 'subnet_exp1')
+    subnet_exp2 = config.get(service, 'subnet_exp2')
+    subnets_exp = ec2.SubnetSelection(
+        subnets=[
+          ec2.Subnet.from_subnet_id(self, "Subnet_exp1", subnet_exp1),
+          ec2.Subnet.from_subnet_id(self, "Subnet_exp2", subnet_exp2)
+        ]
+    )
     ecsService = ecs.FargateService(self,
         "{}-{}-service".format(self.namingPrefix, service),
         service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-exportvalidation",
@@ -250,6 +260,7 @@ class exportvalidationService:
             enable=True,
             rollback=True
         ),
+        vpc_subnets=subnets_exp
     )
 
     #Attach scalable target

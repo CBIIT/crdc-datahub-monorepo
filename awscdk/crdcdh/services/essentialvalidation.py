@@ -3,6 +3,7 @@ from aws_cdk import Duration
 from aws_cdk import aws_elasticloadbalancingv2 as elbv2
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_secretsmanager as secretsmanager
 from datetime import date
 from aws_cdk import Duration
@@ -242,6 +243,15 @@ class essentialvalidationService:
     queue.grant_send_messages(taskDefinition.task_role)
     queue.grant_consume_messages(taskDefinition.task_role)
 
+    # get subnet for the ecs service
+    subnet_es1 = config.get(service, 'subnet_es1')
+    subnet_es2 = config.get(service, 'subnet_es2')
+    subnets_es = ec2.SubnetSelection(
+        subnets=[
+          ec2.Subnet.from_subnet_id(self, "Subnet_es1", subnet_es1),
+          ec2.Subnet.from_subnet_id(self, "Subnet_es2", subnet_es2)
+        ]
+    )
     ecsService = ecs.FargateService(self,
         "{}-{}-service".format(self.namingPrefix, service),
         service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-essentialvalidation",
@@ -255,6 +265,7 @@ class essentialvalidationService:
             enable=True,
             rollback=True
         ),
+        vpc_subnets=subnets_es
     )
 
     #Attach scalable target

@@ -3,6 +3,7 @@ from aws_cdk import Duration
 from aws_cdk import aws_elasticloadbalancingv2 as elbv2
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_secretsmanager as secretsmanager
 from datetime import date
 from aws_cdk import Duration
@@ -241,6 +242,15 @@ class metadatavalidationService:
     queue.grant_send_messages(taskDefinition.task_role)
     queue.grant_consume_messages(taskDefinition.task_role)
 
+    # get subnet for the ecs service
+    subnet_me1 = config.get(service, 'subnet_me1')
+    subnet_me2 = config.get(service, 'subnet_me2')
+    subnets_me = ec2.SubnetSelection(
+        subnets=[
+          ec2.Subnet.from_subnet_id(self, "Subnet_me1", subnet_me1),
+          ec2.Subnet.from_subnet_id(self, "Subnet_me2", subnet_me2)
+        ]
+    )
     ecsService = ecs.FargateService(self,
         "{}-{}-service".format(self.namingPrefix, service),
         service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-metadatavalidation",
@@ -254,6 +264,7 @@ class metadatavalidationService:
             enable=True,
             rollback=True
         ),
+        vpc_subnets=subnets_me
     )
 
     #Attach scalable target

@@ -3,6 +3,7 @@ from aws_cdk import Duration
 from aws_cdk import aws_elasticloadbalancingv2 as elbv2
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_secretsmanager as secretsmanager
 from datetime import date
 from aws_cdk import aws_applicationautoscaling as appscaling
@@ -243,7 +244,15 @@ class authnService:
     )
 
 
-
+    # get subnet for the ecs service
+    subnet_au1 = config.get(service, 'subnet_au1')
+    subnet_au2 = config.get(service, 'subnet_au2')
+    subnets_au = ec2.SubnetSelection(
+        subnets=[
+          ec2.Subnet.from_subnet_id(self, "Subnet_au1", subnet_au1),
+          ec2.Subnet.from_subnet_id(self, "Subnet_au2", subnet_au2)
+        ]
+    )
     ecsService = ecs.FargateService(self,
         "{}-{}-service".format(self.namingPrefix, service),
         service_name=f"{config['main']['resource_prefix']}-{config['main']['tier']}-authn",
@@ -256,6 +265,7 @@ class authnService:
             enable=True,
             rollback=True
         ),
+        vpc_subnets=subnets_au
     )
     #ecsService.connections.allow_to_default_port(self.auroraCluster)
 
